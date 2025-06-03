@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="ru">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+  <style>
+    @media only screen and  (max-width: 600px) {
+      .container {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+<div style="background-color: #0E0C15; min-height: 100vh; font-family: Arial, Helvetica, sans-serif;">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    .main {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding-left: 49px;
+      padding-right: 49px;
+    }
+
+    @media only screen and  (max-width: 600px) {
+      .container {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+      }
+    }
+
+    hr {
+      max-width: 502px;
+      border: 0;
+      height: 1px;
+      margin: 0 auto;
+      background-color: #323333;
+    }
+
+    .h1 {
+      font-weight: 700;
+      font-size: 24px;
+      line-height: 26px;
+      text-align: center;
+    }
+
+    .h2 {
+      font-weight: 700;
+      font-size: 20px;
+      line-height: 24px;
+      text-align: center;
+    }
+
+    p, h1, h2, h3, h4, h5, h6 {
+      margin-block-start: 0;
+      margin-block-end: 0;
+    }
+
+    .text-sm {
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 400;
+      font-size: 12px;
+      line-height: 18px;
+      text-align: center;
+    }
+
+    .text-md {
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 22px;
+      text-align: center;
+    }
+
+    .button {
+      display: inline-block;
+      border-radius: 12px;
+      color: #ffffff;
+      padding: 12px 28px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      outline: none;
+      background-color: #1C64F2;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 22px;
+      text-align: center;
+    }
+
+    .button:hover {
+      color: #ffffff;
+      outline: none;
+    }
+
+    .color-secondary {
+      color: #82ACFF;
+    }
+
+    .color-gray-1 {
+      color: #182031;
+    }
+
+    .color-gray-2 {
+      color: #9BA5B2;
+    }
+
+    .color-gray-3 {
+      color: #323333;
+    }
+
+    .bgcolor-primary {
+      background-color: #1C64F2;
+    }
+
+    .bgcolor-gray-1 {
+      background-color: #182031;
+    }
+
+    .color-white {
+      color: #fff;
+    }
+
+    .tac {
+      text-align: center;
+    }
+
+    .tal {
+      text-align: left;
+    }
+
+    .mb-2 {
+      margin-bottom: 8px;
+    }
+
+    .mb-3 {
+      margin-bottom: 12px;
+    }
+
+    .my-4 {
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+
+    .mt-4 {
+      margin-top: 16px;
+    }
+
+    .mb-6 {
+      margin-bottom: 24px;
+    }
+
+    .my-9 {
+      margin-top: 36px;
+      margin-bottom: 36px;
+    }
+  </style>
+
+  {{> header }}
+
+  <div class="main">
+    {{{ body }}}
+  </div>
+
+  {{> midjourney }}
+
+  {{> footer }}
+</div>
+
+</body>
+</html>

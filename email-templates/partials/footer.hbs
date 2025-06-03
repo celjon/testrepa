@@ -1,0 +1,165 @@
+<style>
+  .footer {
+    background-color: #182031;
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+
+  .footer__inner {
+    text-align: center;
+  }
+
+  .copyright {
+    margin-top: 4px;
+  }
+
+  .footer__nav {
+    list-style: none;
+    margin: 12px 0;
+  }
+
+  .footer__nav a {
+    display: inline-block;
+    margin-right: 15px;
+  }
+
+  .footer__nav a:last-child {
+    margin-right: 0;
+  }
+
+  .socials {
+    height: 24px;
+    list-style: none;
+  }
+
+  .socials a {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+</style>
+<div class='footer'>
+  <div class='footer__inner container'>
+    <a href='{{config.frontendAddress}}{{config.locale}}' target='_blank'>
+      <img
+        src='{{config.realAddress}}email-assets/logo.png'
+        alt='BotHub logo'
+        style='height: 27px;'
+      />
+    </a>
+
+    <p class='text-sm color-gray-2 copyright'>
+      {{t.footer.companyName}}<br />
+      &copy; BotHub 2024
+    </p>
+
+    <div class='footer__nav'>
+      <a
+        class='color-gray-2 text-sm'
+        target='_blank'
+        href='{{config.frontendAddress}}{{config.locale}}/main#plans'
+      >
+        {{t.footer.pricing}}
+      </a>
+      {{#if_eq config.locale 'ru'}}
+        <a
+          class='color-gray-2 text-sm'
+          target='_blank'
+          href='https://t.me/bothub_founder'
+        >
+          {{t.footer.forInvestors}}
+        </a>
+      {{else}}
+        <a
+          class='color-gray-2 text-sm'
+          target='_blank'
+          href='https://x.com/Greg_Ewin'
+        >
+          {{t.footer.forInvestors}}
+        </a>
+      {{/if_eq}}
+      <a
+        class='color-gray-2 text-sm'
+        target='_blank'
+        href='{{config.frontendAddress}}{{config.locale}}/business'
+      >
+        {{t.footer.forBusiness}}
+      </a>
+      <a
+        class='color-gray-2 text-sm'
+        target='_blank'
+        href='{{config.frontendAddress}}{{config.locale}}/contacts'
+      >
+        {{t.footer.contacts}}
+      </a>
+    </div>
+
+    <div class='socials'>
+      <a
+        style='margin-right: 16px;'
+        target='_blank'
+        href='mailto:email@bothub.chat'
+      >
+        <img
+          src='{{config.realAddress}}email-assets/mail.png'
+          alt='Mail icon'
+          style='height: 24px;'
+        />
+      </a>
+
+      {{#if_eq config.locale 'ru'}}
+        <a
+          style='margin-right: 16px;'
+          target='_blank'
+          href='https://t.me/bothub_chat_bot'
+        >
+          <img
+            src='{{config.realAddress}}email-assets/robot.png'
+            alt='Robot icon'
+            style='height: 24px;'
+          />
+        </a>
+      {{else}}
+        <a
+          style='margin-right: 16px;'
+          target='_blank'
+          href='https://t.me/bothub_en_chat_bot'
+        >
+          <img
+            src='{{config.realAddress}}email-assets/robot.png'
+            alt='Robot icon'
+            style='height: 24px;'
+          />
+        </a>
+      {{/if_eq}}
+
+      {{#if_eq config.locale 'ru'}}
+        <a
+          style='margin-right: 0;'
+          target='_blank'
+          href='https://t.me/bothub_chat'
+        >
+          <img
+            src='{{config.realAddress}}email-assets/telegram.png'
+            alt='Telegram icon'
+            style='height: 24px;'
+          />
+        </a>
+      {{else}}
+        <a
+          style='margin-right: 0;'
+          target='_blank'
+          href='https://discord.gg/bothub'
+        >
+          <img
+            src='{{config.realAddress}}email-assets/discord.png'
+            alt='Telegram icon'
+            style='height: 24px;'
+          />
+        </a>
+      {{/if_eq}}
+    </div>
+  </div>
+</div>

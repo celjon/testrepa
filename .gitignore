@@ -1,0 +1,25 @@
+node_modules
+# Keep environment variables out of version control
+/.env
+
+pg_data
+
+**/.DS_Store
+
+.idea
+
+redisdata
+
+build
+/config/config.yml
+
+logs
+
+redis.conf
+
+yarn-error.log
+tsconfig.tsbuildinfo
+.qodo
+/.env.example
+/.gitlab-ci.yml
+/config/config.example.yml

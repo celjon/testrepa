@@ -1,0 +1,58 @@
+{{> bothub-logo-card }}
+
+<style>
+  .card {
+    margin-left: auto;
+    margin-right: auto;
+    width: auto;
+    display: inline-block;
+    border-radius: 8px;
+    padding: 8px 24px;
+  }
+
+  .row-label {
+    display: inline-block;
+    min-width: 70px;
+  }
+
+  .row-value {
+    font-weight: bold;
+    color: #fff;
+  }
+</style>
+<div class="my-9">
+  <div class="container tac">
+    <h1 class="h1 color-white mb-3">
+      {{ t.title }}
+    </h1>
+
+    <p class="text-md color-white">
+      {{ t.subtitle }}
+    </p>
+
+    <div class="card bgcolor-gray-1 my-4">
+      <p class="text-md tal" style="max-width: 100%; word-wrap: break-word;">
+        <span class="color-gray-2 row-label">E-mail:</span> <span class="row-value">
+          <a href="mailto:{{ user.email }}" style="color: #fff; text-decoration: none; font-weight: bold;">
+            {{ user.email }}
+          </a>
+        </span>
+      </p>
+      {{#if_neq user.password ""}}
+        <p class="text-md tal" style="max-width: 100%; word-wrap: break-word;">
+          <span class="color-gray-2 row-label">Пароль:</span> <span class="row-value">{{ user.password }}</span>
+        </p>
+      {{/if_neq}}
+    </div>
+
+    <div>
+      <a href="{{config.frontendAddress}}{{config.locale}}/profile" class="button">
+        {{ t.profile }}
+      </a>
+    </div>
+  </div>
+</div>
+
+{{#if_eq config.locale 'ru'}}
+  <hr />
+{{/if_eq}}

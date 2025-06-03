@@ -1,0 +1,39 @@
+build_prod86:
+  only:
+    - main-x86
+  variables:
+    ENV: $PROD_ENV
+    CONFIG: $PROD_CONFIG
+    CONTAINERS: db_prod api_prod migrate scripts
+    REDIS_CONFIG: $PROD_REDIS_CONFIG
+  extends: .build_job
+  tags:
+    - Prod-x86
+
+migrate_prod86:
+  needs: [build_prod86]
+  only:
+    - main-x86
+  variables:
+    DB: db_prod
+    MIGRATE_CONTAINER: migrate
+  tags:
+    - Prod-x86
+  extends: .migrate_job
+
+scripts_prod86:
+  tags:
+    - Prod-x86
+  variables:
+    SCRIPTS_CONTAINER: scripts
+    BRANCH_NAME: main-x86
+  extends: .scripts_job
+
+deploy_prod86:
+  only:
+    - main-x86
+  variables:
+    CONTAINERS: api_prod redis_prod
+  tags:
+    - Prod-x86
+  extends: .deploy_job

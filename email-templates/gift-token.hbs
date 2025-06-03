@@ -1,0 +1,52 @@
+{{> gift-card }}
+
+<style>
+  .card {
+    margin: auto;
+    width: auto;
+    display: inline-block;
+    border-radius: 8px;
+    padding: 8px 24px;
+    margin: 20px 0;
+  }
+
+  .row-title {
+    display: inline-block;
+    width: 100px;
+  }
+
+  .row-value {
+    display: block;
+    font-weight: bold;
+  }
+</style>
+
+<div class="my-9">
+  <div class="container tac">
+    <h1 class="h1 color-white mb-3">
+      {{ t.title }}
+    </h1>
+
+    <p class="text-md color-white mb-6">
+      {{ t.body1 }} <span class="color-secondary">{{ tokens }}</span> {{ t.body2 }} <span class="color-secondary">BotHub.chat</span> {{ t.body3 }}
+    </p>
+
+    <h2 class="h2 color-white mb-3">
+      {{ t.bottomText1 }}
+    </h2>
+
+    <p class="text-md color-white">
+      {{ t.bottomText2 }}
+    </p>
+
+    <div class="my-4">
+      <a href="{{config.frontendAddress}}{{config.locale}}/profile" class="button">
+        {{ t.auth }}
+      </a>
+    </div>
+  </div>
+</div>
+
+{{#if_eq config.locale 'ru'}}
+  <hr />
+{{/if_eq}}

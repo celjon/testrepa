@@ -1,0 +1,127 @@
+<style>
+  .midjourney {
+    text-align: center;
+  }
+
+  .midjourney__images {
+    width: 100%;
+    border: none transparent;
+    border-collapse: collapse;
+    border-spacing: 0;
+    height: 316px;
+  }
+
+  .midjourney__images td {
+    height: 100%;
+    border: none;
+  }
+
+  .midjourney__images td p {
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .midjourney__images td img {
+    border-radius: 16px;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .w-50 {
+    width: 50%;
+  }
+
+  .w-25 {
+    width: 25%;
+  }
+</style>
+{{#if_eq config.locale 'ru'}}
+  <div class='midjourney my-9'>
+    <div class='container'>
+      <h2 class='h1 color-white mb-2'>
+        {{t.midjourney.title}}
+      </h2>
+      <p class='text-md color-white'>
+        {{t.midjourney.subtitle}}
+      </p>
+
+      <table class='midjourney__images my-4'>
+        <tbody>
+        <tr>
+          <td
+            colspan='2'
+            class='w-50'
+            style='padding-right: 8px; padding-bottom: 8px;'
+          >
+            <p style='height: 150px;'>
+              <img
+                height='150'
+                src='{{config.realAddress}}email-assets/midjourney-1.png'
+                alt=''
+              />
+            </p>
+          </td>
+          <td
+            colspan='2'
+            rowspan='2'
+            class='w-50'
+            style='padding-left: 8px;'
+          >
+            <p style='height: 316px;'>
+              <img
+                height='316'
+                src='{{config.realAddress}}email-assets/midjourney-4.png'
+                alt=''
+              />
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td
+            class='w-25'
+            style='padding-top: 8px; padding-right: 8px;'
+          >
+            <p style='height: 150px;'>
+              <img
+                height='150'
+                src='{{config.realAddress}}email-assets/midjourney-2.png'
+                alt=''
+              />
+            </p>
+          </td>
+          <td
+            class='w-25'
+            style='padding-left: 8px; padding-top: 8px; padding-right: 8px;'
+          >
+            <p style='height: 150px;'>
+              <img
+                height='150'
+                src='{{config.realAddress}}email-assets/midjourney-3.png'
+                alt=''
+              />
+            </p>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+
+      <div class='tac'>
+        <a
+          href='{{config.frontendAddress}}{{config.locale}}/dashboard'
+          target='_blank'
+          class='button'
+        >
+          {{t.midjourney.tryMidjourney}}
+        </a>
+      </div>
+    </div>
+  </div>
+{{/if_eq}}

@@ -1,0 +1,39 @@
+build_stage:
+  only:
+    - stage
+  variables:
+    ENV: $STAGE_ENV
+    CONFIG: $STAGE_CONFIG
+    CONTAINERS: db_stage api_stage migrate scripts
+    REDIS_CONFIG: $STAGE_REDIS_CONFIG
+  extends: .build_job
+  tags:
+    - bothub_api
+
+migrate_stage:
+  needs: [build_stage]
+  only:
+    - stage
+  variables:
+    DB: db_stage
+    MIGRATE_CONTAINER: migrate
+  tags:
+    - bothub_api
+  extends: .migrate_job
+
+scripts_stage:
+  tags:
+    - bothub_api
+  variables:
+    SCRIPTS_CONTAINER: scripts
+    BRANCH_NAME: stage
+  extends: .scripts_job
+
+deploy_stage:
+  only:
+    - stage
+  variables:
+    CONTAINERS: api_stage redis_stage
+  tags:
+    - bothub_api
+  extends: .deploy_job

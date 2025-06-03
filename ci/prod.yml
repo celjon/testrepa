@@ -1,0 +1,39 @@
+build_prod:
+  only:
+    - main
+  variables:
+    ENV: $PROD_ENV
+    CONFIG: $PROD_CONFIG
+    CONTAINERS: db_prod api_prod migrate scripts
+    REDIS_CONFIG: $PROD_REDIS_CONFIG
+  extends: .build_job
+  tags:
+    - BotHub
+
+migrate_prod:
+  needs: [build_prod]
+  only:
+    - main
+  variables:
+    DB: db_prod
+    MIGRATE_CONTAINER: migrate
+  tags:
+    - BotHub
+  extends: .migrate_job
+
+scripts_prod:
+  tags:
+    - BotHub
+  variables:
+    SCRIPTS_CONTAINER: scripts
+    BRANCH_NAME: main
+  extends: .scripts_job
+
+deploy_prod:
+  only:
+    - main
+  variables:
+    CONTAINERS: api_prod redis_prod
+  tags:
+    - BotHub
+  extends: .deploy_job

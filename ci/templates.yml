@@ -1,0 +1,35 @@
+.build_job:
+  stage: build
+  script:
+    - cp $ENV .env
+    - echo $CONTAINERS
+    - cp $CONFIG ./config/config.yml
+    - cp $REDIS_CONFIG redis.conf
+    - docker compose build $CONTAINERS
+  artifacts:
+    paths:
+      - '.env'
+      - 'config/config.yml'
+      - 'redis.conf'
+
+.migrate_job:
+  stage: migrate
+  when: on_success
+  script:
+    - docker compose up -d $DB
+    - sleep 20
+    - docker compose up $MIGRATE_CONTAINER
+
+.scripts_job:
+  stage: scripts
+  rules:
+    - if: $PREDEPLOY_SCRIPT && $CI_COMMIT_REF_NAME == $BRANCH_NAME
+  script:
+    - echo "" >> .env
+    - echo SCRIPTS_CONTAINER__SCRIPT_TO_RUN=$PREDEPLOY_SCRIPT >> .env
+    - docker compose up $SCRIPTS_CONTAINER
+
+.deploy_job:
+  stage: deploy
+  script:
+    - docker compose up -d $CONTAINERS

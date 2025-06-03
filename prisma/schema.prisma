@@ -1,0 +1,1295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Currency {
+  RUB
+  USD
+  EUR
+  BOTHUB_TOKEN
+}
+
+enum PlanType {
+  FREE
+  BASIC
+  PREMIUM
+  DELUXE
+  ELITE
+}
+
+enum TransactionStatus {
+  FAILED
+  SUCCEDED
+  PENDING
+}
+
+enum TransactionType {
+  SUBSCRIPTION
+  WRITE_OFF
+  REPLINSH
+  WITHDRAW
+  REFERRAL_REWARD
+}
+
+enum TransactionProvider {
+  YOOMONEY
+  CRYPTO
+  BOTHUB
+  TINKOFF
+  STRIPE
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum EnterpriseRole {
+  EMPLOYEE
+  OWNER
+}
+
+enum FileType {
+  IMAGE
+  DOCUMENT
+  AUDIO
+  HAR
+  VIDEO
+}
+
+enum ActionType {
+  CONTEXT_CLEARED
+}
+
+enum MessageStatus {
+  PENDING
+  DONE
+}
+
+enum SearchStatus {
+  SEARCHING
+  DONE
+}
+
+enum MessageImageStatus {
+  PENDING
+  DONE
+}
+
+enum MessageButtonType {
+  BUTTON
+  MJ_BUTTON
+}
+
+enum MessageButtonAction {
+  DOWNLOAD
+  MJ_UPSCALE_1
+  MJ_UPSCALE_2
+  MJ_UPSCALE_3
+  MJ_UPSCALE_4
+  MJ_REGENERATE
+  MJ_VARIATION_1
+  MJ_VARIATION_2
+  MJ_VARIATION_3
+  MJ_VARIATION_4
+  MJ_LEFT
+  MJ_RIGHT
+  MJ_UP
+  MJ_DOWN
+  MJ_VARY_SUBTILE
+  MJ_VARY_STRONG
+  MJ_VARY_REGION
+  MJ_CUSTOM_ZOOM
+  MJ_ZOOM_OUT_2X
+  MJ_ZOOM_OUT_1_5X
+  MJ_UPSCALE_SUBTLE
+  MJ_UPSCALE_CREATIVE
+  MJ_MAKE_SQUARE
+  MJ_REDO_UPSCALE_SUBTLE
+  MJ_REDO_UPSCALE_CREATIVE
+  MJ_UPSCALE_2X
+  MJ_UPSCALE_4X
+  MJ_REDO_UPSCALE_2X
+  MJ_REDO_UPSCALE_4X
+  UNKNOWN
+}
+
+enum MidjourneyMode {
+  RELAX
+  FAST
+  TURBO
+}
+
+enum JobStatus {
+  CREATED
+  PENDING
+  STOPPED
+  ERROR
+  DONE
+}
+
+enum PresetAccess {
+  PUBLIC
+  PRIVATE
+}
+
+enum StrikeReason {
+  GPT_MODERATION
+  GPT_VISION_MODERATION
+  MJ_MODERATION
+}
+
+enum MidjourneyDiscordAccountStatus {
+  FAST
+  RELAX
+  BANNED
+  VERIFYING
+}
+
+enum ModelCustomAction {
+  INCLUDE
+  EXCLUDE
+}
+
+enum ModelAccountStatus {
+  CREATED
+  ACTIVE
+  INACTIVE
+  FAST
+  RELAX
+  BANNED
+  VERIFYING
+}
+
+enum EnterprisePaymentPlanStatus {
+  CREDIT
+  DEBIT
+}
+
+enum ModelAccountAuthType {
+  API_KEY
+  HAR_FILE
+}
+
+enum ModelAccountQueueType {
+  USAGE_LIMITS
+  INTERVAL
+}
+
+enum EnterpriseType {
+  REGULAR
+  CONTRACTED
+}
+
+enum EnterpriseCreator {
+  ADMIN
+  USER
+}
+
+enum Region {
+  RU
+  KZ
+  OTHER
+}
+
+model Plan {
+  id                String             @id @default(uuid())
+  type              PlanType
+  price             Float
+  currency          Currency
+  tokens            Int
+  subscriptions     Subscription[]     @relation(name: "subscriptionsPlan")
+  transactions      Transaction[]      @relation(name: "transactionsPlan")
+  referralTemplates ReferralTemplate[] @relation(name: "referralTemplatePlan")
+  models            PlanModel[]
+
+  @@unique([type, currency], name: "planUnique")
+  @@map("plans")
+}
+
+model PlanModel {
+  plan             Plan      @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  plan_id          String
+  is_default_model Boolean   @default(false)
+  model            Model     @relation(fields: [model_id], references: [id], onDelete: Cascade)
+  model_id         String
+  created_at       DateTime  @default(now())
+  deleted_at       DateTime?
+
+  @@id([model_id, plan_id])
+}
+
+model Subscription {
+  id            String                      @id @default(uuid())
+  plan_id       String?
+  plan          Plan?                       @relation(name: "subscriptionsPlan", fields: [plan_id], references: [id], onDelete: Cascade)
+  user_id       String?                     @unique
+  user          User?                       @relation(name: "subsriptionsUser", fields: [user_id], references: [id], onDelete: Cascade)
+  enterprise_id String?                     @unique
+  enterprise    Enterprise?                 @relation(name: "subscriptionEnterprise", fields: [enterprise_id], references: [id], onDelete: Cascade)
+  payment_plan  EnterprisePaymentPlanStatus @default(DEBIT)
+  balance       BigInt                      @default(0)
+  hard_limit    Int?
+  soft_limit    Int?
+  system_limit  Int?
+  created_at    DateTime                    @default(now())
+
+  @@map("subscriptions")
+}
+
+model Transaction {
+  id            String              @id @default(uuid())
+  provider      TransactionProvider
+  amount        Float
+  currency      Currency
+  meta          Json?
+  message       Message?            @relation(name: "transactionsMessage")
+  status        TransactionStatus
+  type          TransactionType
+  plan_id       String?
+  plan          Plan?               @relation(name: "transactionsPlan", fields: [plan_id], references: [id])
+  user_id       String?
+  user          User?               @relation(name: "transactionsUser", fields: [user_id], references: [id])
+  from_user_id  String?
+  from_user     User?               @relation(name: "transactionsFromUser", fields: [from_user_id], references: [id])
+  referral_id   String?
+  referral      Referral?           @relation(name: "transactionsReferral", fields: [referral_id], references: [id])
+  created_at    DateTime            @default(now())
+  external_id   String?
+  enterprise_id String?
+  enterprise    Enterprise?         @relation(name: "transactionsEnterprise", fields: [enterprise_id], references: [id])
+  actions       Action[]            @relation(name: "transactionActions")
+  deleted       Boolean             @default(false)
+
+  @@unique([provider, external_id], name: "transactionUnique")
+  @@index([user_id], type: Hash)
+  @@index([from_user_id], type: Hash)
+  @@index([enterprise_id], type: Hash)
+  @@index([created_at], type: BTree)
+  @@map("transactions")
+}
+
+model PresetCategory {
+  id         String   @id @default(uuid())
+  code       String
+  name       String
+  locale     String   @default("en")
+  presets    Preset[] @relation(name: "presetsCategories")
+  created_at DateTime @default(now())
+}
+
+model PresetAttachment {
+  id         String   @id @default(uuid())
+  preset_id  String
+  preset     Preset   @relation(name: "presetAttachment", fields: [preset_id], references: [id], onDelete: Cascade)
+  is_nsfw    Boolean  @default(false)
+  file_id    String
+  file       File     @relation(name: "presetAttachmentFile", fields: [file_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+}
+
+model Preset {
+  id            String             @id @default(uuid())
+  name          String
+  description   String
+  model_id      String?
+  model         Model?             @relation(name: "presetModel", fields: [model_id], references: [id], onDelete: SetNull)
+  system_prompt String             @default("")
+  attachments   PresetAttachment[] @relation(name: "presetAttachment")
+  access        PresetAccess       @default(PUBLIC)
+  usage_count   BigInt             @default(0)
+  author_id     String
+  author        User               @relation(name: "presetsAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  categories    PresetCategory[]   @relation(name: "presetsCategories")
+  users         User[]             @relation(name: "userPresets")
+  text_settings ChatTextSettings[] @relation(name: "chatTextSettingsPreset")
+  created_at    DateTime           @default(now())
+
+  @@index([model_id], type: Hash)
+  @@index([author_id], type: Hash)
+  @@map("presets")
+}
+
+model Chat {
+  id                String         @id @default(uuid())
+  name              String?
+  group_id          String?
+  group             Group?         @relation(name: "chatsGroup", fields: [group_id], references: [id], onDelete: Cascade)
+  model_id          String?
+  model             Model?         @relation(name: "chatModel", fields: [model_id], references: [id], onDelete: SetNull)
+  model_function_id String?
+  model_function    ModelFunction? @relation(name: "modelFunction", fields: [model_function_id], references: [id], onDelete: Cascade)
+  settings          ChatSettings?  @relation(name: "settingsChat")
+  messages          Message[]      @relation(name: "messageChat")
+
+  sets            MessageSet[] @relation(name: "messageSetChat")
+  created_at      DateTime     @default(now())
+  last_message_at DateTime?
+  user_id         String?
+  highlight       String?
+  initial         Boolean      @default(false)
+  platform        Platform?    @default(WEB)
+  total_caps      Int          @default(0)
+  user            User?        @relation(name: "chatsUser", fields: [user_id], references: [id], onDelete: Cascade)
+  jobs            Job[]        @relation(name: "jobChat")
+  articles        Article[]    @relation(name: "articleChat")
+  order           Int?         @default(0)
+  deleted         Boolean      @default(false)
+  report          Report[]     @relation(name: "reportChat")
+
+  @@index(fields: [user_id], type: Hash)
+  @@map("chats")
+}
+
+model Job {
+  id                   String    @id @default(uuid())
+  name                 String
+  status               JobStatus @default(CREATED)
+  is_stop_allowed      Boolean   @default(false)
+  timeout              Int       @default(0)
+  progress             Int?
+  error                Json?
+  error_code           String?
+  chat_id              String?
+  chat                 Chat?     @relation(name: "jobChat", fields: [chat_id], references: [id], onDelete: Cascade)
+  message              Message?  @relation(name: "messageJob")
+  user_message_id      String?
+  user_message         Message?  @relation(name: "jobUserMessage", fields: [user_message_id], references: [id], onDelete: Cascade)
+  mj_native_message_id String?
+  mj_remaining_timeout Float?
+  created_at           DateTime  @default(now())
+
+  @@index(fields: [chat_id], type: Hash)
+  @@index(fields: [user_message_id], type: Hash)
+}
+
+model Voice {
+  id               String    @id @default(uuid())
+  content          String
+  wave_data        Json
+  duration_seconds Int       @map("duration")
+  file_id          String?   @unique
+  file             File?     @relation(name: "voiceFile", fields: [file_id], references: [id], onDelete: Cascade)
+  messages         Message[] @relation(name: "messageVoice")
+  isEncrypted      Boolean   @default(false)
+}
+
+model Video {
+  id               String @id @default(uuid())
+  content          String
+  duration_seconds Int    @map("duration")
+
+  file_id     String?   @unique
+  file        File?     @relation(name: "videoFile", fields: [file_id], references: [id], onDelete: Cascade)
+  messages    Message[] @relation(name: "messageVideo")
+  isEncrypted Boolean   @default(false)
+}
+
+model MessageButton {
+  id                String              @id @default(uuid())
+  type              MessageButtonType   @default(BUTTON)
+  action            MessageButtonAction @default(UNKNOWN)
+  mj_native_custom  String?
+  mj_native_label   String?
+  mj_message_id     String?
+  mj_account_id     String?
+  disabled          Boolean             @default(false)
+  message_id        String?
+  message           Message?            @relation(name: "messageButton", fields: [message_id], references: [id], onDelete: Cascade)
+  parent_message_id String?
+  parent_message    Message?            @relation(name: "parentMessageButton", fields: [parent_message_id], references: [id], onDelete: Cascade)
+  parent_image_id   String?
+  parent_image      MessageImage?       @relation(name: "parentMessageButtonImage", fields: [parent_image_id], references: [id], onDelete: Cascade)
+  created_at        DateTime            @default(now())
+
+  @@index(fields: [message_id], type: Hash)
+  @@index(fields: [parent_message_id], type: Hash)
+  @@index(fields: [parent_image_id], type: Hash)
+}
+
+model MessageImage {
+  id             String             @id @default(uuid())
+  status         MessageImageStatus @default(DONE)
+  message_id     String?
+  message        Message?           @relation(name: "messageImage", fields: [message_id], references: [id], onDelete: Cascade)
+  width          Int
+  height         Int
+  preview_width  Int
+  preview_height Int
+  original_id    String?            @unique
+  original       File?              @relation(name: "messageOriginalImage", fields: [original_id], references: [id], onDelete: Cascade)
+  preview_id     String?            @unique
+  preview        File?              @relation(name: "messagePreviewImage", fields: [preview_id], references: [id], onDelete: Cascade)
+  buttons        MessageButton[]    @relation(name: "parentMessageButtonImage")
+  is_nsfw        Boolean?           @default(false)
+  created_at     DateTime           @default(now())
+
+  @@index(fields: [message_id], type: Hash)
+}
+
+model Message {
+  id      String      @id @default(uuid())
+  role    String
+  choiced Boolean     @default(true)
+  version Int         @default(0)
+  set_id  String?
+  set     MessageSet? @relation(name: "MessageSet", fields: [set_id], references: [id])
+  setLast MessageSet? @relation(name: "LastMessage")
+
+  previous_version_id String?   @unique
+  previous_version    Message?  @relation("MessagePreviousVersion", fields: [previous_version_id], references: [id])
+  previous_versions   Message[] @relation("MessagePreviousVersion")
+
+  next_version_id String?       @unique
+  next_version    Message?      @relation("MessageNextVersion", fields: [next_version_id], references: [id])
+  next_versions   Message[]     @relation("MessageNextVersion")
+  video_id        String?       @unique
+  video           Video?        @relation(name: "messageVideo", fields: [video_id], references: [id], onDelete: Cascade)
+  action_type     ActionType?
+  status          MessageStatus @default(DONE)
+  model_id        String?
+  model           Model?        @relation(name: "messageModel", fields: [model_id], references: [id], onDelete: SetNull)
+  model_version   String?
+  content         String?
+  full_content    String?
+
+  reasoning_content String?
+  reasoning_time_ms Float?
+
+  search_status  SearchStatus?
+  search_results Json?
+
+  isEncrypted        Boolean         @default(false)
+  additional_content Json?
+  chat_id            String
+  user_id            String?
+  user               User?           @relation(name: "userMessages", fields: [user_id], references: [id], onDelete: Cascade)
+  tokens             Int             @default(0)
+  chat               Chat            @relation(name: "messageChat", fields: [chat_id], references: [id], onDelete: Cascade)
+  disabled           Boolean         @default(false)
+  created_at         DateTime        @default(now())
+  transaction_id     String?         @unique
+  transaction        Transaction?    @relation(name: "transactionsMessage", fields: [transaction_id], references: [id])
+  request_id         String?         @unique
+  images             MessageImage[]  @relation(name: "messageImage")
+  buttons            MessageButton[] @relation(name: "parentMessageButton")
+  all_buttons        MessageButton[] @relation(name: "messageButton")
+  attachments        Attachment[]    @relation(name: "attachmentMessage")
+  voice_id           String?         @unique
+  voice              Voice?          @relation(name: "messageVoice", fields: [voice_id], references: [id], onDelete: Cascade)
+  job_id             String?         @unique
+  job                Job?            @relation(name: "messageJob", fields: [job_id], references: [id])
+  user_jobs          Job[]           @relation(name: "jobUserMessage")
+  mj_mode            MidjourneyMode?
+  strikes            Strike[]        @relation(name: "strikeMessage")
+  platform           Platform?
+  report             Report?         @relation(name: "reportMessage")
+
+  @@index(fields: [user_id], type: Hash)
+  @@index(fields: [chat_id], type: Hash)
+  @@map("messages")
+}
+
+model MessageSet {
+  id       String    @id @unique @default(uuid())
+  messages Message[] @relation(name: "MessageSet")
+  length   Int       @default(1)
+  choiced  String?   @unique
+  last_id  String?   @unique
+  last     Message?  @relation(name: "LastMessage", fields: [last_id], references: [id])
+  chat_id  String
+  chat     Chat      @relation(name: "messageSetChat", fields: [chat_id], references: [id], onDelete: Cascade)
+}
+
+model Attachment {
+  id         String   @id @default(uuid())
+  message_id String
+  message    Message  @relation(name: "attachmentMessage", fields: [message_id], references: [id], onDelete: Cascade)
+  file_id    String
+  file       File     @relation(name: "attachmentFile", fields: [file_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@index(fields: [message_id], type: Hash)
+}
+
+model ChatTextSettings {
+  id                   String         @id @default(uuid())
+  model                String         @default("gpt-4o-mini")
+  system_prompt        String         @default("")
+  full_system_prompt   String?
+  system_prompt_tokens Int            @default(0)
+  files                File[]         @relation(name: "chatTextSettingsFiles")
+  temperature          Float          @default(0.7)
+  top_p                Float          @default(1)
+  presence_penalty     Float          @default(0)
+  frequency_penalty    Float          @default(0)
+  max_tokens           Int            @default(256)
+  include_context      Boolean        @default(true)
+  preset_id            String?
+  preset               Preset?        @relation(name: "chatTextSettingsPreset", fields: [preset_id], references: [id])
+  analyze_urls         Boolean        @default(false)
+  enable_web_search    Boolean        @default(false)
+  created_at           DateTime       @default(now())
+  settings             ChatSettings[] @relation(name: "chatTextSettings")
+}
+
+model ChatImageSettings {
+  id         String         @id @default(uuid())
+  model      String         @default("dall-e-3")
+  size       String         @default("1024x1024")
+  quality    String         @default("standard")
+  style      String?
+  created_at DateTime       @default(now())
+  settings   ChatSettings[] @relation(name: "chatImageSettings")
+}
+
+model ChatVideoSettings {
+  id               String         @id @default(uuid())
+  model            String         @default("veo-2")
+  aspect_ratio     String         @default("16:9")
+  duration_seconds Int            @default(5)
+  seed             Int            @default(0)
+  created_at       DateTime       @default(now())
+  settings         ChatSettings[] @relation(name: "chatVideoSettings")
+}
+
+model ChatMidjourneySettings {
+  id         String         @id @default(uuid())
+  aspect     String         @default("1:1")
+  chaos      Int            @default(0)
+  no         String         @default("")
+  quality    Float          @default(1)
+  stop       Int            @default(100)
+  style      String?
+  stylize    Int            @default(100)
+  tile       Boolean        @default(false)
+  weird      Int            @default(0)
+  mode       MidjourneyMode @default(TURBO)
+  version    String         @default("7")
+  created_at DateTime       @default(now())
+  settings   ChatSettings[] @relation(name: "chatMidjourneySettings")
+}
+
+model ChatReplicateImageSettings {
+  id              String         @id @default(uuid())
+  model           String         @default("flux-schnell")
+  prompt_strength Float          @default(0.8)
+  aspect_ratio    String         @default("1:1")
+  steps           Int            @default(1)
+  guidance        Float          @default(3.5)
+  interval        Int            @default(1)
+  seed            Int            @default(0)
+  output_format   String         @default("png")
+  output_quality  Int            @default(100)
+  num_outputs     Int            @default(1)
+  negative_prompt String         @default("")
+  settings        ChatSettings[] @relation(name: "chatReplicateImageSettings")
+  created_at      DateTime       @default(now())
+}
+
+model ChatSpeechSettings {
+  id              String         @id @default(uuid())
+  model           String         @default("tts-1")
+  voice           String         @default("alloy")
+  response_format String         @default("wav")
+  speed           Float          @default(1)
+  created_at      DateTime       @default(now())
+  settings        ChatSettings[] @relation(name: "chatSpeechSettings")
+}
+
+model ChatSTTSettings {
+  id          String         @id @default(uuid())
+  model       String         @default("whisper-1")
+  temperature Float          @default(0.5)
+  format      Boolean        @default(true)
+  speakers    Boolean        @default(true)
+  created_at  DateTime       @default(now())
+  settings    ChatSettings[] @relation(name: "chatSTTSettings")
+}
+
+model ChatSettings {
+  id                String                      @id @default(uuid())
+  text_id           String?                     @unique
+  text              ChatTextSettings?           @relation(name: "chatTextSettings", fields: [text_id], references: [id], onDelete: SetNull)
+  image_id          String?                     @unique
+  image             ChatImageSettings?          @relation(name: "chatImageSettings", fields: [image_id], references: [id], onDelete: SetNull)
+  video_id          String?                     @unique
+  video             ChatVideoSettings?          @relation(name: "chatVideoSettings", fields: [video_id], references: [id], onDelete: SetNull)
+  mj_id             String?                     @unique
+  mj                ChatMidjourneySettings?     @relation(name: "chatMidjourneySettings", fields: [mj_id], references: [id], onDelete: SetNull)
+  replicateImage    ChatReplicateImageSettings? @relation(name: "chatReplicateImageSettings", fields: [replicateImage_id], references: [id], onDelete: SetNull)
+  speech_id         String?
+  speech            ChatSpeechSettings?         @relation(name: "chatSpeechSettings", fields: [speech_id], references: [id], onDelete: SetNull)
+  stt_id            String?
+  stt               ChatSTTSettings?            @relation(name: "chatSTTSettings", fields: [stt_id], references: [id], onDelete: SetNull)
+  replicateImage_id String?                     @unique
+  chat_id           String?                     @unique
+  chat              Chat?                       @relation(name: "settingsChat", fields: [chat_id], references: [id])
+  created_at        DateTime                    @default(now())
+
+  @@index([chat_id], type: Hash)
+  @@map("chat_settings")
+}
+
+model Group {
+  id         String   @id @default(uuid())
+  name       String?
+  chats      Chat[]   @relation(name: "chatsGroup")
+  user_id    String
+  user       User     @relation(name: "groupsUser", fields: [user_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+  highlight  String?
+  order      Int?     @default(0)
+
+  @@index([user_id], type: Hash)
+  @@map("groups")
+}
+
+model DeveloperKey {
+  id         String   @id @default(uuid())
+  key        String
+  label      String?
+  user_id    String
+  deleted    Boolean  @default(false)
+  user       User     @relation(name: "developerKeyUser", fields: [user_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+}
+
+model User {
+  id                         String  @id @default(uuid())
+  email                      String? @unique
+  emailVerified              Boolean @default(true)
+  tg_id                      String? @unique
+  tg_id_before               String?
+  name                       String?
+  password                   String?
+  avatar                     String?
+  avatar_id                  String?
+  avatar_file                File?   @relation(name: "avatar", fields: [avatar_id], references: [id])
+  anonymousDeviceFingerprint String?
+  inactive                   Boolean @default(false)
+  disabled                   Boolean @default(false)
+  yandexMetricClientId       String?
+  yandexMetricYclid          String?
+
+  encryptedDEK  Bytes?
+  useEncryption Boolean @default(false)
+  kekSalt       Bytes?
+
+  receiveEmails           Boolean @default(false)
+  hadSubscriptedForEmails Boolean @default(false)
+
+  region Region?
+
+  groups                Group[]               @relation(name: "groupsUser")
+  subscription          Subscription?         @relation(name: "subsriptionsUser")
+  transactions          Transaction[]         @relation(name: "transactionsUser")
+  present_transactions  Transaction[]         @relation(name: "transactionsFromUser")
+  paymentMethods        PaymentMethod[]       @relation(name: "paymentMethodsUser")
+  developerKeys         DeveloperKey[]        @relation(name: "developerKeyUser")
+  chats                 Chat[]                @relation(name: "chatsUser")
+  shortcuts             Shortcut[]            @relation(name: "shortcutUser")
+  created_at            DateTime              @default(now())
+  role                  Role                  @default(USER)
+  employees             Employee[]            @relation(name: "employeesUser")
+  messages              Message[]             @relation(name: "userMessages")
+  owned_referrals       Referral[]            @relation(name: "referralOwner")
+  referral_participants ReferralParticipant[] @relation(name: "referralParticipantUser")
+  actions               Action[]              @relation(name: "userActions")
+  presets               Preset[]              @relation(name: "userPresets")
+  author_presets        Preset[]              @relation(name: "presetsAuthor")
+  strikes               Strike[]              @relation(name: "userStrike")
+  verificationCodes     VerificationCode[]    @relation(name: "userVerificationCode")
+  articles              Article[]             @relation(name: "articleAuthor")
+  oldEmail              OldEmail[]            @relation(name: "userEmails")
+
+  @@map("users")
+}
+
+model ReferralTemplate {
+  id                            String     @id @default(uuid())
+  name                          String
+  locale                        String     @default("ru")
+  min_withdraw_amount           Float
+  encouragement_percentage      Float
+  caps_encouragement_percentage Float      @default(0)
+  currency                      Currency
+  plan_id                       String?
+  plan                          Plan?      @relation(name: "referralTemplatePlan", fields: [plan_id], references: [id])
+  tokens                        Int?
+  private                       Boolean?   @default(false)
+  referrals                     Referral[] @relation(name: "referralTemplate")
+  disabled                      Boolean    @default(false)
+}
+
+model Referral {
+  id                 String                @id @default(uuid())
+  name               String?
+  owner_id           String
+  owner              User                  @relation(name: "referralOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  template_id        String
+  template           ReferralTemplate      @relation(name: "referralTemplate", fields: [template_id], references: [id], onDelete: Cascade)
+  balance            Float                 @default(0)
+  participants       ReferralParticipant[] @relation(name: "referralParticipantReferral")
+  code               String
+  transactions       Transaction[]         @relation(name: "transactionsReferral")
+  last_withdrawed_at DateTime              @default(now())
+  disabled           Boolean               @default(false)
+}
+
+model ReferralParticipant {
+  id          String   @id @default(uuid())
+  user_id     String
+  user        User     @relation(name: "referralParticipantUser", fields: [user_id], references: [id], onDelete: Cascade)
+  referral_id String
+  referral    Referral @relation(name: "referralParticipantReferral", fields: [referral_id], references: [id], onDelete: Cascade)
+  created_at  DateTime @default(now())
+
+  @@index([user_id], type: Hash)
+}
+
+model Enterprise {
+  id                        String            @id @default(uuid())
+  name                      String
+  type                      EnterpriseType    @default(REGULAR)
+  creator                   EnterpriseCreator @default(USER)
+  agreement_conclusion_date String?
+  rubs_per_million_caps     Int               @default(250)
+  created_at                DateTime          @default(now())
+  subscription              Subscription?     @relation(name: "subscriptionEnterprise")
+  employees                 Employee[]        @relation(name: "employeesEnterprise")
+  transactions              Transaction[]     @relation(name: "transactionsEnterprise")
+
+  common_pool                Boolean                      @default(false)
+  EnterpriseUsageConstraints EnterpriseUsageConstraints[] @relation(name: "fk_enterprise_usage_constraints")
+
+  actions            Action[]           @relation(name: "enterpriseActions")
+  credit_limit_spend CreditLimitSpend[] @relation(name: "spendEnterpriseId")
+
+  @@map("enterprises")
+}
+
+model EnterpriseUsageConstraints {
+  id            String     @id @default(uuid())
+  constraint    String
+  enterprise_id String
+  enterprise    Enterprise @relation(name: "fk_enterprise_usage_constraints", fields: [enterprise_id], references: [id], onDelete: Cascade)
+  created_at    DateTime   @default(now())
+
+  @@map("enterprisesUsageConstraints")
+}
+
+model Employee {
+  id             String          @id @default(uuid())
+  user_id        String
+  user           User            @relation(name: "employeesUser", fields: [user_id], references: [id], onDelete: Cascade)
+  enterprise_id  String
+  enterprise     Enterprise      @relation(name: "employeesEnterprise", fields: [enterprise_id], references: [id], onDelete: Cascade)
+  role           EnterpriseRole  @default(EMPLOYEE)
+  allowed_models EmployeeModel[]
+
+  @@map("employees")
+}
+
+model Shortcut {
+  id         String   @id @default(uuid())
+  name       String
+  text       String
+  autosend   Boolean
+  position   Int      @default(0)
+  user_id    String
+  user       User     @relation(name: "shortcutUser", fields: [user_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
+
+  @@index([user_id], type: Hash)
+}
+
+model ModelCustom {
+  id                String            @id @default(uuid())
+  action            ModelCustomAction
+  model_id          String?
+  child_model_id    String?
+  label             String?
+  icon_id           String?
+  icon              File?             @relation(name: "modelCustomIcon", fields: [icon_id], references: [id])
+  provider_id       String?
+  provider          ModelProvider?    @relation(name: "modelCustomProvider", fields: [provider_id], references: [id])
+  child_provider_id String?
+  child_provider    ModelProvider?    @relation(name: "modelCustomChildProvider", fields: [child_provider_id], references: [id])
+  discount          Float?
+  message_color     String?
+  order             Int               @default(0)
+  disabled          Boolean           @default(false)
+  created_at        DateTime          @default(now())
+}
+
+model ModelFunction {
+  id         String   @id @default(uuid())
+  name       String
+  label      String?
+  is_default Boolean  @default(false)
+  features   Json?
+  order      Int      @default(0)
+  model_id   String?
+  used_count Int      @default(0)
+  model      Model?   @relation(name: "functionModel", fields: [model_id], references: [id], onDelete: Cascade)
+  chats      Chat[]   @relation(name: "modelFunction")
+  created_at DateTime @default(now())
+}
+
+model ModelProvider {
+  id                            String                  @id @default(uuid())
+  name                          String?
+  label                         String?
+  disabled                      Boolean                 @default(false)
+  order                         Int                     @default(0)
+  parent_id                     String?
+  parent                        ModelProvider?          @relation(name: "modelProviderParent", fields: [parent_id], references: [id], onDelete: Cascade)
+  fallback_id                   String?
+  fallback                      ModelProvider?          @relation(name: "modelProviderFallback", fields: [fallback_id], references: [id])
+  fallback_providers            ModelProvider[]         @relation(name: "modelProviderFallback")
+  models                        Model[]                 @relation(name: "modelProviders")
+  models_provider               Model[]                 @relation(name: "modelProvider")
+  models_child_provider         Model[]                 @relation(name: "modelChildProvider")
+  models_custom_provider        ModelCustom[]           @relation(name: "modelCustomProvider")
+  models_custom_child_provider  ModelCustom[]           @relation(name: "modelCustomChildProvider")
+  model_account_queues          ModelAccountQueue[]     @relation(name: "modelAccountQueueProvider")
+  children                      ModelProvider[]         @relation(name: "modelProviderParent")
+  supported_accounts            Boolean                 @default(false)
+  supported_account_queue_types ModelAccountQueueType[] @default([])
+  created_at                    DateTime                @default(now())
+}
+
+model ModelAccountQueue {
+  id                  String                @id @default(uuid())
+  name                String
+  type                ModelAccountQueueType
+  interval_time_start String?
+  interval_time_end   String?
+  next_switch_time    DateTime?
+  provider_id         String?
+  provider            ModelProvider?        @relation(name: "modelAccountQueueProvider", fields: [provider_id], references: [id])
+  first_account_id    String?
+  first_account       ModelAccount?         @relation(name: "modelAccountQueueFirstAccount", fields: [first_account_id], references: [id])
+  active_account_id   String?
+  active_account      ModelAccount?         @relation(name: "modelAccountQueueActiveAccount", fields: [active_account_id], references: [id])
+  accounts            ModelAccount[]        @relation(name: "modelAccountQueue")
+  disabled            Boolean               @default(true)
+  created_at          DateTime              @default(now())
+
+  @@index([provider_id])
+}
+
+model ModelAccount {
+  id                      String                @id @default(uuid())
+  name                    String?
+  status                  ModelAccountStatus    @default(CREATED)
+  next_active_id          String?
+  next_active             ModelAccount?         @relation(name: "modelNextActiveAccount", fields: [next_active_id], references: [id])
+  prev_active             ModelAccount[]        @relation(name: "modelNextActiveAccount")
+  auth_type               ModelAccountAuthType?
+  g4f_api_url             String?
+  g4f_auth                String?
+  g4f_har_file_id         String?
+  g4f_har_file            File?                 @relation(name: "modelAccountG4fHarFile", fields: [g4f_har_file_id], references: [id])
+  g4f_har_file_updated_at DateTime?
+  g4f_email               String?
+  g4f_password            String?
+  g4f_email_password      String?
+  g4f_imap_server         String?
+  mj_channel_id           String?
+  mj_server_id            String?
+  mj_token                String?
+  mj_personalization_key  String?
+  mj_concurrency          Int?
+  mj_active_generations   Int?
+  mj_used_count           Int?
+  queue_id                String?
+  queue                   ModelAccountQueue?    @relation(name: "modelAccountQueue", fields: [queue_id], references: [id])
+  models                  ModelAccountModel[]   @relation(name: "modelAccountModels")
+  first_account_queues    ModelAccountQueue[]   @relation(name: "modelAccountQueueFirstAccount")
+  active_account_queues   ModelAccountQueue[]   @relation(name: "modelAccountQueueActiveAccount")
+  disabled_at             DateTime?
+  created_at              DateTime              @default(now())
+
+  @@index([status, queue_id])
+}
+
+model ModelAccountModel {
+  id          String   @id @default(uuid())
+  model_id    String?
+  model       Model?   @relation(name: "modelAccountModel", fields: [model_id], references: [id], onDelete: Cascade)
+  usage_count Int      @default(0)
+  limit       Int      @default(0)
+  usage_time  DateTime @default(now())
+  time_limit  String?
+
+  usage_reset_interval_seconds Int?
+  usage_resetted_at            DateTime?
+
+  account_id  String?
+  account     ModelAccount? @relation(name: "modelAccountModels", fields: [account_id], references: [id], onDelete: Cascade)
+  disabled_at DateTime?
+  created_at  DateTime      @default(now())
+}
+
+model Model {
+  id                  String              @id
+  label               String?
+  description         String?
+  icon_id             String?
+  icon                File?               @relation(name: "modelIcon", fields: [icon_id], references: [id])
+  pricing             Json?
+  auto_update_pricing Boolean             @default(true)
+  prefix              String              @default("")
+  context_length      Int                 @default(4095)
+  max_tokens          Int                 @default(4096)
+  features            Json?
+  functions           ModelFunction[]     @relation(name: "functionModel")
+  provider_id         String?
+  provider            ModelProvider?      @relation(name: "modelProvider", fields: [provider_id], references: [id])
+  child_provider_id   String?
+  child_provider      ModelProvider?      @relation(name: "modelChildProvider", fields: [child_provider_id], references: [id])
+  providers           ModelProvider[]     @relation(name: "modelProviders")
+  owned_by            String
+  parent_id           String?
+  parent              Model?              @relation(name: "modelParent", fields: [parent_id], references: [id])
+  message_color       String?
+  children            Model[]             @relation(name: "modelParent")
+  disabled            Boolean             @default(true)
+  disabledWeb         Boolean             @default(false)
+  disabledTelegram    Boolean             @default(true)
+  order               Int                 @default(0)
+  used_count          Int                 @default(0)
+  custom              Boolean             @default(false)
+  plans               PlanModel[]
+  chats               Chat[]              @relation(name: "chatModel")
+  messages            Message[]           @relation(name: "messageModel")
+  employees           EmployeeModel[]
+  presets             Preset[]            @relation(name: "presetModel")
+  account_models      ModelAccountModel[] @relation(name: "modelAccountModel")
+  articles            Article[]           @relation(name: "articleModel")
+
+  popularity_score    Int                @default(0)
+  model_usage_buckets ModelUsageBucket[]
+
+  deleted_at DateTime?
+  created_at DateTime  @default(now())
+
+  @@map("models")
+}
+
+model ModelUsageBucket {
+  id String @id @default(uuid())
+
+  model_id String
+  model    Model  @relation(fields: [model_id], references: [id])
+
+  usage_count Int @default(0)
+
+  bucket_date DateTime // Store just the date part
+  updated_at  DateTime @updatedAt
+  created_at  DateTime @default(now())
+
+  @@unique([model_id, bucket_date])
+  @@map("model_usage_buckets")
+}
+
+model EmployeeModel {
+  employee_id String
+  model_id    String
+  employee    Employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  model       Model    @relation(fields: [model_id], references: [id])
+
+  @@id([employee_id, model_id])
+  @@map("employee_models")
+}
+
+model File {
+  id                       String             @id @default(uuid())
+  type                     FileType?
+  name                     String?
+  url                      String?
+  path                     String?
+  size                     Int                @default(0)
+  isEncrypted              Boolean            @default(false)
+  attachments              Attachment[]       @relation(name: "attachmentFile")
+  messages_original_images MessageImage[]     @relation(name: "messageOriginalImage")
+  messages_preview_images  MessageImage[]     @relation(name: "messagePreviewImage")
+  voices                   Voice[]            @relation(name: "voiceFile")
+  videos                   Video[]            @relation(name: "videoFile")
+  text_settings            ChatTextSettings[] @relation(name: "chatTextSettingsFiles")
+  models                   Model[]            @relation(name: "modelIcon")
+  model_customization      ModelCustom[]      @relation(name: "modelCustomIcon")
+  model_accounts           ModelAccount[]     @relation(name: "modelAccountG4fHarFile")
+  preset_attachments       PresetAttachment[] @relation(name: "presetAttachmentFile")
+  created_at               DateTime           @default(now())
+
+  avatars User[] @relation(name: "avatar")
+}
+
+model PaymentMethod {
+  id          String              @id @default(uuid())
+  external_id String
+  provider    TransactionProvider
+  user_id     String
+  user        User                @relation(name: "paymentMethodsUser", fields: [user_id], references: [id], onDelete: Cascade)
+  created_at  DateTime            @default(now())
+
+  @@unique([user_id, provider, external_id], name: "paymentMethodUnique")
+  @@map("payment_methods")
+}
+
+enum Platform {
+  WEB
+  MAIN
+  DASHBOARD
+  TELEGRAM
+  BOTHUB_API
+  API
+  API_COMPLETIONS
+  API_IMAGES
+  API_EMBEDDINGS
+  API_MODERATIONS
+  API_SPEECH
+  API_TRANSCRIPTIONS
+  API_TRANSLATIONS
+  ENTERPRISE
+  EASY_WRITER
+}
+
+model Action {
+  id             String    @id @default(uuid())
+  type           String
+  platform       Platform?
+  model_id       String?
+  user_id        String?
+  enterprise_id  String?
+  transaction_id String?
+  meta           Json?
+
+  user        User?        @relation(name: "userActions", fields: [user_id], references: [id])
+  enterprise  Enterprise?  @relation(name: "enterpriseActions", fields: [enterprise_id], references: [id])
+  transaction Transaction? @relation(name: "transactionActions", fields: [transaction_id], references: [id])
+
+  created_at DateTime @default(now())
+
+  // @@index([platform], type: Hash) // migration locks the table for long time on production
+  // @@index([model_id], type: Hash) // migration locks the table for long time on production
+  @@index([type, platform, user_id, created_at])
+  @@index([transaction_id], type: Hash)
+}
+
+model Strike {
+  id         String       @id @default(uuid())
+  user_id    String
+  message_id String?
+  content    String?
+  reason     StrikeReason
+  corrected  Boolean      @default(true)
+  user       User         @relation(name: "userStrike", fields: [user_id], references: [id], onDelete: Cascade)
+  message    Message?     @relation(name: "strikeMessage", fields: [message_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, message_id])
+  @@map("strikes")
+}
+
+model MidjourneyDiscordAccount {
+  id            String                         @id @default(uuid())
+  name          String?
+  token         String
+  channel_id    String
+  server_id     String
+  is_active     Boolean
+  status        MidjourneyDiscordAccountStatus
+  concurrency   Int
+  queue_waiting Int?
+  queue_active  Int?
+  disabled      Boolean                        @default(false)
+  order         Int                            @default(0)
+  created_at    DateTime                       @default(now())
+}
+
+model VerificationCode {
+  id         String   @id @default(uuid())
+  code       String
+  user_id    String
+  user       User     @relation(name: "userVerificationCode", fields: [user_id], references: [id], onDelete: Cascade)
+  expires_at DateTime
+  created_at DateTime @default(now())
+
+  @@unique([code, user_id])
+  @@map("verification_codes")
+}
+
+enum ArticleStyle {
+  FRIENDLY
+  NEUTRAL
+  INSPIRATIONAL
+  HUMOROUS
+  SCIENTIFIC
+  ANALYTICAL
+  FORMAL
+  JOURNALISTIC
+  CASUAL
+  BLOGGER
+  PERSUASIVE
+  CONVERSATIONAL
+  OBJECTIVE
+  DESCRIPTIVE
+  INSTRUCTIVE
+  NARRATIVE
+  CUSTOM
+}
+
+enum ArticleLinkStyle {
+  NONE // do not use links
+  DIRECT // use direct links
+  MENTION // mention in text but do not include direct links
+}
+
+model Article {
+  id   String  @id @default(uuid())
+  slug String? @unique
+
+  user_id String
+  user    User   @relation(name: "articleAuthor", fields: [user_id], references: [id], onDelete: Cascade)
+
+  model_id String
+  model    Model  @relation(name: "articleModel", fields: [model_id], references: [id], onDelete: Cascade)
+
+  generationMode String @default("")
+  subject        String
+  plan           String
+  creativity     Float  @default(1)
+
+  style         ArticleStyle
+  customStyle   String           @default("")
+  linkStyle     ArticleLinkStyle
+  language      String
+  symbolsCount  Int
+  keywords      String
+  sourceContent String
+  sourceLink    String           @default("")
+
+  content String
+
+  spentCaps Int @default(0)
+
+  chat_id String?
+  chat    Chat?   @relation(name: "articleChat", fields: [chat_id], references: [id], onDelete: Cascade)
+
+  created_at   DateTime  @default(now())
+  published_at DateTime?
+
+  topics        SEOArticleTopic[]
+  proofreadings SEOArticleProofreading[]
+
+  @@index(fields: [chat_id], type: Hash)
+  @@map("articles")
+}
+
+model SEOArticleTopic {
+  id   String @id @default(uuid())
+  name Json
+  slug String
+
+  article_id  String
+  category_id String
+
+  article  Article            @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  category SEOArticleCategory @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@map("seoArticleTopic")
+}
+
+model SEOArticleCategory {
+  id   String @id @default(uuid())
+  name Json
+  slug String @unique
+
+  topics SEOArticleTopic[]
+
+  @@map("seoArticleCategory")
+}
+
+model SEOArticleProofreading {
+  id         String   @id @default(uuid())
+  expert_id  String
+  article_id String
+  created_at DateTime @default(now())
+
+  expert  SEOArticleExpert @relation(fields: [expert_id], references: [id], onDelete: Cascade)
+  article Article          @relation(fields: [article_id], references: [id], onDelete: Cascade)
+
+  @@map("seoArticleProofreading")
+}
+
+model SEOArticleExpert {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  email         String?
+  telegram      String?
+  bio           String?
+  city          String?
+  country       String?
+  education     Json?
+  qualification String?
+  created_at    DateTime @default(now())
+
+  experience    SEOArticleExpertJobHistory[]
+  proofreadings SEOArticleProofreading[]
+
+  @@map("seoArticleExpert")
+}
+
+model SEOArticleExpertJobHistory {
+  id            String   @id @default(uuid())
+  post          String
+  from_date     DateTime
+  to_date       DateTime
+  company       String
+  city          String
+  duties        String[]
+  achievements  String[]
+  description   String
+  seo_expert_id String?
+
+  expert SEOArticleExpert? @relation(fields: [seo_expert_id], references: [id])
+
+  @@map("seoArticleExpertJobHistory")
+}
+
+model OldEmail {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  user_id   String?
+  user      User?    @relation(name: "userEmails", fields: [user_id], references: [id], onDelete: NoAction)
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  user_id     String
+  description String?
+  chat_id     String
+  chat        Chat     @relation(name: "reportChat", fields: [chat_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt   DateTime @default(now())
+  message_id  String   @unique
+  message     Message  @relation(name: "reportMessage", fields: [message_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model CreditLimitSpend {
+  id                String     @id @default(uuid())
+  enterprise_id     String
+  enterprise        Enterprise @relation(name: "spendEnterpriseId", fields: [enterprise_id], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  limit_change      BigInt
+  prev_credit_limit BigInt
+  credit_limit      BigInt
+}

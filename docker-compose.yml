@@ -1,0 +1,159 @@
+version: '3.8'
+services:
+  # Utils
+  migrate:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/migrate.Dockerfile
+    env_file:
+      - .env
+
+  scripts:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/scripts.Dockerfile
+    env_file:
+      - .env
+
+  # Redis
+  redis_dev:
+    image: redis:7.2
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+    restart: always
+    ports:
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redisdata:/data
+    env_file:
+      - .env
+
+  redis_stage:
+    image: redis:7.2
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+    restart: always
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - redis_data:/data
+    ports:
+      - '127.0.0.1:6379:6379'
+    env_file:
+      - .env
+
+  redis_prod:
+    image: redis:7.2
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+    volumes:
+      - redis_data_prod:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    restart: always
+    ports:
+      - '127.0.0.1:6379:6379'
+    env_file:
+      - .env
+
+  # Postgres
+  db_dev:
+    image: postgres:13
+    restart: always
+    ports:
+      - '127.0.0.1:5432:5432'
+    env_file:
+      - .env
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data/pgdata
+
+  db_stage:
+    image: postgres:13
+    restart: always
+    ports:
+      - '127.0.0.1:5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+
+  db_prod:
+    image: postgres:13
+    restart: always
+    ports:
+      - '127.0.0.1:5434:5432'
+    volumes:
+      - db_data_prod:/var/lib/postgresql/data/pgdata
+      - /build/tmp/postgresql:/oracle/pg_data/archive/
+    env_file:
+      - .env
+
+  # Application
+  api_dev:
+    build:
+      dockerfile: ./dockerfiles/Dockerfile
+    depends_on:
+      - db_dev
+      - redis_dev
+    network_mode: host
+    restart: always
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+    env_file:
+      - .env
+
+  api_stage:
+    build:
+      dockerfile: ./dockerfiles/Dockerfile
+    depends_on:
+      - db_stage
+      - redis_stage
+    restart: always
+    volumes:
+      - ./src:/app/src
+      - logs:/app/logs
+    ports:
+      - '127.0.0.1:8000:8000'
+    env_file:
+      - .env
+
+  api_stage_ru:
+    build:
+      dockerfile: ./dockerfiles/Dockerfile
+    depends_on:
+      - db_stage
+      - redis_stage
+    restart: always
+    volumes:
+      - ./src:/app/src
+      - logs:/app/logs
+    ports:
+      - '127.0.0.1:8010:8000'
+    env_file:
+      - .env
+
+
+  api_prod:
+    build:
+      dockerfile: ./dockerfiles/Dockerfile
+    depends_on:
+      - db_prod
+      - redis_prod
+    volumes:
+      - logs:/app/logs
+    restart: always
+    ports:
+      - '127.0.0.1:8001:8001'
+    env_file:
+      - .env
+
+volumes:
+  db_data:
+  db_data_prod:
+  redis_data:
+  redis_data_prod:
+  logs:
+  g4f_files:
+  g4f_files_config:
+  g4f_files_prod:
+
+networks:
+  default:
+    name: bothub-backend

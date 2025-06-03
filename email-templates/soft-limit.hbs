@@ -1,0 +1,60 @@
+{{> bothub-logo-card }}
+
+<style>
+  .card {
+    margin: auto;
+    width: auto;
+    display: inline-block;
+    border-radius: 8px;
+    padding: 8px 24px;
+    margin: 20px 0;
+  }
+
+  .row-title {
+    display: inline-block;
+    width: 100px;
+  }
+
+  .row-value {
+    display: block;
+    font-weight: bold;
+  }
+</style>
+
+<div class="my-9">
+  <div class="container tac">
+    <h1 class="h1 color-white mb-3">
+      {{ t.title }}
+    </h1>
+
+    <p class="text-md color-white my-4">
+      {{ t.subtitle }}
+    </p>
+
+    <p class="text-md color-white my-4">
+      {{ t.body1 }}
+    </p>
+
+    <p class="text-md color-white my-4">
+      {{ t.body2 }}
+    </p>
+
+    <p class="text-md color-white my-4">
+      {{ t.body3 }}
+    </p>
+
+    <p class="text-md color-white my-4">
+      {{ t.body4 }}
+    </p>
+
+    <div class="my-4">
+      <a href="https://t.me/bothub_chat" class="button">
+        Телеграм чат
+      </a>
+    </div>
+  </div>
+</div>
+
+{{#if_eq config.locale 'ru'}}
+  <hr />
+{{/if_eq}}
