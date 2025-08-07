@@ -1,7 +1,11 @@
 import { UseCaseParams } from '@/domain/usecase/types'
 import { IArticle } from '@/domain/entity/article'
 
-export type ListSEOArticles = (params: { search?: string; page: number; quantity: number }) => Promise<
+export type ListSEOArticles = (params: {
+  search?: string
+  page: number
+  quantity: number
+}) => Promise<
   | {
       data: IArticle[]
       pages: number
@@ -15,29 +19,29 @@ export const buildListSEOArticles = ({ service }: UseCaseParams): ListSEOArticle
       query: {
         where: {
           published_at: {
-            not: null
+            not: null,
           },
           ...(search && {
             subject: {
               contains: search,
-              mode: 'insensitive' as const
-            }
-          })
+              mode: 'insensitive' as const,
+            },
+          }),
         },
         include: {
           proofreadings: { include: { expert: true } },
           topics: {
             include: {
-              category: true
-            }
-          }
+              category: true,
+            },
+          },
         },
         orderBy: {
-          created_at: 'desc'
-        }
+          created_at: 'desc',
+        },
       },
       page,
-      quantity
+      quantity,
     })
 
     return articles

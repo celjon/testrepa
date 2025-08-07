@@ -42,7 +42,7 @@ async function main() {
     password: POSTGRES_PASSWORD,
     host: POSTGRES_HOST,
     port: parseInt(POSTGRES_PORT!),
-    database: POSTGRES_DB
+    database: POSTGRES_DB,
   })
   const client = await pool.connect()
 
@@ -70,7 +70,7 @@ async function main() {
           await updateGroupsOrder(pool, userId)
 
           process.stdout.write(chalk.green(`Completed processing user: ${userId}\n`))
-        })
+        }),
       )
     }
   } finally {
@@ -84,7 +84,9 @@ async function main() {
 
 main()
   .then(() => {
-    process.stdout.write(chalk.blue.bold('[Bothub Server] ') + 'Script was executed successfully.\n')
+    process.stdout.write(
+      chalk.blue.bold('[Bothub Server] ') + 'Script was executed successfully.\n',
+    )
   })
   .catch((error) => {
     process.stderr.write(chalk.red.bold('Error: ') + error.message + '\n')

@@ -18,7 +18,7 @@ export const buildGetEmployeesStatsStream = ({ enterprise }: Params): GetEmploye
       from: req.query.from ? new Date(req.query.from as string) : new Date(),
       to: req.query.to ? new Date(req.query.to as string) : new Date(),
       sort: prepareSortParams(req.query.sort as string),
-      includeTransactions: !!req.query.includeTransactions
+      includeTransactions: !!req.query.includeTransactions,
     })
 
     setSSEHeaders(res)
@@ -36,13 +36,13 @@ export const buildGetEmployeesStatsStream = ({ enterprise }: Params): GetEmploye
       complete: () => {
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.on('error', () => {
       logger.warn({
         location: 'enterprise.getEmployeesStatsStream',
-        message: 'Unexpected sse connection error'
+        message: 'Unexpected sse connection error',
       })
     })
 

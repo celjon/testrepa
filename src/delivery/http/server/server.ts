@@ -20,6 +20,6 @@ export const buildServer = () => {
   const app = Express()
 
   return {
-    start: buildStart(app)
+    start: buildStart(app),
   }
 }

@@ -6,11 +6,11 @@ type Params = {
 
 export const newClient = ({ apiKey }: Params): { client: Replicate } => {
   const replicate = new Replicate({
-    auth: apiKey
+    auth: apiKey,
   })
 
   return {
-    client: replicate
+    client: replicate,
   }
 }
 

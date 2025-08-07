@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger'
 import { ForbiddenError, InternalError, NotFoundError } from '@/domain/errors'
 import { IMessage } from '@/domain/entity/message'
 import { UseCaseParams } from '@/domain/usecase/types'
+import { buildSendSyncTextByProvider } from './completions.sync.send-by-provider'
 
 export type CompletionsSync = (p: {
   userId: string
@@ -12,75 +13,86 @@ export type CompletionsSync = (p: {
     messages: Array<ChatCompletionMessageParam & IMessage>
     [key: string]: unknown
   }
+  developerKeyId?: string
 }) => Promise<unknown>
 
 export const buildCompletionsSync = ({ adapter, service }: UseCaseParams): CompletionsSync => {
-  return async ({ userId, params }) => {
+  const sendByProvider = buildSendSyncTextByProvider({
+    adapter,
+    service,
+  })
+
+  return async ({ userId, params, developerKeyId }) => {
     if (params.model === 'auto') {
       throw new ForbiddenError({
-        code: 'INVALID_MODEL'
+        code: 'INVALID_MODEL',
       })
     }
 
     const model = await adapter.modelRepository.get({
       where: {
-        id: params.model
-      }
+        id: params.model,
+      },
     })
 
     if (!model) {
       throw new NotFoundError({
-        code: 'MODEL_NOT_FOUND'
+        code: 'MODEL_NOT_FOUND',
       })
     }
 
     const subscription = await service.user.getActualSubscriptionById(userId)
 
-    if (!subscription || (subscription && subscription.balance <= 0) || !subscription.plan) {
-      throw new ForbiddenError({
-        code: 'NOT_ENOUGH_TOKENS'
-      })
-    }
+    await service.subscription.checkBalance({ subscription, estimate: 0 })
 
-    const { hasAccess, reasonCode } = await service.plan.hasAccessToAPI({ plan: subscription.plan })
+    const { hasAccess, reasonCode } = await service.plan.hasAccessToAPI({
+      plan: subscription!.plan!,
+    })
 
     if (!hasAccess) {
       throw new ForbiddenError({
-        code: reasonCode ?? 'MODEL_NOT_ALLOWED_FOR_PLAN'
+        code: reasonCode ?? 'MODEL_NOT_ALLOWED_FOR_PLAN',
       })
     }
 
-    const result = await adapter.openrouterGateway.raw.completions.create.sync({
-      ...params,
-      model: model.prefix + model.id,
-      endUserId: userId
+    const { result, provider_id } = await sendByProvider({
+      providerId: null,
+      apiParams: params,
+      model,
+      user: {
+        id: userId,
+      },
     })
 
     if (!result.usage) {
       logger.error({
         location: 'completions.sync',
         message: 'Unable to correctly calculate usage',
-        model_id: model.id
+        model_id: model.id,
+        result,
       })
       throw new InternalError({
         code: 'UNABLE_TO_CALCULATE_USAGE',
-        message: 'Unable to correctly calculate usage'
+        message: 'Unable to correctly calculate usage',
+        data: result,
       })
     }
 
-    const caps = await service.model.getCaps({
+    const caps = await service.model.getCaps.text({
       model,
-      usage: result.usage
+      usage: result.usage,
     })
 
     await service.subscription.writeOffWithLimitNotification({
-      subscription,
+      subscription: subscription!,
       amount: caps,
       meta: {
         userId: userId,
         platform: Platform.API_COMPLETIONS,
-        model_id: model.id
-      }
+        model_id: model.id,
+        provider_id,
+        developerKeyId,
+      },
     })
 
     return result.response

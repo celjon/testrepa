@@ -5,9 +5,9 @@ import { buildDelete, Delete } from './delete'
 import { buildGet, Get } from './get'
 import { buildList, List } from './list'
 import { buildUpdate, Update } from './update'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 import { buildUpsert, Upsert } from './upsert'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
+import { buildDeleteMany, DeleteMany } from './delete-many'
 
 type Params = Pick<AdapterParams, 'db' | 'redis'>
 
@@ -42,6 +42,6 @@ export const buildChatRepository = (params: Params): ChatRepository => {
     updateMany,
     list,
     count,
-    upsert
+    upsert,
   }
 }

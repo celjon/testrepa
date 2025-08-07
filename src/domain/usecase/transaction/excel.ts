@@ -8,8 +8,8 @@ export const buildExcel = ({ adapter, service }: UseCaseParams): Excel => {
   return async ({ userId }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user || user.role !== Role.ADMIN) {
@@ -18,7 +18,7 @@ export const buildExcel = ({ adapter, service }: UseCaseParams): Excel => {
 
     const file = await service.transaction.toExcel({
       type: TransactionType.SUBSCRIPTION,
-      status: TransactionStatus.SUCCEDED
+      status: TransactionStatus.SUCCEDED,
     })
 
     return file

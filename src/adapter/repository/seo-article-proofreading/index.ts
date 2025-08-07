@@ -17,7 +17,9 @@ export type SEOArticleProofreadingRepository = {
   delete: Delete
 }
 
-export const buildSEOArticleProofreadingRepository = (params: Params): SEOArticleProofreadingRepository => {
+export const buildSEOArticleProofreadingRepository = (
+  params: Params,
+): SEOArticleProofreadingRepository => {
   const create = buildCreate(params)
   const get = buildGet(params)
   const update = buildUpdate(params)
@@ -30,6 +32,6 @@ export const buildSEOArticleProofreadingRepository = (params: Params): SEOArticl
     update,
     updateMany,
     createMany,
-    delete: deleteAction
+    delete: deleteAction,
   }
 }

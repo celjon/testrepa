@@ -12,7 +12,7 @@ export const buildUpdate = ({ group }: Params): Update => {
       id: req.params.id,
       name: req.body.name,
       highlight: req.body.highlight,
-      order: req.body.order
+      order: req.body.order,
     })
 
     return res.status(200).json(data)

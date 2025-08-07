@@ -13,6 +13,6 @@ export const buildAssemblyAiGateway = ({ assemblyAI }: Params) => {
     getTranscribeParagraphs: async (transcript_id: string): Promise<TranscriptParagraph[]> => {
       const { paragraphs } = await assemblyAI.client.transcripts.paragraphs(transcript_id)
       return paragraphs
-    }
+    },
   }
 }

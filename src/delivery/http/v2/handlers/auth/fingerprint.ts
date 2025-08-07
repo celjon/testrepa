@@ -9,7 +9,7 @@ export const buildFingerprintAuthorize = ({ auth }: Params): FingerprintAuthoriz
     const data = await auth.fingerprint({
       fingerprint: req.body.fingerprint,
       yandexMetricClientId: req.body.yandexMetricClientId,
-      yandexMetricYclid: req.body.yandexMetricYclid
+      yandexMetricYclid: req.body.yandexMetricYclid,
     })
     return res.status(200).json(data)
   }

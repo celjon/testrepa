@@ -5,10 +5,10 @@ import { buildExcel, Excel } from './excel'
 import { buildUserRules } from './rules'
 import { Middlewares } from '../../middlewares'
 import { createRouteHandler } from '../../routeHandler'
-import { buildGetGroups, GetGroups } from './getGroups'
+import { buildGetGroups, GetGroups } from './get-groups'
 import { buildUpdate, Update } from './update'
-import { buildGetPaymentMethods, GetPaymentMethods } from './getPaymentMethods'
-import { buildUpdateRegion, UpdateRegion } from './updateRegion'
+import { buildGetPaymentMethods, GetPaymentMethods } from './get-payment-methods'
+import { buildUpdateRegion, UpdateRegion } from './update-region'
 import { buildSendVerifyUpdating, SendVerifyUpdating } from './send-verify-updating'
 
 type Params = Pick<DeliveryParams, 'user' | 'group' | 'middlewares'>
@@ -23,8 +23,14 @@ export type UserMethods = {
 }
 
 const buildRegisterRoutes = (methods: UserMethods, middlewares: Middlewares) => {
-  const { getExcelRules, getGroupsRules, updateUserRules, updateRegionRules, sendVerifyUpdatingRules, getPaymentMethodsRules } =
-    buildUserRules(middlewares)
+  const {
+    getExcelRules,
+    getGroupsRules,
+    updateUserRules,
+    updateRegionRules,
+    sendVerifyUpdatingRules,
+    getPaymentMethodsRules,
+  } = buildUserRules(middlewares)
 
   return (root: Express.Router) => {
     const namespace = Express.Router()
@@ -60,9 +66,18 @@ const buildRegisterRoutes = (methods: UserMethods, middlewares: Middlewares) => 
 
     namespace.get('/groups', getGroupsRules, createRouteHandler(methods.groups))
 
-    namespace.get('/send-verify-updating', sendVerifyUpdatingRules, createRouteHandler(methods.sendVerifyUpdating))
+    namespace.post(
+      '/send-verify-updating',
+      sendVerifyUpdatingRules,
+      createRouteHandler(methods.sendVerifyUpdating),
+    )
 
-    namespace.patch('/', middlewares.fileUpload().single('file'), updateUserRules, createRouteHandler(methods.update))
+    namespace.patch(
+      '/',
+      middlewares.fileUpload().single('file'),
+      updateUserRules,
+      createRouteHandler(methods.update),
+    )
 
     /**
      * @openapi
@@ -82,7 +97,7 @@ const buildRegisterRoutes = (methods: UserMethods, middlewares: Middlewares) => 
      *             properties:
      *               region:
      *                 type: string
-     *                 enum: [RU, KZ, OTHER]
+     *                 enum: [RU, KZ, GLOBAL]
      *     responses:
      *        200:
      *           content:
@@ -109,14 +124,18 @@ const buildRegisterRoutes = (methods: UserMethods, middlewares: Middlewares) => 
      *                    properties:
      *                        region:
      *                          type: string
-     *                          enum: [RU, KZ, OTHER]
+     *                          enum: [RU, KZ, GLOBAL]
      *                        paymentMethods:
      *                          type: array
      *                          items:
      *                            type: string
      *                            enum: [TINKOFF, KASPI, STRIPE, CRYPTO]
      */
-    namespace.get('/payment-methods', getPaymentMethodsRules, createRouteHandler(methods.getPaymentMethods))
+    namespace.get(
+      '/payment-methods',
+      getPaymentMethodsRules,
+      createRouteHandler(methods.getPaymentMethods),
+    )
 
     root.use('/user', namespace)
   }
@@ -131,9 +150,9 @@ export const buildUserHandler = (params: Params): IHandler => {
         update: buildUpdate(params),
         sendVerifyUpdating: buildSendVerifyUpdating(params),
         updateRegion: buildUpdateRegion(params),
-        getPaymentMethods: buildGetPaymentMethods(params)
+        getPaymentMethods: buildGetPaymentMethods(params),
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

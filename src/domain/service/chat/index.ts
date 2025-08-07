@@ -4,7 +4,7 @@ import { buildPaginate, Paginate } from './paginate'
 import { buildEventStreamService, EventStreamService } from './event-stream'
 import { buildSettingsService, SettingsService } from './settings'
 import { ModelService } from '../model'
-import { buildGenerateName, GenerateName } from './generateName'
+import { buildGenerateName, GenerateName } from './generate-name'
 
 type Params = {
   modelService: ModelService
@@ -24,7 +24,7 @@ export const buildChatService = (params: Params): ChatService => {
   const generateName = buildGenerateName(params)
   const initialize = buildInitialize({
     ...params,
-    settingsService: settings
+    settingsService: settings,
   })
   const eventStream = buildEventStreamService(params)
 
@@ -33,6 +33,6 @@ export const buildChatService = (params: Params): ChatService => {
     initialize,
     generateName,
     settings,
-    eventStream
+    eventStream,
   }
 }

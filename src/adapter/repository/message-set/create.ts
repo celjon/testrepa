@@ -1,5 +1,5 @@
 import { AdapterParams } from '@/adapter/types'
-import { IMessageSet } from '@/domain/entity/messageSet'
+import { IMessageSet } from '@/domain/entity/message-set'
 import { Prisma } from '@prisma/client'
 
 type Params = Pick<AdapterParams, 'db'>

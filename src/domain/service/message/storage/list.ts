@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { Adapter } from '@/domain/types'
 import { IMessage } from '@/domain/entity/message'
 import { IUser } from '@/domain/entity/user'
-import { DecryptMessage } from './decrypt/decryptMessage'
+import { DecryptMessage } from './decrypt/decrypt-message'
 
 type Params = Adapter & {
   decryptMessage: DecryptMessage
@@ -24,10 +24,12 @@ export const buildList = ({ messageRepository, decryptMessage, cryptoGateway }: 
 
     const dek = await cryptoGateway.decryptDEK({
       kek: keyEncryptionKey,
-      edek: user.encryptedDEK as Buffer
+      edek: user.encryptedDEK as Buffer,
     })
 
-    const decryptedMessages = await Promise.all(messages.map((message) => decryptMessage({ dek, message })))
+    const decryptedMessages = await Promise.all(
+      messages.map((message) => decryptMessage({ dek, message })),
+    )
 
     return decryptedMessages
   }

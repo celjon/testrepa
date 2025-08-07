@@ -63,9 +63,9 @@ export const buildReferralTemplateHandler = (params: Params): IHandler => {
   return {
     registerRoutes: buildRegisterRoutes(
       {
-        list
+        list,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

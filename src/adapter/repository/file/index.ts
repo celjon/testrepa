@@ -1,11 +1,11 @@
 import { AdapterParams } from '@/adapter/types'
 import { buildCreate, Create } from './create'
-import { buildCreateMany, CreateMany } from './createMany'
+import { buildCreateMany, CreateMany } from './create-many'
 import { buildDelete, Delete } from './delete'
 import { buildGet, Get } from './get'
 import { buildList, List } from './list'
 import { buildUpdate, Update } from './update'
-import { buildDeleteMany, DeleteMany } from '@/adapter/repository/file/deleteMany'
+import { buildDeleteMany, DeleteMany } from '@/adapter/repository/file/delete-many'
 
 type Params = Pick<AdapterParams, 'db'>
 
@@ -34,6 +34,6 @@ export const buildFileRepository = (params: Params): FileRepository => {
     update,
     delete: d,
     createMany,
-    deleteMany
+    deleteMany,
   }
 }

@@ -1,17 +1,17 @@
 import { buildCreate, Create } from './create'
-import { buildCreateElements, CreateElements } from './createElements'
+import { buildCreateElements, CreateElements } from './create-elements'
+import { buildUpdate, Update } from './update'
 
 export type MidjourneyService = {
   create: Create
   createElements: CreateElements
+  update: Update
 }
 
 export const buildMidjourneyService = (): MidjourneyService => {
-  const create = buildCreate()
-  const createElements = buildCreateElements()
-
   return {
-    create,
-    createElements
+    create: buildCreate(),
+    createElements: buildCreateElements(),
+    update: buildUpdate(),
   }
 }

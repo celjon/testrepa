@@ -1,6 +1,6 @@
-import { Adapter } from '../../types'
-import { ForbiddenError } from '@/domain/errors'
 import { StrikeReason } from '@prisma/client'
+import { ForbiddenError } from '@/domain/errors'
+import { Adapter } from '@/domain/types'
 import { UserService } from '../user'
 
 type Params = Adapter & {
@@ -14,7 +14,12 @@ type ModerateParams = {
   contentCategory?: 'text' | 'presetName' | 'presetDescription' | 'presetSystemPrompt'
 }
 
-export type Moderate = ({ messageId, content, userId, contentCategory }: ModerateParams) => Promise<void>
+export type Moderate = ({
+  messageId,
+  content,
+  userId,
+  contentCategory,
+}: ModerateParams) => Promise<void>
 
 export const buildModerate =
   ({ strikeRepository, moderationGateway }: Params): Moderate =>
@@ -27,26 +32,30 @@ export const buildModerate =
           user_id: userId,
           message_id: messageId,
           ...(!messageId && { content }),
-          reason: StrikeReason.GPT_MODERATION
-        }
+          reason: StrikeReason.GPT_MODERATION,
+        },
       })
 
       switch (contentCategory) {
         case 'presetName':
           throw new ForbiddenError({
-            code: 'NAME_VIOLATION'
+            code: 'NAME_VIOLATION',
+            message: moderationResult.reason,
           })
         case 'presetDescription':
           throw new ForbiddenError({
-            code: 'DESC_VIOLATION'
+            code: 'DESC_VIOLATION',
+            message: moderationResult.reason,
           })
         case 'presetSystemPrompt':
           throw new ForbiddenError({
-            code: 'SYSTEM_PROMPT_VIOLATION'
+            code: 'SYSTEM_PROMPT_VIOLATION',
+            message: moderationResult.reason,
           })
         case 'text':
           throw new ForbiddenError({
-            code: 'VIOLATION'
+            code: 'VIOLATION',
+            message: moderationResult.reason,
           })
       }
     }

@@ -2,7 +2,7 @@ import { AdapterParams } from '@/adapter/types'
 import { buildList, List } from './list'
 import { buildGet, Get } from './get'
 import { buildCount, Count } from './count'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 import { buildUpdate, Update } from './update'
 
 type Params = Pick<AdapterParams, 'db'>
@@ -25,6 +25,6 @@ export const buildPlanRepository = (params: Params): PlanRepository => {
     get,
     count,
     updateMany,
-    update
+    update,
   }
 }

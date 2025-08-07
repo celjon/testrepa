@@ -9,12 +9,12 @@ export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
     let article = await adapter.articleRepository.get({ where: { id } })
     if (article) {
       article = await adapter.articleRepository.delete({
-        where: { id }
+        where: { id },
       })
     }
     if (!article) {
       throw new NotFoundError({
-        code: 'ARTICLE_NOT_FOUND'
+        code: 'ARTICLE_NOT_FOUND',
       })
     }
 

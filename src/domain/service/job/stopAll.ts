@@ -1,7 +1,7 @@
 import { IChat } from '@/domain/entity/chat'
 import { IJob } from '@/domain/entity/job'
 import { Adapter } from '@/domain/types'
-import { CreateInstance } from './createInstance'
+import { CreateInstance } from './create-instance'
 
 type Params = {
   createInstance: CreateInstance
@@ -15,8 +15,8 @@ export const buildStopAll =
     const jobs = (
       await jobRepository.list({
         where: {
-          chat_id: chat.id
-        }
+          chat_id: chat.id,
+        },
       })
     ).map((job) => createInstance({ job }))
 

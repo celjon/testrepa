@@ -7,10 +7,10 @@ export const buildReferralTemplateRules = ({ authRequired, validateSchema }: Mid
     query('page').optional().isNumeric(),
     query('search').optional().isString(),
     query('locale').optional().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   return {
-    listRules
+    listRules,
   }
 }

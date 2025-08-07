@@ -1,7 +1,7 @@
 import { extname } from 'path'
 import { Adapter } from '@/domain/types'
 import { IUser } from '@/domain/entity/user'
-import { IMessageImage } from '@/domain/entity/messageImage'
+import { IMessageImage } from '@/domain/entity/message-image'
 import { FileService } from '../../file'
 import { FileType, MessageButtonAction } from '@prisma/client'
 
@@ -15,7 +15,7 @@ export const buildExtractGeneratedImages =
     user,
     keyEncryptionKey,
     messageId,
-    content
+    content,
   }: {
     user: IUser
     keyEncryptionKey: string | null
@@ -32,7 +32,7 @@ export const buildExtractGeneratedImages =
     if (user.encryptedDEK && user.useEncryption && keyEncryptionKey) {
       dek = await cryptoGateway.decryptDEK({
         edek: user.encryptedDEK as Buffer,
-        kek: keyEncryptionKey
+        kek: keyEncryptionKey,
       })
     }
 
@@ -44,33 +44,34 @@ export const buildExtractGeneratedImages =
         const originalImage = await fileService.write({
           buffer: buffer,
           ext: ext,
-          dek
+          dek,
         })
 
-        const { width: originalImageWidth = 1024, height: originalImageHeight = 1024 } = await imageGateway.metadata({
-          buffer: buffer
-        })
+        const { width: originalImageWidth = 1024, height: originalImageHeight = 1024 } =
+          await imageGateway.metadata({
+            buffer: buffer,
+          })
 
         const {
           buffer: previewImageBuffer,
-          info: { width: previewImageWidth, height: previewImageHeight }
+          info: { width: previewImageWidth, height: previewImageHeight },
         } = await imageGateway.resize({
           buffer: buffer,
-          width: 512
+          width: 512,
         })
 
         const previewImage = await fileService.write({
           buffer: previewImageBuffer,
           ext: ext,
-          dek
+          dek,
         })
 
         const messageImage = await messageImageRepository.create({
           data: {
             message: {
               connect: {
-                id: messageId
-              }
+                id: messageId,
+              },
             },
             width: originalImageWidth,
             height: originalImageHeight,
@@ -81,38 +82,39 @@ export const buildExtractGeneratedImages =
                 type: FileType.IMAGE,
                 name: originalImage.name,
                 path: originalImage.path,
-                isEncrypted: originalImage.isEncrypted
-              }
+                isEncrypted: originalImage.isEncrypted,
+              },
             },
             preview: {
               create: {
                 type: FileType.IMAGE,
                 name: previewImage.name,
                 path: previewImage.path,
-                isEncrypted: previewImage.isEncrypted
-              }
+                isEncrypted: previewImage.isEncrypted,
+              },
             },
             buttons: {
               createMany: {
                 data: [
                   {
                     message_id: messageId,
-                    action: MessageButtonAction.DOWNLOAD
-                  }
-                ]
-              }
-            }
-          }
+                    action: MessageButtonAction.DOWNLOAD,
+                  },
+                ],
+              },
+            },
+          },
         })
 
         return messageImage
-      })
+      }),
     )
 
     return messageImages
   }
 
-const generatedImagesRegex = /<!-- generated images start -->([\s\S]*?)<!-- generated images end -->/
+const generatedImagesRegex =
+  /<!-- generated images start -->([\s\S]*?)<!-- generated images end -->/
 const urlRegex = /(https?:\/\/[^\s)"]+)/g
 
 export const extractGeneratedImageURLs = (text: string): string[] => {

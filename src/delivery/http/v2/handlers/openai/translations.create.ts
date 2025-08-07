@@ -13,7 +13,7 @@ export const buildTranslationsCreate = ({ openai }: Params): TranslationsCreate 
         const f = new Readable({})
 
         const body: any = {
-          file: f
+          file: f,
         }
         req.busboy.once('file', (_, file, info) => {
           body['fileName'] = info.filename
@@ -37,7 +37,8 @@ export const buildTranslationsCreate = ({ openai }: Params): TranslationsCreate 
           try {
             const data = await openai.translations.create({
               userId: req.user?.id,
-              params: body
+              params: body,
+              developerKeyId: req.user.developerKeyId,
             })
             res.status(200).json(data)
             resolve(null)

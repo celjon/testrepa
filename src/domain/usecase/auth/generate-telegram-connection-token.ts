@@ -8,29 +8,31 @@ export type GenerateTelegramConnectionToken = (data: { userId: string }) => Prom
     }
   | never
 >
-export const buildGenerateTelegramConnectionToken = ({ adapter }: UseCaseParams): GenerateTelegramConnectionToken => {
+export const buildGenerateTelegramConnectionToken = ({
+  adapter,
+}: UseCaseParams): GenerateTelegramConnectionToken => {
   return async ({ userId }) => {
     const user = await adapter.userRepository.get({
-      where: { id: userId }
+      where: { id: userId },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
     if (!user.tg_id || user.email) {
       throw new ForbiddenError({
-        code: 'TELEGRAM_ALREADY_CONNECTED'
+        code: 'TELEGRAM_ALREADY_CONNECTED',
       })
     }
     return {
       telegramConnectionToken: signJWT({
         id: userId,
         expiresIn: '1h',
-        keyEncryptionKey: null
-      })
+        keyEncryptionKey: null,
+      }),
     }
   }
 }

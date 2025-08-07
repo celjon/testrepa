@@ -22,6 +22,6 @@ export const buildEventStreamService = (params: Params): EventStreamService => {
   return {
     init,
     emit,
-    stream
+    stream,
   }
 }

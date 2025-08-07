@@ -7,6 +7,7 @@ import { ArticleLinkStyle, Role } from '@prisma/client'
 import { filter, firstValueFrom, scan } from 'rxjs'
 import { config } from '@/config'
 import { NotFoundError } from '@/domain/errors'
+import { logger } from '@/lib/logger'
 
 type Params = UseCaseParams & {
   generateArticle: GenerateArticle
@@ -32,23 +33,29 @@ export type BatchGenerateArticles = (params: {
   }[]
   email: string
   locale: string
+  developerKeyId?: string
 }) => Promise<void>
 
 const poolLimit = 4
 const batchSize = config.theSizeOfTheBundleForSendingGeneratedLinksToArticles
 
-export const buildBatchGenerateArticles = ({ generateArticle, generatePlan, service, adapter }: Params): BatchGenerateArticles => {
-  return async ({ articles, email, locale }) => {
+export const buildBatchGenerateArticles = ({
+  generateArticle,
+  generatePlan,
+  service,
+  adapter,
+}: Params): BatchGenerateArticles => {
+  return async ({ articles, email, locale, developerKeyId }) => {
     let batchLinks: string[] = []
     const user = await adapter.userRepository.get({
       where: {
-        id: articles[0].userId
-      }
+        id: articles[0].userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -60,42 +67,46 @@ export const buildBatchGenerateArticles = ({ generateArticle, generatePlan, serv
         await service.article.sendLinksToGeneratedArticles({
           email,
           articleLinks: batchLinks.join('\n'),
-          locale
+          locale,
         })
         batchLinks = []
       } catch (error) {
-        console.error(`Error sending article links: ${error}`)
+        logger.error(`Error sending article links: ${error}`)
       }
     }
 
     await runWithConcurrencyLimit(poolLimit, articles, async (params) => {
       try {
-        const { responseStream$: planResponseStream$, closeStream: planCloseStream } = await generatePlan({
-          userId: params.userId,
-          locale: params.language,
-          generationMode: params.generationMode,
-          subject: params.subject,
-          creativity: params.creativity,
-          model_id: params.model_id,
-          isAdmin
-        })
+        const { responseStream$: planResponseStream$, closeStream: planCloseStream } =
+          await generatePlan({
+            userId: params.userId,
+            locale: params.language,
+            generationMode: params.generationMode,
+            subject: params.subject,
+            creativity: params.creativity,
+            model_id: params.model_id,
+            isAdmin,
+            developerKeyId,
+          })
 
         const finalPlanResult = await firstValueFrom(
           planResponseStream$.pipe(
             scan((acc, curr) => ({
               ...curr,
-              contentDelta: acc.contentDelta + curr.contentDelta
+              contentDelta: acc.contentDelta + curr.contentDelta,
             })),
-            filter((val) => val.status === 'done')
-          )
+            filter((val) => val.status === 'done'),
+          ),
         )
         planCloseStream()
         const plan = finalPlanResult.contentDelta.trim()
-        const { responseStream$: articleResponseStream$, closeStream: articleCloseStream } = await generateArticle({
-          ...params,
-          plan,
-          isAdmin
-        })
+        const { responseStream$: articleResponseStream$, closeStream: articleCloseStream } =
+          await generateArticle({
+            ...params,
+            plan,
+            isAdmin,
+            developerKeyId,
+          })
 
         const link = await new Promise<string>((resolve, reject) => {
           let articleId: string | null = null
@@ -108,7 +119,6 @@ export const buildBatchGenerateArticles = ({ generateArticle, generatePlan, serv
               }
             },
             error(err) {
-              console.error(`Error in article response stream: ${err}`)
               sub.unsubscribe()
               articleCloseStream()
               reject(err)
@@ -119,9 +129,11 @@ export const buildBatchGenerateArticles = ({ generateArticle, generatePlan, serv
               if (!articleId) {
                 return reject(new Error('ArticleId not returned'))
               }
-              const resultLink = slug ? `${config.http.real_address}seo-article/find-by-slug/${slug}` : articleId!
+              const resultLink = slug
+                ? `${new URL(config.http.real_address).origin}/essay-examples/${slug}`
+                : articleId!
               resolve(resultLink)
-            }
+            },
           })
         })
 
@@ -131,7 +143,7 @@ export const buildBatchGenerateArticles = ({ generateArticle, generatePlan, serv
         }
         return link
       } catch (error) {
-        console.error(`Error generating article or plan: ${error}`)
+        logger.error(`Error generating article or plan: ${error}`)
       }
     })
 

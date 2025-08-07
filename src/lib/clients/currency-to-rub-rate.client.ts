@@ -17,8 +17,8 @@ export const newClient = () => {
         const currencyCode = CurrencyEnum[currency]
         const rate = response.data.rates[currencyCode]
         return 1 / rate
-      }
-    }
+      },
+    },
   }
 }
 /*type AxiosResponse.data = {

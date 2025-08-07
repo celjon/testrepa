@@ -18,12 +18,12 @@ export type GetChildModel = (params: { model_id: string; userId: string }) => Pr
 export const buildGetChildModel = ({ service, adapter }: UseCaseParams): GetChildModel => {
   return async ({ model_id, userId }) => {
     const user = await adapter.userRepository.get({
-      where: { id: userId }
+      where: { id: userId },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
     const isAdmin = user.role === Role.ADMIN
@@ -31,14 +31,13 @@ export const buildGetChildModel = ({ service, adapter }: UseCaseParams): GetChil
     if (!isAdmin && (!subscription || subscription.balance <= 0 || !subscription.plan)) {
       throw new ForbiddenError({
         code: 'NOT_ENOUGH_TOKENS',
-        message: 'Not enough tokens'
+        message: 'Not enough tokens',
       })
     }
     const employee = await adapter.employeeRepository.get({
       where: { user_id: userId },
-      include: { allowed_models: true, enterprise: true }
+      include: { enterprise: true },
     })
-    const employeeId = employee?.allowed_models?.length != 0 ? employee?.id : undefined
 
     let plan: IPlan | null = await adapter.planRepository.get({ where: { type: 'ELITE' } })
     if (isAdmin) {
@@ -48,10 +47,10 @@ export const buildGetChildModel = ({ service, adapter }: UseCaseParams): GetChil
           models: {
             where: { deleted_at: null },
             include: {
-              model: true
-            }
-          }
-        }
+              model: true,
+            },
+          },
+        },
       })
       plan = elitePlan
     } else if (subscription?.plan) {
@@ -61,37 +60,37 @@ export const buildGetChildModel = ({ service, adapter }: UseCaseParams): GetChil
           models: {
             where: { deleted_at: null },
             include: {
-              model: true
-            }
-          }
-        }
+              model: true,
+            },
+          },
+        },
       })
     }
     if (!plan) {
       throw new ForbiddenError({
         code: 'NOT_ENOUGH_TOKENS',
-        message: 'Not enough tokens'
+        message: 'Not enough tokens',
       })
     }
     const model = await adapter.modelRepository.get({
-      where: { id: model_id }
+      where: { id: model_id },
     })
 
     if (!model) {
       throw new ForbiddenError({
         code: 'NO_DEFAULT_MODEL',
-        message: 'No default model found for current plan'
+        message: 'No default model found for current plan',
       })
     }
     let access = false
     if (subscription?.plan) {
-      const { hasAccess } = await service.plan.hasAccess(subscription.plan, model.id, employeeId)
+      const { hasAccess } = await service.plan.hasAccess(subscription.plan, model.id, employee?.id)
       access = hasAccess
     }
     if (!access && !isAdmin) {
       throw new ForbiddenError({
         code: 'MODEL_NOT_ALLOWED_FOR_PLAN',
-        message: 'Has no access to this model'
+        message: 'Has no access to this model',
       })
     }
 

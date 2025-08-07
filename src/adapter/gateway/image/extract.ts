@@ -1,6 +1,12 @@
 import sharp from 'sharp'
 
-export type Extract = (params: { buffer: Buffer; top: number; left: number; width: number; height: number }) => Promise<{
+export type Extract = (params: {
+  buffer: Buffer
+  top: number
+  left: number
+  width: number
+  height: number
+}) => Promise<{
   buffer: Buffer
   info: {
     width: number
@@ -16,13 +22,13 @@ export const buildExtract =
         top: Math.floor(top),
         left: Math.floor(left),
         width: Math.floor(width),
-        height: Math.floor(height)
+        height: Math.floor(height),
       })
       .png()
       .toBuffer({ resolveWithObject: true })
 
     return {
       buffer: data,
-      info
+      info,
     }
   }

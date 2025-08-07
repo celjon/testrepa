@@ -19,7 +19,8 @@ export type ReferralMethods = {
 }
 
 const buildRegisterRoutes = (methods: ReferralMethods, middlewares: Middlewares) => {
-  const { createRules, withdrawRules, listReferralRules, deleteReferralRules } = buildReferralRules(middlewares)
+  const { createRules, withdrawRules, listReferralRules, deleteReferralRules } =
+    buildReferralRules(middlewares)
 
   return (root: Express.Router) => {
     const namespace = Express.Router()
@@ -157,9 +158,9 @@ export const buildReferralHandler = (params: Params): IHandler => {
         create,
         delete: d,
         list,
-        withdraw
+        withdraw,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

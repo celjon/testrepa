@@ -12,7 +12,7 @@ export class AuthResolver {
   @Query(() => UserGraphQLObject)
   me(@Ctx() { req }: GraphQLContext): Promise<UserGraphQLObject> {
     return this.params.auth.getMe({
-      id: req.user.id
+      id: req.user.id,
     })
   }
 }

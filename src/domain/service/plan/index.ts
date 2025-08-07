@@ -1,12 +1,15 @@
 import { Adapter } from '../../types'
-import { AddModel, buildAddModel } from './addModel'
-import { buildHasAccess, HasAccess } from './hasAccess'
-import { buildHasAccessToAPI, HasAccessToAPI } from './hasAccessToAPI'
+import { AddModel, buildAddModel } from './add-model'
+import { buildHasAccess, HasAccess } from './has-access'
+import { buildHasAccessToAPI, HasAccessToAPI } from './has-access-to-api'
 import { buildPaginate, Paginate } from './paginate'
-import { buildRemoveModel, RemoveModel } from './removeModel'
-import { buildSetDefaultModel, SetDefaultModel } from './setDefaultModel'
-import { buildUnsetDefaultModel, UnsetDefaultModel } from './unsetDefaultModel'
-import { buildUnsetDefaultModelGlobally, UnsetDefaultModelGlobally } from './unsetDefaultModelGlobally'
+import { buildRemoveModel, RemoveModel } from './remove-model'
+import { buildSetDefaultModel, SetDefaultModel } from './set-default-model'
+import { buildUnsetDefaultModel, UnsetDefaultModel } from './unset-default-model'
+import {
+  buildUnsetDefaultModelGlobally,
+  UnsetDefaultModelGlobally,
+} from './unset-default-model-globally'
 
 export type PlanService = {
   paginate: Paginate
@@ -36,6 +39,6 @@ export const buildPlanService = (params: Adapter): PlanService => {
     hasAccessToAPI,
     setDefaultModel,
     unsetDefaultModel,
-    unsetDefaultModelGlobally
+    unsetDefaultModelGlobally,
   }
 }

@@ -8,19 +8,19 @@ export const buildDeleteMany = ({ adapter }: UseCaseParams): DeleteMany => {
     const chats = await adapter.chatRepository.list({
       where: {
         id: {
-          in: ids
+          in: ids,
         },
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     await adapter.chatRepository.deleteMany({
       where: {
         id: {
-          in: ids
+          in: ids,
         },
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     return chats

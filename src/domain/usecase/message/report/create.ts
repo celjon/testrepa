@@ -12,8 +12,8 @@ export const buildCreateReport = ({ adapter }: UseCaseParams): CreateReport => {
   return async ({ user_id, description, message_id }) => {
     const message = await adapter.messageRepository.get({
       where: {
-        id: message_id
-      }
+        id: message_id,
+      },
     })
 
     const report = await adapter.messageRepository.createReport({
@@ -21,8 +21,8 @@ export const buildCreateReport = ({ adapter }: UseCaseParams): CreateReport => {
         user_id: user_id,
         description: description,
         message_id: message_id,
-        chat_id: String(message?.chat_id)
-      }
+        chat_id: String(message?.chat_id),
+      },
     })
 
     return report.message_id

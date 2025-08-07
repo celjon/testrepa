@@ -3,10 +3,16 @@ import { IUser, UserGraphQLObject } from './user'
 import { IModel, ModelGraphQLObject } from './model'
 import { ISEOArticleTopic, SEOArticleTopicGraphQLObject } from '@/domain/entity/seo-article-topic'
 import { Field, Float, ID, ObjectType } from 'type-graphql'
-import { ISEOArticleProofreading, SEOArticleProofreadingGraphQLObject } from '@/domain/entity/seo-article-proofreading'
+import {
+  ISEOArticleProofreading,
+  SEOArticleProofreadingGraphQLObject,
+} from '@/domain/entity/seo-article-proofreading'
 import { ChatGraphQLObject, IChat } from '@/domain/entity/chat'
 
-export type ValidArticleStyle = Exclude<ArticleStyle, 'FRIENDLY' | 'NEUTRAL' | 'INSPIRATIONAL' | 'HUMOROUS' | 'SCIENTIFIC'>
+export type ValidArticleStyle = Exclude<
+  ArticleStyle,
+  'FRIENDLY' | 'NEUTRAL' | 'INSPIRATIONAL' | 'HUMOROUS' | 'SCIENTIFIC'
+>
 
 export interface IArticle extends Article {
   user?: IUser
@@ -19,7 +25,7 @@ export enum IArticleLanguage {
   en = 'en',
   es = 'es',
   fr = 'fr',
-  pt = 'pt'
+  pt = 'pt',
 }
 
 @ObjectType('Article')

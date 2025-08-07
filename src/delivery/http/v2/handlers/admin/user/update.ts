@@ -11,7 +11,7 @@ export const buildUpdateUser = ({ user }: Params): UpdateUser => {
       tokens: req.body.tokens,
       plan: req.body.plan_id,
       id: req.params.id,
-      userId: req.user?.id
+      userId: req.user.id,
     })
 
     return res.status(200).json(users)

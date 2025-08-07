@@ -24,7 +24,7 @@ import { buildArticleHandler } from './article'
 import { buildGeoHandler } from './geo'
 import { buildFileHandler } from './file'
 import { buildGraphQLHandler } from './graphql'
-import { buildRegionLockHandler } from './regionLock'
+import { buildRegionLockHandler } from './region-lock'
 import { buildHealthCheckHandler } from './health-check'
 import { buildDataAnalysisHandler } from './data-analysis'
 import { buildSEOArticleProofreadingHandler } from './seo-article-proofreading'
@@ -32,8 +32,11 @@ import { buildSEOArticleExpertJobHistoryHandler } from './seo-article-expert-job
 import { buildSEOArticleExpertHandler } from './seo-article-expert'
 import { buildSEOArticleTopicHandler } from './seo-article-topic'
 import { buildSEOArticleCategoryHandler } from './seo-article-category'
-import { buildSEOArticleHandler } from '@/delivery/http/v2/handlers/seo-article'
-import { buildAIToolsHandler } from '@/delivery/http/v2/handlers/ai-tools'
+import { buildSEOArticleHandler } from './seo-article'
+import { buildAIToolsHandler } from './ai-tools'
+import { buildIntentHandler } from './intent'
+import { buildGiftCertificateHandler } from './gift-certificate'
+import { buildExchangeRateHandler } from './exchange-rate'
 
 export const buildHandler = (params: DeliveryParams): Express.Router => {
   const router = Express.Router()
@@ -71,7 +74,10 @@ export const buildHandler = (params: DeliveryParams): Express.Router => {
     buildHealthCheckHandler(params),
     buildDataAnalysisHandler(params),
     buildSEOArticleHandler(params),
-    buildAIToolsHandler(params)
+    buildAIToolsHandler(params),
+    buildIntentHandler(params),
+    buildGiftCertificateHandler(params),
+    buildExchangeRateHandler(params),
   ]
 
   for (let i = 0; i < handlers.length; i++) {

@@ -6,7 +6,7 @@ import { UseCaseParams } from '@/domain/usecase/types'
 enum GetEmployeesStatsSort {
   ALPHABET,
   DESCENDING,
-  ASCENDING
+  ASCENDING,
 }
 
 export type GetEmployeesStatsExcel = (data: {
@@ -18,7 +18,10 @@ export type GetEmployeesStatsExcel = (data: {
   sort: GetEmployeesStatsSort
 }) => Promise<Buffer<ArrayBufferLike>>
 
-export function buildGetEmployeesStatsExcel({ adapter, service }: UseCaseParams): GetEmployeesStatsExcel {
+export function buildGetEmployeesStatsExcel({
+  adapter,
+  service,
+}: UseCaseParams): GetEmployeesStatsExcel {
   return async ({ search, userId, from, to, enterpriseId, sort }) => {
     try {
       const user = await adapter.userRepository.get({
@@ -27,10 +30,10 @@ export function buildGetEmployeesStatsExcel({ adapter, service }: UseCaseParams)
           employees: {
             where: {
               enterprise_id: enterpriseId,
-              role: EnterpriseRole.OWNER
-            }
-          }
-        }
+              role: EnterpriseRole.OWNER,
+            },
+          },
+        },
       })
       const isOwner = user?.employees?.length !== 0
       if (!isOwner && user.role !== Role.ADMIN) {
@@ -39,11 +42,11 @@ export function buildGetEmployeesStatsExcel({ adapter, service }: UseCaseParams)
 
       const [enterpriseSubscription, enterprise] = await Promise.all([
         adapter.subscriptionRepository.get({
-          where: { enterprise_id: enterpriseId }
+          where: { enterprise_id: enterpriseId },
         }),
         adapter.enterpriseRepository.get({
-          where: { id: enterpriseId }
-        })
+          where: { id: enterpriseId },
+        }),
       ])
 
       if (!enterpriseSubscription) {
@@ -55,11 +58,12 @@ export function buildGetEmployeesStatsExcel({ adapter, service }: UseCaseParams)
         from,
         to,
         enterpriseId,
-        sort
+        sort,
       })
       const collectedData: {
         totalTokensSpent: bigint
         totalTokensCredited: bigint
+        balance?: bigint
         employeesData: {
           email: string | null
           id: string
@@ -89,11 +93,28 @@ export function buildGetEmployeesStatsExcel({ adapter, service }: UseCaseParams)
             resolve({
               employeesData: employeesData,
               totalTokensSpent: totalTokensSpent,
-              totalTokensCredited: totalTokensCredited
-            })
+              totalTokensCredited: totalTokensCredited,
+            }),
         })
       })
-
+      if (enterprise!.name === 'RSHB') {
+        const employees = await adapter.employeeRepository.list({
+          where: { enterprise_id: enterpriseId },
+          include: { user: { include: { subscription: true } } },
+        })
+        collectedData.employeesData = collectedData.employeesData.map((employee) => {
+          return {
+            email: employee.email,
+            id: employee.id,
+            tg_id: employee.tg_id,
+            usedTokens: employee.usedTokens,
+            balance: employees.find((e) => e.id === employee.id)?.user?.subscription?.balance ?? 0n,
+          }
+        })
+        collectedData.balance = (await adapter.subscriptionRepository.get({
+          where: { enterprise_id: enterpriseId },
+        }))!.balance
+      }
       const excelDocument = adapter.excelGateway.createExcelStatsForEnterprise({
         enterpriseName: enterprise!.name,
         agreementConclusionDate: enterprise!.agreement_conclusion_date,
@@ -101,7 +122,8 @@ export function buildGetEmployeesStatsExcel({ adapter, service }: UseCaseParams)
         to: to,
         totalEnterpriseTokensCredited: collectedData.totalTokensCredited,
         totalEnterpriseTokensSpent: collectedData.totalTokensSpent,
-        enterpriseEmployees: collectedData.employeesData
+        balance: collectedData.balance,
+        enterpriseEmployees: collectedData.employeesData,
       })
 
       return excelDocument

@@ -1,7 +1,7 @@
 import { UserService } from '../user'
 import { buildModerate, Moderate } from './moderate'
 import { Adapter } from '../../types'
-import { buildVisionModerate, VisionModerate } from './visionModerate'
+import { buildVisionModerate, VisionModerate } from './vision-moderate'
 import { SubscriptionService } from '../subscription'
 import { ChatService } from '../chat'
 
@@ -22,6 +22,6 @@ export const buildModerationService = (params: Params): ModerationService => {
 
   return {
     moderate,
-    visionModerate
+    visionModerate,
   }
 }

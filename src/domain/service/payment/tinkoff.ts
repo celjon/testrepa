@@ -12,26 +12,26 @@ export const buildTinkoff = ({ paymentGateway }: Adapter): Tinkoff => {
       description: request.description,
       orderId,
       data: {
-        email: request.customer.email?.toLowerCase()
+        email: request.customer.email?.toLowerCase(),
       },
       receipt: {
         email: request.customer.email?.toLowerCase(),
-        taxation: 'usn_income',
+        taxation: 'osn',
         items: [
           {
             price: request.price * 100,
             amount: request.price * 100,
             quantity: 1,
             name: request.item.name,
-            tax: 'none'
-          }
-        ]
-      }
+            tax: 'none',
+          },
+        ],
+      },
     })
 
     const payment: IPayment = {
       id: result.paymentId.toString(),
-      url: result.paymentUrl
+      url: result.paymentUrl,
     }
 
     return payment

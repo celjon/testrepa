@@ -33,12 +33,12 @@ export const buildDownloadPDFsAsMarkdown = (): DownloadPDFsAsMarkdown => async (
           title: source.title,
           text,
           link,
-          meta
+          meta,
         }
       } catch (error) {
         return undefined
       }
-    })
+    }),
   )
   let downloadedPDFSources = await Promise.all(tasks)
   return downloadedPDFSources.filter((item) => item !== undefined)

@@ -1,5 +1,8 @@
-import { MarkdownContent } from '@/adapter/gateway/webSearch'
+import { MarkdownContent } from 'adapter/gateway/web-search'
 
 export type JinaApiClient = {
-  getMarkdownContent: (params: { url: string; signal?: AbortController }) => Promise<MarkdownContent>
+  getMarkdownContent: (params: {
+    url: string
+    signal?: AbortController
+  }) => Promise<MarkdownContent>
 }

@@ -4,7 +4,7 @@ import { Adapter } from '@/domain/types'
 import { IMessage, ISearchResult } from '@/domain/entity/message'
 import { IUser } from '@/domain/entity/user'
 import { Get } from './get'
-import { DecryptMessage } from './decrypt/decryptMessage'
+import { DecryptMessage } from './decrypt/decrypt-message'
 import { NotFoundError } from '@/domain/errors'
 
 type Params = Adapter & {
@@ -18,10 +18,15 @@ export type Update = (
     keyEncryptionKey: string | null
     data: Prisma.MessageUpdateArgs
   },
-  tx?: unknown
+  tx?: unknown,
 ) => Promise<IMessage | null | never>
 
-export const buildUpdate = ({ messageRepository, get, decryptMessage, cryptoGateway }: Params): Update => {
+export const buildUpdate = ({
+  messageRepository,
+  get,
+  decryptMessage,
+  cryptoGateway,
+}: Params): Update => {
   return async ({ user, keyEncryptionKey, data }, tx) => {
     // May cause inconsistencies if there are encrypted fields in DB but not in data.data
     if (!user.encryptedDEK || !keyEncryptionKey) {
@@ -30,7 +35,7 @@ export const buildUpdate = ({ messageRepository, get, decryptMessage, cryptoGate
 
     const dek = await cryptoGateway.decryptDEK({
       kek: keyEncryptionKey,
-      edek: user.encryptedDEK
+      edek: user.encryptedDEK,
     })
 
     if (!hasDataForEncryption(data) || !user.useEncryption) {
@@ -48,15 +53,15 @@ export const buildUpdate = ({ messageRepository, get, decryptMessage, cryptoGate
         user,
         keyEncryptionKey,
         data: {
-          where: data.where
-        }
+          where: data.where,
+        },
       },
-      tx
+      tx,
     )
     if (!storedMessage) {
       throw new NotFoundError({
         code: 'MESSAGE_NOT_FOUND',
-        message: 'Message not found'
+        message: 'Message not found',
       })
     }
 
@@ -70,21 +75,21 @@ export const buildUpdate = ({ messageRepository, get, decryptMessage, cryptoGate
     if (isString(originalContent)) {
       data.data.content = await cryptoGateway.encrypt({
         dek,
-        data: originalContent
+        data: originalContent,
       })
       data.data.isEncrypted = true
     }
     if (isString(originalFullContent)) {
       data.data.full_content = await cryptoGateway.encrypt({
         dek,
-        data: originalFullContent
+        data: originalFullContent,
       })
       data.data.isEncrypted = true
     }
     if (isString(originalReasoningContent)) {
       data.data.reasoning_content = await cryptoGateway.encrypt({
         dek,
-        data: originalReasoningContent
+        data: originalReasoningContent,
       })
       data.data.isEncrypted = true
     }
@@ -95,18 +100,18 @@ export const buildUpdate = ({ messageRepository, get, decryptMessage, cryptoGate
             ...searchResult,
             url: await cryptoGateway.encrypt({
               dek,
-              data: searchResult.url
+              data: searchResult.url,
             }),
             title: await cryptoGateway.encrypt({
               dek,
-              data: searchResult.title
+              data: searchResult.title,
             }),
             snippet: await cryptoGateway.encrypt({
               dek,
-              data: searchResult.snippet
-            })
+              data: searchResult.snippet,
+            }),
           }
-        })
+        }),
       )
       data.data.isEncrypted = true
     }

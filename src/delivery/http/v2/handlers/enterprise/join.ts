@@ -9,7 +9,7 @@ export const buildJoinEnterprise = ({ enterprise }: Params): JoinEnterprise => {
   return async (req, res) => {
     const subscription = await enterprise.join({
       inviteToken: req.body.inviteToken,
-      userId: req.user?.id
+      userId: req.user?.id,
     })
 
     return res.status(200).json(subscription)

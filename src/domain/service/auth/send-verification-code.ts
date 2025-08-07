@@ -1,6 +1,6 @@
 import { Adapter } from '@/domain/types'
 import { getRandom6DigitNumber } from '@/lib'
-import { IVerificationCode } from '@/domain/entity/verificationCode'
+import { IVerificationCode } from '@/domain/entity/verification-code'
 
 export type SendVerificationCode = (params: {
   userId: string
@@ -8,7 +8,10 @@ export type SendVerificationCode = (params: {
   locale?: string
 }) => Promise<[IVerificationCode, void] | never>
 
-export const buildSendVerificationCode = ({ verificationCodeRepository, mailGateway }: Adapter): SendVerificationCode => {
+export const buildSendVerificationCode = ({
+  verificationCodeRepository,
+  mailGateway,
+}: Adapter): SendVerificationCode => {
   return async ({ userId, email, locale }) => {
     const code = getRandom6DigitNumber()
     const verificationCodeTTLinMs = 24 * 3600 * 1000
@@ -18,15 +21,15 @@ export const buildSendVerificationCode = ({ verificationCodeRepository, mailGate
         data: {
           code,
           user_id: userId,
-          expires_at: new Date(new Date().getTime() + verificationCodeTTLinMs)
-        }
+          expires_at: new Date(new Date().getTime() + verificationCodeTTLinMs),
+        },
       }),
 
       mailGateway.sendVerificationMail({
         to: email,
         verificationCode: code,
-        locale: locale
-      })
+        locale: locale,
+      }),
     ])
   }
 }

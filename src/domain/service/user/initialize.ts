@@ -27,7 +27,7 @@ export type Initialize = (
   },
   invitedBy?: string | null,
   anonymousUser?: IUser | null,
-  linkedBefore?: boolean | null
+  linkedBefore?: boolean | null,
 ) => Promise<IUser | null | never>
 
 export const buildInitialize = ({
@@ -36,7 +36,7 @@ export const buildInitialize = ({
   planRepository,
   chatRepository,
   articleRepository,
-  oldEmailRepository
+  oldEmailRepository,
 }: Params): Initialize => {
   return async (data, invitedBy = null, anonymousUser = null, linkedBefore = false) => {
     let plan: IPlan
@@ -47,22 +47,22 @@ export const buildInitialize = ({
       referral = await referralRepository.get({
         where: {
           code: invitedBy,
-          disabled: false
+          disabled: false,
         },
         include: {
           template: {
             include: {
-              plan: true
-            }
-          }
-        }
+              plan: true,
+            },
+          },
+        },
       })
 
       if (!referral || !referral.template) {
         plan = (await planRepository.get({
           where: {
-            type: PlanType.FREE
-          }
+            type: PlanType.FREE,
+          },
         })) as IPlan
 
         tokens = BigInt(anonymousUser?.subscription!.balance ?? Math.trunc(plan.tokens))
@@ -73,19 +73,19 @@ export const buildInitialize = ({
     } else {
       plan = (await planRepository.get({
         where: {
-          type: PlanType.FREE
+          type: PlanType.FREE,
         },
         include: {
-          models: true
-        }
+          models: true,
+        },
       })) as IPlan
       tokens = BigInt(anonymousUser?.subscription!.balance ?? Math.trunc(plan.tokens))
     }
 
     const oldEmail = await oldEmailRepository.get({
       where: {
-        email: data.email?.toLowerCase()
-      }
+        email: data.email?.toLowerCase(),
+      },
     })
 
     const user = await userRepository.create({
@@ -96,22 +96,22 @@ export const buildInitialize = ({
         subscription: {
           create: {
             plan_id: plan.id,
-            balance: linkedBefore || oldEmail ? 0 : tokens
-          }
+            balance: linkedBefore || oldEmail ? 0 : tokens,
+          },
         },
         ...(referral && {
           referral_participants: {
             create: {
-              referral_id: referral.id
-            }
-          }
-        })
+              referral_id: referral.id,
+            },
+          },
+        }),
       },
       include: {
         subscription: {
           include: {
-            plan: true
-          }
+            plan: true,
+          },
         },
         employees: {
           include: {
@@ -119,25 +119,25 @@ export const buildInitialize = ({
               include: {
                 subscription: {
                   include: {
-                    plan: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    plan: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })
 
     if (anonymousUser) {
       // add anonymous user's chats to the new user
       await chatRepository.updateMany({
         where: { user_id: anonymousUser.id },
-        data: { user_id: user.id }
+        data: { user_id: user.id },
       })
       await articleRepository.updateMany({
         where: { user_id: anonymousUser.id },
-        data: { user_id: user.id }
+        data: { user_id: user.id },
       })
     }
 

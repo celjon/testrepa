@@ -2,13 +2,17 @@ import { UseCaseParams } from '@/domain/usecase/types'
 import { Role } from '@prisma/client'
 import { ForbiddenError } from '@/domain/errors'
 
-export type AddModel = (p: { userId: string; planId: string; modelId: string }) => Promise<void | never>
+export type AddModel = (p: {
+  userId: string
+  planId: string
+  modelId: string
+}) => Promise<void | never>
 export const buildAddModel = ({ adapter, service }: UseCaseParams): AddModel => {
   return async ({ userId, planId, modelId }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user || user.role !== Role.ADMIN) {
@@ -17,8 +21,8 @@ export const buildAddModel = ({ adapter, service }: UseCaseParams): AddModel => 
 
     const plan = await adapter.planRepository.get({
       where: {
-        id: planId
-      }
+        id: planId,
+      },
     })
 
     if (!plan) {
@@ -27,7 +31,7 @@ export const buildAddModel = ({ adapter, service }: UseCaseParams): AddModel => 
 
     await service.plan.addModel({
       type: plan.type,
-      modelId
+      modelId,
     })
   }
 }

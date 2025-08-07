@@ -11,7 +11,7 @@ export const buildUpdate = ({ message }: Params): Update => {
       userId: req.user?.id,
       keyEncryptionKey: req.user?.keyEncryptionKey,
       id: req.params.id,
-      content: req.body.content
+      content: req.body.content,
     })
 
     return res.status(200).json(data)

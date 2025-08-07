@@ -18,11 +18,11 @@ export type Create = (params: {
 export const buildCreate = ({ adapter }: UseCaseParams): Create => {
   return async ({ name, article_id, category_id }) => {
     const seoArticleTopic = await adapter.seoArticleTopicRepository.create({
-      data: { name, slug: slugification(name.en), article_id, category_id }
+      data: { name, slug: slugification(name.en), article_id, category_id },
     })
     if (!seoArticleTopic) {
       throw new NotFoundError({
-        code: 'TOPIC_NOT_FOUND'
+        code: 'TOPIC_NOT_FOUND',
       })
     }
 

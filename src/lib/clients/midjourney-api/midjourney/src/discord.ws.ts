@@ -10,10 +10,18 @@ import {
   MJSettings,
   MJShorten,
   OnModal,
-  WaitMjEvent
+  WaitMjEvent,
 } from './interfaces'
 import { MidjourneyApi } from './midjourney.api'
-import { content2progress, content2prompt, formatInfo, formatOptions, formatPrompts, nextNonce, uriToHash } from './utils'
+import {
+  content2progress,
+  content2prompt,
+  formatInfo,
+  formatOptions,
+  formatPrompts,
+  nextNonce,
+  uriToHash,
+} from './utils'
 import { VerifyHuman } from './verify.human'
 import WebSocket from 'isomorphic-ws'
 
@@ -28,7 +36,7 @@ export class WsMessage {
   public UserId = ''
   constructor(
     public config: MJConfig,
-    public MJApi: MidjourneyApi
+    public MJApi: MidjourneyApi,
   ) {
     this.ws = new this.config.WebSocket(this.config.WsBaseUrl)
     this.ws.addEventListener('open', this.open.bind(this))
@@ -52,8 +60,8 @@ export class WsMessage {
     this.ws.send(
       JSON.stringify({
         op: 1,
-        d: this.heartbeatInterval
-      })
+        d: this.heartbeatInterval,
+      }),
     )
     await this.timeout(1000 * 40)
     await this.heartbeat(num)
@@ -118,11 +126,11 @@ export class WsMessage {
           properties: {
             os: 'Mac OS X',
             browser: 'Chrome',
-            device: ''
+            device: '',
           },
-          compress: false
-        }
-      })
+          compress: false,
+        },
+      }),
     )
   }
   async timeout(ms: number) {
@@ -141,7 +149,9 @@ export class WsMessage {
             //error
             if (
               title == 'Action needed to continue' &&
-              !description.includes('Sorry! Our AI moderators feel your prompt might be against our community standards.')
+              !description.includes(
+                'Sorry! Our AI moderators feel your prompt might be against our community standards.',
+              )
             ) {
               return this.continue(message)
             } else if (title == 'Pending mod message') {
@@ -206,7 +216,7 @@ export class WsMessage {
             descriptions: embeds?.[0]?.description.split('\n\n'),
             url,
             proxy_url: embeds?.[0]?.image?.proxy_url,
-            options: formatOptions(components)
+            options: formatOptions(components),
           }
           this.emitMJ(id, describe)
           break
@@ -222,7 +232,7 @@ export class WsMessage {
             prompts: formatPrompts(embeds?.[0]?.description as string),
             options: formatOptions(components),
             id,
-            flags: message.flags
+            flags: message.flags,
           }
           this.emitMJ(id, shorten)
           break
@@ -328,7 +338,9 @@ export class WsMessage {
         this.log('Interaction failed', message.reason_code, message)
         if (this.getEventByNonce(message.nonce)) {
           const eventMsg: MJEmit = {
-            error: new Error(`This prompt is too big or too difficult. reason_code: ${message.reason_code}`)
+            error: new Error(
+              `This prompt is too big or too difficult. reason_code: ${message.reason_code}`,
+            ),
           }
           this.emit(this.getEventByNonce(message.nonce)?.nonce!, eventMsg)
         }
@@ -346,7 +358,7 @@ export class WsMessage {
         msgId: id,
         customId: appeal.custom_id,
         flags,
-        nonce: newnonce
+        nonce: newnonce,
       })
       await this.log('appeal.httpStatus', httpStatus)
       if (httpStatus == 204) {
@@ -376,7 +388,7 @@ export class WsMessage {
         msgId: id,
         customId: custom_id,
         flags,
-        nonce: newnonce
+        nonce: newnonce,
       })
       if (httpStatus == 204) {
         this.on(newnonce, (data) => {
@@ -392,7 +404,7 @@ export class WsMessage {
       return
     }
     const eventMsg: MJEmit = {
-      error
+      error,
     }
     this.emit(event.nonce, eventMsg)
   }
@@ -416,7 +428,7 @@ export class WsMessage {
       proxy_url,
       options: formatOptions(components),
       width,
-      height
+      height,
     }
     this.filterMessages(MJmsg)
     return
@@ -450,10 +462,10 @@ export class WsMessage {
       proxy_url,
       content: content,
       flags: flags,
-      progress: progress
+      progress: progress,
     }
     const eventMsg: MJEmit = {
-      message: MJmsg
+      message: MJmsg,
     }
     this.emitImage(event.nonce, eventMsg)
   }
@@ -467,7 +479,7 @@ export class WsMessage {
       return
     }
     const eventMsg: MJEmit = {
-      message: MJmsg
+      message: MJmsg,
     }
     this.emitImage(event.nonce, eventMsg)
   }
@@ -530,14 +542,26 @@ export class WsMessage {
     this.event.push({ event, callback })
   }
   onSystem(
-    event: 'ready' | 'messageCreate' | 'messageUpdate' | 'messageDelete' | 'interactionCreate' | 'interactionSuccess',
-    callback: (message: any) => void
+    event:
+      | 'ready'
+      | 'messageCreate'
+      | 'messageUpdate'
+      | 'messageDelete'
+      | 'interactionCreate'
+      | 'interactionSuccess',
+    callback: (message: any) => void,
   ) {
     this.on(event, callback)
   }
   private emitSystem(
-    type: 'ready' | 'messageCreate' | 'messageUpdate' | 'messageDelete' | 'interactionSuccess' | 'interactionCreate',
-    message: MJEmit
+    type:
+      | 'ready'
+      | 'messageCreate'
+      | 'messageUpdate'
+      | 'messageDelete'
+      | 'interactionSuccess'
+      | 'interactionCreate',
+    message: MJEmit,
   ) {
     this.emit(type, message)
   }
@@ -606,7 +630,7 @@ export class WsMessage {
     prompt,
     onmodal,
     messageId,
-    loading
+    loading,
   }: {
     nonce: string
     prompt?: string
@@ -647,7 +671,7 @@ export class WsMessage {
           this.waitMjEvents.set(nonce, { nonce })
           this.onceImage(nonce, handleImageMessage)
           return nonce
-        }
+        },
       })
       this.onceImage(nonce, handleImageMessage)
     })
@@ -687,7 +711,7 @@ export class WsMessage {
           id: message.id,
           flags: message.flags,
           content: message,
-          options: formatOptions(message.components)
+          options: formatOptions(message.components),
         })
       })
     })

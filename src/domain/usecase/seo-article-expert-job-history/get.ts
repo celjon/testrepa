@@ -7,12 +7,12 @@ export type Get = (params: { id: string }) => Promise<ISEOArticleExpertJobHistor
 export const buildGet = ({ adapter }: UseCaseParams): Get => {
   return async ({ id }) => {
     const seoArticleExpertJobHistory = await adapter.seoArticleExpertJobHistoryRepository.get({
-      where: { id }
+      where: { id },
     })
 
     if (!seoArticleExpertJobHistory) {
       throw new NotFoundError({
-        code: 'EXPERT_EXPERIENCE_NOT_FOUND'
+        code: 'EXPERT_EXPERIENCE_NOT_FOUND',
       })
     }
 

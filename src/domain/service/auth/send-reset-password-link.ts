@@ -15,29 +15,26 @@ export const buildSendResetLink = ({ mailGateway }: Adapter): SendResetPasswordL
   return async ({ user, metadata }) => {
     if (!user.email) {
       throw new ForbiddenError({
-        code: 'USER_NOT_REGISTERED'
+        code: 'USER_NOT_REGISTERED',
       })
     }
 
     const secret = config.jwt.secret + user.password
-    const frontendAddress = config.frontend.address
 
     const token = jwt.sign(
       {
-        userId: user.id
+        userId: user.id,
       },
       secret as string,
       {
-        expiresIn: '15m'
-      }
+        expiresIn: '15m',
+      },
     )
-
-    const recoveryURL = `${frontendAddress}${metadata?.locale ? metadata.locale : 'ru'}/reset-password?token=${token}`
 
     await mailGateway.sendPasswordRecoveryMail({
       to: user.email,
-      recoveryURL,
-      locale: metadata?.locale
+      token,
+      locale: metadata?.locale,
     })
 
     return

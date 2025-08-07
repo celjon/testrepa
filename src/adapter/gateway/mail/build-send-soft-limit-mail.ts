@@ -1,8 +1,10 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildCompileEmailTemplate } from './compile-email-template'
-import { getTranlation, Translation } from './translation'
+import { CompileTemplate } from './compile-email-template'
+import { getTranslation, Translation } from './translation'
 
-type Params = Pick<AdapterParams, 'mail'>
+type Params = Pick<AdapterParams, 'mail'> & {
+  compileTemplate: CompileTemplate
+}
 
 type TemplateParams = {
   t: Translation['softLimitMail']
@@ -10,23 +12,25 @@ type TemplateParams = {
 
 export type SendSoftLimitMail = (params: { to: string; locale?: string }) => Promise<void>
 
-export const buildSendSoftLimitMail = ({ mail: mailClient }: Params): SendSoftLimitMail => {
-  const compileTemplate = buildCompileEmailTemplate()
+export const buildSendSoftLimitMail = ({
+  mail: mailClient,
+  compileTemplate,
+}: Params): SendSoftLimitMail => {
   const template = compileTemplate<TemplateParams>('soft-limit.hbs')
 
   return async (params) => {
     const html = await template(
       {
-        t: getTranlation('softLimitMail', params.locale)
+        t: getTranslation('softLimitMail', params.locale),
       },
-      params.locale
+      params.locale,
     )
 
     await mailClient.client.sendMail({
       from: 'no-reply@bothub.chat',
       to: params.to,
-      subject: getTranlation('softLimitMailSubject', params.locale),
-      html
+      subject: getTranslation('softLimitMailSubject', params.locale),
+      html,
     })
   }
 }

@@ -6,10 +6,10 @@ export const buildDataAnalysisRules = ({ authRequired, validateSchema }: Middlew
     authRequired({ required: true }),
     body('sheet_name').optional().isString(),
     body('target_columns').exists().notEmpty().isArray({ min: 1 }),
-    validateSchema
+    validateSchema,
   ]
 
   return {
-    clusterizeExcelRules
+    clusterizeExcelRules,
   }
 }

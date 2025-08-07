@@ -17,7 +17,8 @@ export const buildGeneratePlanHints = ({ article }: Params): GeneratePlanHints =
       subject: req.body.subject,
       plan: req.body.plan,
       creativity: req.body.creativity,
-      model_id: req.body.model_id
+      model_id: req.body.model_id,
+      developerKeyId: req.user.developerKeyId,
     })
 
     setSSEHeaders(res)
@@ -35,13 +36,13 @@ export const buildGeneratePlanHints = ({ article }: Params): GeneratePlanHints =
         res.write(`data: ${JSON.stringify(error)}\n\n`)
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.on('error', () => {
       logger.warn({
         location: 'article.generatePlanHints',
-        message: 'Unexpected sse connection error'
+        message: 'Unexpected sse connection error',
       })
     })
 

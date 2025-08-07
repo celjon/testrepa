@@ -1,4 +1,4 @@
-import { IPaymentMethod } from '@/domain/entity/paymentMethod'
+import { IPaymentMethod } from '@/domain/entity/payment-method'
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
 

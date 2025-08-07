@@ -5,11 +5,13 @@ import { Middlewares } from '../../middlewares'
 import Express from 'express'
 import { buildFileRules } from './rules'
 import { createRouteHandler } from '../../routeHandler'
+import { buildGeneratePresignedUrl, GeneratePresignedUrl } from './generatePresignedUrl'
 
 type Params = Pick<DeliveryParams, 'file' | 'middlewares'>
 
 export type FileMethods = {
   decrypt: Decrypt
+  generatePresignedUrl: GeneratePresignedUrl
 }
 
 const buildRegisterRoutes = (methods: FileMethods, middlewares: Middlewares) => {
@@ -42,19 +44,23 @@ const buildRegisterRoutes = (methods: FileMethods, middlewares: Middlewares) => 
      */
     namespace.get('/decrypted/:fileId', decryptRules, createRouteHandler(methods.decrypt))
 
+    namespace.get('/presigned/:ext', createRouteHandler(methods.generatePresignedUrl))
+
     root.use('/file', namespace)
   }
 }
 
 export const buildFileHandler = (params: Params): IHandler => {
   const decrypt = buildDecrypt(params)
+  const generatePresignedUrl = buildGeneratePresignedUrl(params)
 
   return {
     registerRoutes: buildRegisterRoutes(
       {
-        decrypt
+        decrypt,
+        generatePresignedUrl,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

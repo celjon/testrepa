@@ -25,6 +25,6 @@ export const buildHealthCheckHandlers = ({ healthCheckGateway }: Params) => {
       const result = await healthCheckGateway.getMemoryUsage()
 
       return res.status(200).json(result)
-    }
+    },
   }
 }

@@ -24,3 +24,7 @@ export class SendObservable extends Observable<Chunk> {
     super(...observableParams)
   }
 }
+
+export type RawStreamChunk = ChatCompletionChunk
+
+export type RawStream = Observable<RawStreamChunk>

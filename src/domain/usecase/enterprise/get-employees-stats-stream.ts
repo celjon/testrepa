@@ -21,8 +21,8 @@ type EmployeesStatsEvent =
           status: 'SUCCEDED'
           user: {
             id: string
-            email: string
-            tg_id: string
+            email: string | null
+            tg_id: string | null
           }
         }[]
       }
@@ -44,7 +44,7 @@ type EmployeesStatsEvent =
 enum GetEmployeesStatsSort {
   ALPHABET,
   DESCENDING,
-  ASCENDING
+  ASCENDING,
 }
 
 export type GetEmployeesStatsStream = (data: {
@@ -60,7 +60,10 @@ export type GetEmployeesStatsStream = (data: {
   closeStream: () => void
 }>
 
-export const buildGetEmployeesStatsStream = ({ adapter, service }: UseCaseParams): GetEmployeesStatsStream => {
+export const buildGetEmployeesStatsStream = ({
+  adapter,
+  service,
+}: UseCaseParams): GetEmployeesStatsStream => {
   return async ({ search, userId, from, to, enterpriseId, sort, includeTransactions }) => {
     const user = await adapter.userRepository.get({
       where: { id: userId },
@@ -68,17 +71,17 @@ export const buildGetEmployeesStatsStream = ({ adapter, service }: UseCaseParams
         employees: {
           where: {
             enterprise_id: enterpriseId,
-            role: EnterpriseRole.OWNER
-          }
-        }
-      }
+            role: EnterpriseRole.OWNER,
+          },
+        },
+      },
     })
 
     const isOwner = user?.employees?.length !== 0
 
     if (!isOwner && user.role !== Role.ADMIN) {
       throw new ForbiddenError({
-        code: 'YOU_ARE_NOT_ADMIN'
+        code: 'YOU_ARE_NOT_ADMIN',
       })
     }
 
@@ -90,13 +93,13 @@ export const buildGetEmployeesStatsStream = ({ adapter, service }: UseCaseParams
       enterpriseId,
       sort,
       streamStopped,
-      includeTransactions
+      includeTransactions,
     })
     return {
       responseStream$,
       closeStream: () => {
         streamStopped.value = true
-      }
+      },
     }
   }
 }

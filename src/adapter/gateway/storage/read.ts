@@ -12,7 +12,7 @@ export const buildRead =
       const { data } = await axios<Buffer>({
         method: 'get',
         url,
-        responseType: 'arraybuffer'
+        responseType: 'arraybuffer',
       })
 
       return data

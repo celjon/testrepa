@@ -5,12 +5,19 @@ export const buildTransactionRules = ({ authRequired, validateSchema }: Middlewa
   const listTransactionsRules = [
     authRequired({}),
     query('page').optional().isInt({
-      min: 1
+      min: 1,
     }),
-    validateSchema
+    validateSchema,
+  ]
+  const excelGroupedByDeveloperKeyRules = [
+    authRequired({}),
+    query('from').optional().isDate(),
+    query('to').optional().isDate(),
+    validateSchema,
   ]
 
   return {
-    listTransactionsRules
+    listTransactionsRules,
+    excelGroupedByDeveloperKeyRules,
   }
 }

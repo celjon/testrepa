@@ -10,17 +10,17 @@ export const buildStop =
       where: {
         id: chatId,
         user_id: userId,
-        deleted: false
-      }
+        deleted: false,
+      },
     })
 
     if (!chat) {
       throw new NotFoundError({
-        code: 'CHAT_NOT_FOUND'
+        code: 'CHAT_NOT_FOUND',
       })
     }
 
     await service.job.stopAll({
-      chat
+      chat,
     })
   }

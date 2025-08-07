@@ -28,9 +28,9 @@ export const buildAIToolsHandler = (params: Params): IHandler => {
   return {
     registerRoutes: buildRegisterRoutes(
       {
-        completions: buildCompletions(params)
+        completions: buildCompletions(params),
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

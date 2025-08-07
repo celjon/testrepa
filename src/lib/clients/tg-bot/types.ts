@@ -4,5 +4,5 @@ export type TgBotClient = {
 
 export enum TgBotParseMode {
   MARKDOWN = 'MARKDOWN',
-  HTML = 'HTML'
+  HTML = 'HTML',
 }

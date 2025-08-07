@@ -18,24 +18,24 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
       where: {
         user_id: userId,
         id: chatId,
-        deleted: false
-      }
+        deleted: false,
+      },
     })
 
     if (!chat) {
       throw new NotFoundError({
-        code: 'CHAT_NOT_FOUND'
+        code: 'CHAT_NOT_FOUND',
       })
     }
 
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -45,10 +45,10 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
       query: {
         where: {
           chat_id: chatId,
-          choiced: true
+          choiced: true,
         },
         orderBy: {
-          created_at: 'desc'
+          created_at: 'desc',
         },
         include: {
           model: {
@@ -56,10 +56,10 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
           transaction: true,
           set: true,
@@ -67,37 +67,37 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
             include: {
               original: true,
               preview: true,
-              buttons: true
-            }
+              buttons: true,
+            },
           },
           buttons: {
             where: {
-              disabled: false
-            }
+              disabled: false,
+            },
           },
           all_buttons: {
-            distinct: ['action']
+            distinct: ['action'],
           },
           attachments: {
             include: {
-              file: true
-            }
+              file: true,
+            },
           },
           voice: {
             include: {
-              file: true
-            }
+              file: true,
+            },
           },
           video: {
             include: {
-              file: true
-            }
+              file: true,
+            },
           },
-          job: true
-        }
+          job: true,
+        },
       },
       page: page || 1,
-      quantity: quantity || 20
+      quantity: quantity || 20,
     })
 
     return messages

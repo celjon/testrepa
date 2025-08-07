@@ -1,4 +1,4 @@
-import { IModelProvider } from '@/domain/entity/modelProvider'
+import { IModelProvider } from '@/domain/entity/model-provider'
 import { UseCaseParams } from '@/domain/usecase/types'
 
 export type UpdateProvider = (params: {
@@ -14,63 +14,63 @@ export const buildUpdateProvider =
     if (order) {
       const provider = await adapter.modelProviderRepository.get({
         where: {
-          id
-        }
+          id,
+        },
       })
       const orderProvider = await adapter.modelProviderRepository.get({
         where: {
           parent_id: null,
-          order
-        }
+          order,
+        },
       })
 
       if (provider && orderProvider) {
         await adapter.modelProviderRepository.update({
           where: {
-            id: orderProvider.id
+            id: orderProvider.id,
           },
           data: {
-            order: provider.order
-          }
+            order: provider.order,
+          },
         })
       }
     }
 
     const provider = await adapter.modelProviderRepository.update({
       where: {
-        id
+        id,
       },
       data: {
         order,
         disabled,
-        fallback_id: fallbackId
-      }
+        fallback_id: fallbackId,
+      },
     })
 
     if (order) {
       const providers = await adapter.modelProviderRepository.list({
         where: {
-          parent_id: null
+          parent_id: null,
         },
         orderBy: {
-          order: 'asc'
+          order: 'asc',
         },
         select: {
-          id: true
-        }
+          id: true,
+        },
       })
 
       await Promise.all(
         providers.map(({ id }, index) =>
           adapter.modelProviderRepository.update({
             where: {
-              id
+              id,
             },
             data: {
-              order: index + 1
-            }
-          })
-        )
+              order: index + 1,
+            },
+          }),
+        ),
       )
     }
 

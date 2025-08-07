@@ -15,11 +15,14 @@ import {
   SendRawSync,
   SpeechCreate,
   TranscriptionsCreate,
-  TranslationsCreate
+  TranslationsCreate,
 } from './raw'
-import { buildGetModels, GetModels } from './getModels'
+import { buildGetModels, GetModels } from './get-models'
 
-type Params = Pick<AdapterParams, 'openaiBalancer' | 'openRouterBalancer' | 'openaiTranscriptionBalancer'>
+type Params = Pick<
+  AdapterParams,
+  'openaiBalancer' | 'openRouterBalancer' | 'openaiTranscriptionBalancer'
+>
 
 export type OpenaiGateway = {
   getModels: GetModels
@@ -60,27 +63,27 @@ export const buildOpenaiGateway = (params: Params): OpenaiGateway => {
       completions: {
         create: {
           sync: buildSendRawSync(params),
-          stream: buildSendRawStream(params)
-        }
+          stream: buildSendRawStream(params),
+        },
       },
       translations: {
-        create: buildTranslationsCreate(params)
+        create: buildTranslationsCreate(params),
       },
       images: {
-        create: buildImagesGenerate(params)
+        create: buildImagesGenerate(params),
       },
       transcriptions: {
-        create: buildTranscriptionsCreate(params)
+        create: buildTranscriptionsCreate(params),
       },
       speech: {
-        create: buildSpeechCreate(params)
+        create: buildSpeechCreate(params),
       },
       moderations: {
-        create: buildModerationsCreate(params)
+        create: buildModerationsCreate(params),
       },
       embeddings: {
-        create: buildEmbeddingsCreate(params)
-      }
-    }
+        create: buildEmbeddingsCreate(params),
+      },
+    },
   }
 }

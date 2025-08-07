@@ -22,7 +22,8 @@ export interface RawFileWithoutBuffer {
   path: string
 }
 
-export const getFileURL = (file: Pick<IFile, 'path'>) => new URL(`https://${config.minio.host}/${MINIO_STORAGE}/${file.path}`)
+export const getFileURL = (file: Pick<IFile, 'path'>) =>
+  new URL(`https://${config.minio.host}/${MINIO_STORAGE}/${file.path}`)
 
 @ObjectType('File')
 export class FileGraphQLObject implements IFile {
@@ -49,4 +50,39 @@ export class FileGraphQLObject implements IFile {
 
   @Field(() => Date)
   created_at!: Date
+
+  @Field(() => Date, { nullable: true })
+  deleted_at!: Date | null
 }
+/**
+ * @openapi
+ * components:
+ *   entities:
+ *      File:
+ *          required:
+ *            - id
+ *            - size
+ *            - isEncrypted
+ *            - created_at
+ *          properties:
+ *            id:
+ *                type: string
+ *            type:
+ *                type: string
+ *            name:
+ *                type: string
+ *            url:
+ *                type: string
+ *            path:
+ *                type: string
+ *            size:
+ *                type: string
+ *            isEncrypted:
+ *                type: string
+ *            created_at:
+ *                type: string
+ *                format: date
+ *            deleted_at:
+ *                type: string
+ *                format: date
+ */

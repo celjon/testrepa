@@ -7,10 +7,12 @@ type Params = Pick<DeliveryParams, 'model'>
 
 export type AutoUpdateAccountQueueHARFiles = (req: AuthRequest, res: Response) => Promise<void>
 
-export const buildAutoUpdateAccountQueueHARFiles = ({ model }: Params): AutoUpdateAccountQueueHARFiles => {
+export const buildAutoUpdateAccountQueueHARFiles = ({
+  model,
+}: Params): AutoUpdateAccountQueueHARFiles => {
   return async (req, res) => {
     const { stream, close } = await model.autoUpdateAccountQueueHARFiles({
-      accountQueueId: req.params.id
+      accountQueueId: req.params.id,
     })
     setSSEHeaders(res)
 
@@ -27,7 +29,7 @@ export const buildAutoUpdateAccountQueueHARFiles = ({ model }: Params): AutoUpda
       complete: () => {
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.connection.on('close', () => {

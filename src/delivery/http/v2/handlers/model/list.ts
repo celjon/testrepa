@@ -9,7 +9,9 @@ export type List = (req: AuthRequest, res: Response) => Promise<Response>
 
 export const buildList = ({ model }: Params): List => {
   return async (req, res) => {
-    const platform = (typeof req.query?.platform === 'string' ? req.query.platform : req.body?.platform) ?? Platform.WEB
+    const platform =
+      (typeof req.query?.platform === 'string' ? req.query.platform : req.body?.platform) ??
+      Platform.WEB
     const models = await model.list({
       userId: req.user?.id,
       parentId: req.query.parentId?.toString() ?? null,

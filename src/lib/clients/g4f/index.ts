@@ -34,14 +34,14 @@ export class G4FClient extends OpenAI {
   constructor({ apiUrl, harManagerUrl }: G4FClientOptions) {
     super({
       apiKey: ' ',
-      baseURL: apiUrl
+      baseURL: apiUrl,
     })
 
     this.api = axios.create({
-      baseURL: apiUrl
+      baseURL: apiUrl,
     })
     this.harManager = axios.create({
-      baseURL: harManagerUrl
+      baseURL: harManagerUrl,
     })
   }
 
@@ -54,7 +54,9 @@ export class G4FClient extends OpenAI {
       let req
 
       if (provider) {
-        req = await this.api.get<ModelList>(this.api.defaults.baseURL?.slice(0, -3) + `/api/${provider}/models`)
+        req = await this.api.get<ModelList>(
+          this.api.defaults.baseURL?.slice(0, -3) + `/api/${provider}/models`,
+        )
       } else {
         req = await this.api.get<ModelList>('/models')
       }
@@ -92,21 +94,28 @@ export class G4FClient extends OpenAI {
   }
 
   public async readHARFile(params: { name: string; apiUrl: string }): Promise<Buffer> {
-    const { data } = await this.harManager.get<Buffer>(`/har-file/${params.name}?worker_url=${params.apiUrl}`, {
-      responseType: 'arraybuffer'
-    })
+    const { data } = await this.harManager.get<Buffer>(
+      `/har-file/${params.name}?worker_url=${params.apiUrl}`,
+      {
+        responseType: 'arraybuffer',
+      },
+    )
 
     return data
   }
 
-  public async writeHARFile(params: { name: string; buffer: Buffer<ArrayBufferLike>; apiUrl: string }): Promise<void> {
+  public async writeHARFile(params: {
+    name: string
+    buffer: Buffer<ArrayBufferLike>
+    apiUrl: string
+  }): Promise<void> {
     const formData = new FormData()
 
     formData.append('file', params.buffer, params.name)
     formData.append('worker_url', params.apiUrl)
 
     await this.harManager.post(`/har-file`, formData.getBuffer(), {
-      headers: formData.getHeaders()
+      headers: formData.getHeaders(),
     })
   }
 
@@ -124,17 +133,19 @@ export class G4FClient extends OpenAI {
       `/har-file/auto-update`,
       {
         ...params,
-        accounts: params.accounts.map(({ harFileName, emailPassword, imapServer, apiUrl,...account }) => ({
-          ...account,
-          har_file_name: harFileName,
-          email_password: emailPassword,
-          imap_server: imapServer,
-          worker_url: apiUrl
-        }))
+        accounts: params.accounts.map(
+          ({ harFileName, emailPassword, imapServer, apiUrl, ...account }) => ({
+            ...account,
+            har_file_name: harFileName,
+            email_password: emailPassword,
+            imap_server: imapServer,
+            worker_url: apiUrl,
+          }),
+        ),
       },
       {
-        responseType: 'stream'
-      }
+        responseType: 'stream',
+      },
     )
   }
 
@@ -147,7 +158,7 @@ export const newClient = (options: G4FClientOptions): { client: G4FClient } => {
   const client = new G4FClient(options)
 
   return {
-    client
+    client,
   }
 }
 

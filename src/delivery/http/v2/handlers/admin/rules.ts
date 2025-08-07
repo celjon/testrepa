@@ -10,7 +10,7 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     authRequired({ adminOnly: true }),
     query('page').optional().isNumeric(),
     query('search').optional().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const updateUserRules = [
@@ -18,12 +18,17 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     authRequired({ adminOnly: true }),
     check('plan_id').exists().isString(),
     check('tokens').exists().isNumeric(),
-    validateSchema
+    validateSchema,
   ]
 
   const transactionListRules = [allowedIps(config.admin.allowed_ips), authRequired()]
 
-  const planModelRules = [allowedIps(config.admin.allowed_ips), authRequired({}), check('modelId').exists().isString(), validateSchema]
+  const planModelRules = [
+    allowedIps(config.admin.allowed_ips),
+    authRequired({}),
+    check('modelId').exists().isString(),
+    validateSchema,
+  ]
 
   const updatePlanRules = [
     allowedIps(config.admin.allowed_ips),
@@ -31,7 +36,7 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     check('price').optional().isInt(),
     check('tokens').optional().isInt(),
     check('defaultModelId').optional().isInt(),
-    validateSchema
+    validateSchema,
   ]
 
   const createReferralTemplateRules = [
@@ -44,7 +49,7 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     check('tokens').optional().isNumeric(),
     check('minWithdrawAmount').exists().isNumeric(),
     check('encouragementPercentage').exists().isNumeric(),
-    validateSchema
+    validateSchema,
   ]
 
   const deleteReferralTemplateRules = [allowedIps(config.admin.allowed_ips), authRequired()]
@@ -54,7 +59,7 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     authRequired({ adminOnly: true }),
     query('dateFrom').isISO8601().toDate().withMessage('Invalid date received'),
     query('dateTo').isISO8601().toDate().withMessage('Invalid date received'),
-    validateSchema
+    validateSchema,
   ]
 
   const getTokensByModelRules = [
@@ -62,7 +67,7 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     authRequired({ adminOnly: true }),
     query('dateFrom').isISO8601().toDate().withMessage('Invalid date received'),
     query('dateTo').isISO8601().toDate().withMessage('Invalid date received'),
-    validateSchema
+    validateSchema,
   ]
 
   const getProductUsageReportRules = [
@@ -71,7 +76,7 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     query('dateFrom').isISO8601().toDate().withMessage('Invalid date received'),
     query('dateTo').isISO8601().toDate().withMessage('Invalid date received'),
     query('product').isString().isIn(validProducts),
-    validateSchema
+    validateSchema,
   ]
 
   const listReferralTemplateRules = [
@@ -80,7 +85,7 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     query('page').optional().isNumeric(),
     query('search').optional().isString(),
     query('locale').optional().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const updateModelRules = [allowedIps(config.admin.allowed_ips), authRequired({}), validateSchema]
@@ -90,21 +95,21 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     authRequired({}),
     body('modelId').notEmpty().isString(),
     check('platform').optional().isIn([Platform.API, Platform.WEB, Platform.TELEGRAM]),
-    validateSchema
+    validateSchema,
   ]
 
   const modelSetDefaultRules = [
     allowedIps(config.admin.allowed_ips),
     authRequired({}),
     body('modelId').notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const unsetDefaultModelRules = [
     allowedIps(config.admin.allowed_ips),
     authRequired({}),
     body('modelId').notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   return {
@@ -122,6 +127,6 @@ export const buildAdminRules = ({ allowedIps, authRequired, validateSchema }: Mi
     getProductUsageReportRules,
     modelEnableDisableRules,
     modelSetDefaultRules,
-    unsetDefaultModelRules
+    unsetDefaultModelRules,
   }
 }

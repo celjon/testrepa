@@ -9,12 +9,12 @@ export const buildUpdateRegion = ({ adapter }: UseCaseParams): UpdateRegion => {
   return async ({ userId, region }) => {
     const user = await adapter.userRepository.update({
       where: { id: userId },
-      data: { region }
+      data: { region },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 

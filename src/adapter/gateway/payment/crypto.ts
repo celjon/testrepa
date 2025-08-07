@@ -1,6 +1,7 @@
 import { AdapterParams } from '@/adapter/types'
 import { Invoice } from '@/lib/clients/hashbon'
 import { IPayment, IPaymentRequest } from '@/domain/entity/payment'
+import { config } from '@/config'
 
 type Params = Pick<AdapterParams, 'hashbon'>
 
@@ -18,17 +19,18 @@ export const buildCrypto = ({ hashbon }: Params): Crypto => {
           item: data.description,
           num: 1,
           price: data.price,
-          descr: data.description
-        }
-      ]
+          descr: data.description,
+        },
+      ],
+      successUrl: config.frontend.address,
     })
     return {
       id: invoice.id.toString(),
-      url: invoice.payFormLink
+      url: invoice.payFormLink,
     } as IPayment
   }
 
   return {
-    createPayment
+    createPayment,
   }
 }

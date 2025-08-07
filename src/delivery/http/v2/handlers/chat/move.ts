@@ -13,7 +13,7 @@ export const buildMove =
       userId: req.user.id,
       chatIds: req.body.ids,
       groupId: req.body?.groupId,
-      startChatId: req.body?.startChatId
+      startChatId: req.body?.startChatId,
     })
 
     return res.status(200).send(chats)

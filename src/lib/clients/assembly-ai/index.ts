@@ -4,12 +4,12 @@ type Params = {
   apiKey: string
 }
 
-export const newClient = ({ apiKey }: Params): {client: AssemblyAI} => {
+export const newClient = ({ apiKey }: Params): { client: AssemblyAI } => {
   const client = new AssemblyAI({
-    apiKey: apiKey
+    apiKey: apiKey,
   })
 
   return {
-    client
+    client,
   }
 }

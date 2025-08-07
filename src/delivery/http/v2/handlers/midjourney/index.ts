@@ -3,7 +3,7 @@ import Express from 'express'
 import { createRouteHandler } from '../../routeHandler'
 import { DeliveryParams } from '@/delivery/types'
 import { Middlewares } from '@/delivery/http/v2/middlewares'
-import { buildGetDiscordAccounts, GetDiscordAccounts } from './getDiscordAccounts'
+import { buildGetDiscordAccounts, GetDiscordAccounts } from './get-discord-accounts'
 import { config } from '@/config'
 
 type Params = Pick<DeliveryParams, 'midjourney' | 'middlewares'>
@@ -21,7 +21,7 @@ const buildRegisterRoutes =
       '/discord-account/list',
       allowedIps(config.admin.allowed_ips),
       authRequired(),
-      createRouteHandler(methods.getDiscordAccounts)
+      createRouteHandler(methods.getDiscordAccounts),
     )
 
     root.use('/midjourney', namespace)
@@ -33,9 +33,9 @@ export const buildMidjourneyHandler = (params: Params): IHandler => {
   return {
     registerRoutes: buildRegisterRoutes(
       {
-        getDiscordAccounts
+        getDiscordAccounts,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

@@ -1,4 +1,4 @@
-import { IModelAccount } from '@/domain/entity/modelAccount'
+import { IModelAccount } from '@/domain/entity/model-account'
 import { ForbiddenError } from '@/domain/errors'
 import { UseCaseParams } from '@/domain/usecase/types'
 import { FileType, ModelAccountAuthType } from '@prisma/client'
@@ -21,6 +21,8 @@ export type CreateAccount = (params: {
   g4fPassword?: string
   g4fEmailPassword?: string
   g4fIMAPServer?: string
+  g4fOnlinePhaseSeconds?: number | null
+  g4fOfflinePhaseSeconds?: number | null
   mjChannelId?: string
   mjServerId?: string
   mjToken?: string
@@ -42,13 +44,15 @@ export const buildCreateAccount =
     g4fPassword,
     g4fEmailPassword,
     g4fIMAPServer,
+    g4fOnlinePhaseSeconds,
+    g4fOfflinePhaseSeconds,
     mjChannelId,
     mjServerId,
     mjToken,
     mjConcurrency,
     queueId,
     disabledAt,
-    mjPersonalizationKey
+    mjPersonalizationKey,
   }) => {
     let modelAccount
     const harManagerUrl = cfg.model_providers.g4f.har_manager_url
@@ -66,36 +70,38 @@ export const buildCreateAccount =
           ...(queueId && {
             queue: {
               connect: {
-                id: queueId
-              }
-            }
+                id: queueId,
+              },
+            },
           }),
-          disabled_at: disabledAt
-        }
+          disabled_at: disabledAt,
+        },
       })
 
       await adapter.midjourneyGateway.account.add({
         id: modelAccount.id,
         SalaiToken: mjToken,
         ServerId: mjServerId,
-        ChannelId: mjChannelId
+        ChannelId: mjChannelId,
       })
     } else if (authType && (g4fAuth || g4fApiUrl)) {
       let g4f_password: string | null = null
       let g4f_email_password: string | null = null
 
-      const dek = await adapter.cryptoGateway.getKeyFromString(config.model_providers.g4f.encryption_key)
+      const dek = await adapter.cryptoGateway.getKeyFromString(
+        config.model_providers.g4f.encryption_key,
+      )
 
       if (g4fPassword) {
         g4f_password = await adapter.cryptoGateway.encrypt({
           dek,
-          data: g4fPassword
+          data: g4fPassword,
         })
       }
       if (g4fEmailPassword) {
         g4f_email_password = await adapter.cryptoGateway.encrypt({
           dek: dek,
-          data: g4fEmailPassword
+          data: g4fEmailPassword,
         })
       }
       let harFileUpdatedAt = null
@@ -104,7 +110,7 @@ export const buildCreateAccount =
           name: g4fHarFile.originalname,
           buffer: g4fHarFile.buffer,
           apiUrl: g4fApiUrl,
-          harManagerUrl: harManagerUrl
+          harManagerUrl: harManagerUrl,
         })
         harFileUpdatedAt = new Date()
       }
@@ -120,27 +126,30 @@ export const buildCreateAccount =
               create: {
                 type: FileType.HAR,
                 name: g4fHarFile.originalname,
-                path: g4fHarFile.path
-              }
-            }
+                path: g4fHarFile.path,
+              },
+            },
           }),
           g4f_har_file_updated_at: harFileUpdatedAt,
           g4f_email: g4fEmail,
           g4f_password,
           g4f_email_password,
           g4f_imap_server: g4fIMAPServer,
+          g4f_online_phase_seconds: g4fOnlinePhaseSeconds,
+          g4f_offline_phase_seconds: g4fOfflinePhaseSeconds,
+          g4f_phase_updated_at: new Date(),
           ...(queueId && {
             queue: {
               connect: {
-                id: queueId
-              }
-            }
+                id: queueId,
+              },
+            },
           }),
-          disabled_at: disabledAt
+          disabled_at: disabledAt,
         },
         include: {
-          g4f_har_file: true
-        }
+          g4f_har_file: true,
+        },
       })
     } else {
       throw new ForbiddenError({ code: 'UNKNOWN_ACCOUNT_PROVIDER' })

@@ -24,7 +24,7 @@ export const buildButton = (): Button => {
 
       if (!client)
         throw new NotFoundError({
-          code: 'MIDJOURNEY_ACCOUNT_NOT_FOUND'
+          code: 'MIDJOURNEY_ACCOUNT_NOT_FOUND',
         })
 
       const result = await client.buttonClick({
@@ -32,7 +32,7 @@ export const buildButton = (): Button => {
         customId: button,
         content,
         flags,
-        callback
+        callback,
       })
 
       return result ? { ...result, accountId: config.accountId } : null
@@ -43,18 +43,18 @@ export const buildButton = (): Button => {
             level: 'error',
             location: 'midjourney.button',
             message: `${JSON.stringify(error.response?.data)}`,
-            meta: error
+            meta: error,
           })
 
           throw new BaseError({
             httpStatus: error.response.status,
             message: error.response?.data?.message,
-            code: 'MIDJOURNEY_ERROR'
+            code: 'MIDJOURNEY_ERROR',
           })
         } else {
           logger.error({
             location: 'midjourney.button ',
-            message: `${String(error)}`
+            message: `${String(error)}`,
           })
         }
       }

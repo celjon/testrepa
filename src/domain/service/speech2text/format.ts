@@ -10,7 +10,7 @@ export const buildFormat =
     const { message } = await openrouterGateway.sync({
       settings: {
         model: 'openai/gpt-4o-mini',
-        temperature: 0.7
+        temperature: 0.7,
       },
       messages: [
         {
@@ -18,9 +18,9 @@ export const buildFormat =
           content: `
           Read the text role-playing. Don't add anything to the text. Use easy to human read formatting.
           ${content}
-          `
-        }
-      ]
+          `,
+        },
+      ],
     })
 
     return message.content

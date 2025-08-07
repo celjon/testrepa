@@ -21,6 +21,6 @@ export const buildReferralUseCase = (params: UseCaseParams): ReferralUseCase => 
     create,
     delete: d,
     list,
-    withdraw
+    withdraw,
   }
 }

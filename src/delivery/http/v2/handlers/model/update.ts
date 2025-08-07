@@ -10,7 +10,7 @@ export const buildUpdate = ({ model }: Params): Update => {
   return async (req, res) => {
     const newModel = await model.update({
       userId: req.user.id,
-      ...req.body
+      ...req.body,
     })
 
     return res.status(200).json(newModel)

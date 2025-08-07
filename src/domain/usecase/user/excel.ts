@@ -10,11 +10,11 @@ export const buildExcel = ({ adapter, service }: UseCaseParams): Excel => {
       omit: {
         kekSalt: true,
         password: true,
-        encryptedDEK: true
+        encryptedDEK: true,
       },
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user || user.role !== Role.ADMIN) {

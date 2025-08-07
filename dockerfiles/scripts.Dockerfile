@@ -6,6 +6,8 @@ COPY package*.json ./
 COPY bun.lock ./
 COPY prisma ./prisma/
 COPY src/config ./src/config
+COPY src/lib ./src/lib
+COPY src/adapter ./src/adapter
 COPY ci_scripts ./ci_scripts
 COPY tsconfig.json ./tsconfig.json
 

@@ -1,15 +1,16 @@
 import { Field, ID, ObjectType } from 'type-graphql'
 import { Region, Role, User } from '@prisma/client'
 import { ChatGraphQLObject, IChat } from './chat'
-import { DeveloperKeyGraphQLObject, IDeveloperKey } from './developerKey'
-import { EmployeeGraphQLObject, IEmployee } from '@/domain/entity/employee'
-import { IReferralParticipant, ReferralParticipantGraphQLObject } from './referralParticipant'
-import { IShortcut, ShortcutGraphQLObject } from './shortcut'
-import { IStrike, StrikeGraphQLObject } from './strike'
-import { ISubscription, SubscriptionGraphQLObject } from '@/domain/entity/subscription'
-import { ITransaction, TransactionGraphQLObject } from './transaction'
+import { DeveloperKeyGraphQLObject, IDeveloperKey } from './developer-key'
+import { EmployeeGraphQLObject, IEmployee } from './employee'
+import { ReferralParticipantGraphQLObject, IReferralParticipant } from './referral-participant'
+import { ShortcutGraphQLObject, IShortcut } from './shortcut'
+import { StrikeGraphQLObject, IStrike } from './strike'
+import { SubscriptionGraphQLObject, ISubscription } from './subscription'
+import { TransactionGraphQLObject, ITransaction } from './transaction'
 import { GroupGraphQLObject, IGroup } from './group'
-import { IOldEmail } from '@/domain/entity/oldEmail'
+import { IOldEmail } from './old-email'
+import { RefreshTokenGraphQLObject, IRefreshToken } from './refresh-token'
 
 export interface IUser extends User {
   chats?: Array<IChat>
@@ -22,6 +23,7 @@ export interface IUser extends User {
   subscription?: ISubscription
   transactions?: Array<ITransaction>
   oldEmails?: Array<IOldEmail>
+  refresh_tokens?: Array<IRefreshToken>
 }
 
 @ObjectType('User')
@@ -76,6 +78,9 @@ export class UserGraphQLObject implements IUser {
   @Field(() => Boolean)
   useEncryption!: boolean
 
+  @Field(() => [String], { defaultValue: [] })
+  old_ids!: string[]
+
   encryptedDEK!: Uint8Array<ArrayBufferLike> | null
 
   kekSalt!: Uint8Array<ArrayBufferLike> | null
@@ -112,6 +117,9 @@ export class UserGraphQLObject implements IUser {
 
   @Field(() => [TransactionGraphQLObject], { nullable: true })
   transactions?: Array<ITransaction>
+
+  @Field(() => [RefreshTokenGraphQLObject], { defaultValue: [] })
+  refresh_tokens?: Array<IRefreshToken>
 
   @Field(() => String, { nullable: true })
   tg_id_before!: string | null
@@ -153,5 +161,5 @@ export class UserGraphQLObject implements IUser {
  *                $ref: '#/components/entities/Subscription'
  *            region:
  *                type: string
- *                enum: [RU, KZ, OTHER]
+ *                enum: [RU, KZ, GLOBAL]
  */

@@ -21,7 +21,7 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
   const getOAuthConsentURLRules = [
     query('provider').exists().notEmpty().isString(),
     query('redirect_uri').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -52,21 +52,21 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
    */
   const oauthAuthorizationRules = [
     check('provider').exists().notEmpty().isString(),
-    check('code').exists().notEmpty().isString(),
+    check('code').exists().isString(),
     check('device_id').optional().isString(),
     check('code_verifier').optional().isString(),
     check('redirect_uri').exists().notEmpty().isString(),
     check('fingerprint').optional().isString(),
     check('yandexMetricClientId').optional({ nullable: true }).isString(),
     check('yandexMetricYclid').optional({ nullable: true }).isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const fingerprintAuthorizationRules = [
     check('fingerprint').exists().notEmpty().isString(),
     check('yandexMetricClientId').optional({ nullable: true }).isString(),
     check('yandexMetricYclid').optional({ nullable: true }).isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -95,7 +95,7 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
     check('fingerprint').optional().isString(),
     check('yandexMetricClientId').optional({ nullable: true }).isString(),
     check('yandexMetricYclid').optional({ nullable: true }).isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -155,7 +155,27 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
     header('botsecretkey').exists().notEmpty().isString(),
     check('yandexMetricClientId').optional({ nullable: true }).isString(),
     check('yandexMetricYclid').optional({ nullable: true }).isString(),
-    validateSchema
+    validateSchema,
+  ]
+
+  /**
+   * @openapi
+   * components:
+   *   rules:
+   *      refreshToken:
+   *          required:
+   *             - refreshToken
+   *             - accessToken
+   *          properties:
+   *             refreshToken:
+   *                type: string
+   *             accessToken:
+   *                type: string
+   */
+  const refreshRules = [
+    check('refreshToken').exists().notEmpty().isString(),
+    check('accessToken').exists().notEmpty().isString(),
+    validateSchema,
   ]
 
   /**
@@ -169,11 +189,29 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
    *             refreshToken:
    *                type: string
    */
-  const refreshRules = [check('refreshToken').exists().notEmpty().isString(), validateSchema]
+  const logoutRules = [
+    authRequired({}),
+    check('refreshToken').exists().notEmpty().isString(),
+    validateSchema,
+  ]
 
-  const getMeRules = [header('authorization').exists().notEmpty().isString(), authRequired({}), validateSchema]
+  const logoutAllRules = [
+    authRequired({}),
+    header('authorization').exists().notEmpty().isString(),
+    validateSchema,
+  ]
 
-  const generateTelegramConnectionTokenRules = [header('authorization').exists().notEmpty().isString(), authRequired({}), validateSchema]
+  const getMeRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    validateSchema,
+  ]
+
+  const generateTelegramConnectionTokenRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    validateSchema,
+  ]
 
   /**
    * @openapi
@@ -190,10 +228,14 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('telegramConnectionToken').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
-  const generateTelegramUnlinkTokenRules = [header('authorization').exists().notEmpty().isString(), authRequired({}), validateSchema]
+  const generateTelegramUnlinkTokenRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    validateSchema,
+  ]
 
   /**
    * @openapi
@@ -210,7 +252,7 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('telegramUnlinkToken').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -227,17 +269,21 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
   const verifyEmailRules = [
     check('userId').exists().notEmpty().isString(),
     check('verificationCode').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const changeEmailRules = [
     authRequired({}),
     check('newEmail').exists().isEmail(),
     check('password').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
-  const enableEncryptionRules = [authRequired({}), check('password').exists().notEmpty().isString(), validateSchema]
+  const enableEncryptionRules = [
+    authRequired({}),
+    check('password').exists().notEmpty().isString(),
+    validateSchema,
+  ]
 
   /**
    * @openapi
@@ -250,7 +296,11 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
    *             receiveEmails:
    *                type: boolean
    */
-  const toggleReceiveEmailsRules = [authRequired({}), check('receiveEmails').exists().notEmpty().isBoolean(), validateSchema]
+  const toggleReceiveEmailsRules = [
+    authRequired({}),
+    check('receiveEmails').exists().notEmpty().isBoolean(),
+    validateSchema,
+  ]
 
   /**
    * @openapi
@@ -270,7 +320,7 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
     authRequired({}),
     check('oldPassword').exists().notEmpty().isString(),
     check('newPassword').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -291,7 +341,7 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
     authRequired({}),
     check('yandexMetricClientId').optional({ nullable: true }).isString(),
     check('yandexMetricYclid').optional({ nullable: true }).isString(),
-    validateSchema
+    validateSchema,
   ]
 
   return {
@@ -313,6 +363,8 @@ export const buildAuthRules = ({ authRequired, validateSchema }: Middlewares) =>
     unlinkTelegramRules,
     toggleReceiveEmailsRules,
     changePasswordRules,
-    updateYandexMetricRules
+    updateYandexMetricRules,
+    logoutRules,
+    logoutAllRules,
   }
 }

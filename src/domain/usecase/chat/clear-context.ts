@@ -3,7 +3,11 @@ import { ActionType } from '@prisma/client'
 import { IMessage } from '@/domain/entity/message'
 import { NotFoundError } from '@/domain/errors'
 
-export type ClearContext = (params: { userId: string; keyEncryptionKey: string | null; chatId: string }) => Promise<IMessage | never>
+export type ClearContext = (params: {
+  userId: string
+  keyEncryptionKey: string | null
+  chatId: string
+}) => Promise<IMessage | never>
 
 export const buildClearContext = ({ adapter, service }: UseCaseParams): ClearContext => {
   return async ({ userId, keyEncryptionKey, chatId }) => {
@@ -11,31 +15,31 @@ export const buildClearContext = ({ adapter, service }: UseCaseParams): ClearCon
       where: {
         id: chatId,
         user_id: userId,
-        deleted: false
-      }
+        deleted: false,
+      },
     })
 
     if (!chat) {
       throw new NotFoundError({
-        code: 'CHAT_NOT_FOUND'
+        code: 'CHAT_NOT_FOUND',
       })
     }
 
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
     const clearContextJob = await service.job.create({
       name: 'CLEAR_CONTEXT',
-      chat
+      chat,
     })
 
     await clearContextJob.start()
@@ -46,12 +50,12 @@ export const buildClearContext = ({ adapter, service }: UseCaseParams): ClearCon
         keyEncryptionKey,
         data: {
           where: {
-            chat_id: chat.id
+            chat_id: chat.id,
           },
           data: {
-            disabled: true
-          }
-        }
+            disabled: true,
+          },
+        },
       }),
       service.message.storage.create({
         user,
@@ -62,13 +66,13 @@ export const buildClearContext = ({ adapter, service }: UseCaseParams): ClearCon
             chat_id: chat.id,
             user_id: userId,
             action_type: ActionType.CONTEXT_CLEARED,
-            job_id: clearContextJob.id
+            job_id: clearContextJob.id,
           },
           include: {
-            job: true
-          }
-        }
-      })
+            job: true,
+          },
+        },
+      }),
     ])
 
     service.chat.eventStream.emit({
@@ -76,19 +80,19 @@ export const buildClearContext = ({ adapter, service }: UseCaseParams): ClearCon
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message
-        }
-      }
+          message,
+        },
+      },
     })
 
     chat =
       (await adapter.chatRepository.update({
         where: {
-          id: chat.id
+          id: chat.id,
         },
         data: {
-          total_caps: 0
-        }
+          total_caps: 0,
+        },
       })) ?? chat
 
     service.chat.eventStream.emit({
@@ -97,10 +101,10 @@ export const buildClearContext = ({ adapter, service }: UseCaseParams): ClearCon
         name: 'UPDATE',
         data: {
           chat: {
-            total_caps: chat.total_caps
-          }
-        }
-      }
+            total_caps: chat.total_caps,
+          },
+        },
+      },
     })
 
     await clearContextJob.done()

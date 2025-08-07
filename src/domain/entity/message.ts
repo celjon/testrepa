@@ -1,13 +1,21 @@
 import { Field, ID, ObjectType } from 'type-graphql'
-import { ActionType, Attachment, Message, MessageStatus, MidjourneyMode, Platform, SearchStatus } from '@prisma/client'
+import {
+  ActionType,
+  Attachment,
+  Message,
+  MessageStatus,
+  MidjourneyMode,
+  Platform,
+  SearchStatus,
+} from '@prisma/client'
 import { IChat } from '@/domain/entity/chat'
 import { ITransaction, TransactionGraphQLObject } from './transaction'
 import { FileGraphQLObject, IFile } from './file'
 import { IModel, ModelGraphQLObject } from './model'
 import { IJob, JobGraphQLObject } from './job'
-import { IMessageImage, MessageImageGraphQLObject } from './messageImage'
-import { IMessageButton, MessageButtonGraphQLObject } from './messageButton'
-import { IMessageSet, MessageSetGraphQLObject } from './messageSet'
+import { IMessageImage, MessageImageGraphQLObject } from './message-image'
+import { IMessageButton, MessageButtonGraphQLObject } from './message-button'
+import { IMessageSet, MessageSetGraphQLObject } from './message-set'
 import { IVoice, VoiceGraphQLObject } from './voice'
 import { IUser } from './user'
 import { IVideo, VideoGraphQLObject } from '@/domain/entity/video'
@@ -194,48 +202,50 @@ export class AttachmentGraphQLObject implements IAttachment {
  * @openapi
  * components:
  *   entities:
- *      Message:
- *          required:
- *            - id
- *            - name
- *            - created_at
- *            - type
- *          properties:
- *            id:
- *                type: string
- *            role:
- *                type: string
- *                enum: [assistant, user, action]
- *            type:
- *                type: string
- *                enum: [TEXT, IMAGE, ACTION]
- *            status:
- *                type: string
- *                enum: [PENDING, DONE]
- *            tokens:
- *                type: number
- *            action_type:
- *                type: string
- *                enum: [CONTEXT_CLEARED]
- *            user_id:
- *                type: string
- *            chat_id:
- *                type: string
- *            additional_content:
- *                type: string
- *            tg_bot_message_id:
- *                type: string
- *            disabled:
- *                type: boolean
- *            content:
- *                type: string
- *            request_id:
- *                type: string
- *            transaction_id:
- *                type: string
- *            model_id:
- *                type: string
- *            created_at:
- *                type: string
- *                format: date
+ *     Message:
+ *       required:
+ *         - id
+ *         - name
+ *         - created_at
+ *         - type
+ *       properties:
+ *         id:
+ *           type: string
+ *         role:
+ *           type: string
+ *           enum: [assistant, user, action]
+ *         type:
+ *           type: string
+ *           enum: [TEXT, IMAGE, ACTION]
+ *         status:
+ *           type: string
+ *           enum: [PENDING, DONE]
+ *         tokens:
+ *           type: number
+ *         action_type:
+ *           type: string
+ *           enum: [CONTEXT_CLEARED]
+ *         user_id:
+ *           type: string
+ *         chat_id:
+ *           type: string
+ *         additional_content:
+ *           type: string
+ *         tg_bot_message_id:
+ *           type: string
+ *         disabled:
+ *           type: boolean
+ *         content:
+ *           type: string
+ *         request_id:
+ *           type: string
+ *         transaction_id:
+ *           type: string
+ *         images:
+ *           $ref: '#/components/entities/MessageImage'
+ *         model_id:
+ *           type: string
+ *         created_at:
+ *           type: string
+ *           format: date
  */

@@ -14,7 +14,8 @@ export const buildGenerateSubject = ({ article }: Params): GenerateSubject => {
       model_id: req.body.model_id as string,
       userId: req.user?.id,
       locale: getLocale(req.headers['accept-language']),
-      generationMode: req.body.generationMode as string
+      generationMode: req.body.generationMode as string,
+      developerKeyId: req.user.developerKeyId,
     })
 
     setSSEHeaders(res)
@@ -33,13 +34,13 @@ export const buildGenerateSubject = ({ article }: Params): GenerateSubject => {
         res.write(`data: ${JSON.stringify(error)}\n\n`)
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.on('error', () => {
       logger.warn({
         location: 'article.generateSubject',
-        message: 'Unexpected sse connection error'
+        message: 'Unexpected sse connection error',
       })
     })
 

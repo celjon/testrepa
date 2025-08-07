@@ -15,8 +15,8 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
     let group = await adapter.groupRepository.get({
       where: {
         id,
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     if (!group) {
@@ -25,13 +25,13 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
 
     group = await adapter.groupRepository.update({
       where: {
-        id
+        id,
       },
       data: {
         name,
         highlight,
-        order
-      }
+        order,
+      },
     })
 
     return group

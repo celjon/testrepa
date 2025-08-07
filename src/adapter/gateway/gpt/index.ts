@@ -3,13 +3,17 @@ import { buildSync, Sync } from './sync'
 import { buildSend, Send } from './send'
 import { StorageGateway } from '../storage'
 
-type Params = Pick<AdapterParams, 'openaiBalancer' | 'openRouterBalancer' | 'openaiModerationBalancer'> & {
+type Params = Pick<
+  AdapterParams,
+  'openaiBalancer' | 'openRouterBalancer' | 'openaiModerationBalancer'
+> & {
   storageGateway: StorageGateway
 }
 
 export type GptGateway = {
   send: Send
   sync: Sync
+  openaiBalancer: AdapterParams['openaiBalancer']
 }
 
 export const buildGptGateway = (params: Params): GptGateway => {
@@ -18,6 +22,7 @@ export const buildGptGateway = (params: Params): GptGateway => {
 
   return {
     send,
-    sync
+    sync,
+    openaiBalancer: params.openaiBalancer,
   }
 }

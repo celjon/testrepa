@@ -16,9 +16,12 @@ export const buildGetEmployeesStatsExcel = ({ enterprise }: Params): GetEmployee
         enterpriseId: req.params.id,
         from: req.query.from ? new Date(req.query.from as string) : new Date(),
         to: req.query.to ? new Date(req.query.to as string) : new Date(),
-        sort: prepareSortParams(req.query.sort as string)
+        sort: prepareSortParams(req.query.sort as string),
       })
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      )
       res.setHeader('Content-Disposition', 'attachment; filename=report.xlsx')
       res.send(fileBuffer)
     } catch (error) {

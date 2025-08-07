@@ -8,6 +8,6 @@ export type WebhookUseCase = {
 export const buildWebhookUseCase = (params: UseCaseParams): WebhookUseCase => {
   const payment = buildPayment(params)
   return {
-    payment
+    payment,
   }
 }

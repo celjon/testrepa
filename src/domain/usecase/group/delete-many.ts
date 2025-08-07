@@ -8,19 +8,19 @@ export const buildDeleteMany = ({ adapter }: UseCaseParams): DeleteMany => {
     const groups = await adapter.groupRepository.list({
       where: {
         id: {
-          in: ids
+          in: ids,
         },
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     await adapter.groupRepository.deleteMany({
       where: {
         id: {
-          in: ids
+          in: ids,
         },
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     return groups

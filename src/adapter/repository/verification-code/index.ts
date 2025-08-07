@@ -15,6 +15,6 @@ export const buildVerificationCodeRepository = ({ db }: Params): VerificationCod
   return {
     create: buildCreate({ db }),
     get: buildGet({ db }),
-    delete: buildDelete({ db })
+    delete: buildDelete({ db }),
   }
 }

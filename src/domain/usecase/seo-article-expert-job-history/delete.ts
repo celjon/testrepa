@@ -6,15 +6,17 @@ export type Delete = (params: { id: string }) => Promise<ISEOArticleExpertJobHis
 
 export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
   return async ({ id }) => {
-    let seoArticleExpertJobHistory = await adapter.seoArticleExpertJobHistoryRepository.get({ where: { id } })
+    let seoArticleExpertJobHistory = await adapter.seoArticleExpertJobHistoryRepository.get({
+      where: { id },
+    })
     if (seoArticleExpertJobHistory) {
       seoArticleExpertJobHistory = await adapter.seoArticleExpertJobHistoryRepository.delete({
-        where: { id }
+        where: { id },
       })
     }
     if (!seoArticleExpertJobHistory) {
       throw new NotFoundError({
-        code: 'EXPERT_EXPERIENCE_NOT_FOUND'
+        code: 'EXPERT_EXPERIENCE_NOT_FOUND',
       })
     }
 

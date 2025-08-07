@@ -1,10 +1,12 @@
 import { Prisma } from '@prisma/client'
 import { AdapterParams } from '@/adapter/types'
-import { IVerificationCode } from '@/domain/entity/verificationCode'
+import { IVerificationCode } from '@/domain/entity/verification-code'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Get = (params: Prisma.VerificationCodeFindFirstArgs) => Promise<IVerificationCode | null | never>
+export type Get = (
+  params: Prisma.VerificationCodeFindFirstArgs,
+) => Promise<IVerificationCode | null | never>
 
 export const buildGet = ({ db }: Params): Get => {
   return async (params) => {

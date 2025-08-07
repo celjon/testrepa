@@ -5,7 +5,7 @@ import { ISEOArticleExpertJobHistory } from '@/domain/entity/seo-article-expert-
 export type Create = (params: {
   post: string
   from_date: Date
-  to_date: Date
+  to_date: Date | null
   company: string
   city: string
   duties: string[]
@@ -15,14 +15,34 @@ export type Create = (params: {
 }) => Promise<ISEOArticleExpertJobHistory>
 
 export const buildCreate = ({ adapter }: UseCaseParams): Create => {
-  return async ({ post, from_date, to_date, company, city, duties, achievements, description, seo_expert_id }) => {
+  return async ({
+    post,
+    from_date,
+    to_date,
+    company,
+    city,
+    duties,
+    achievements,
+    description,
+    seo_expert_id,
+  }) => {
     const seoArticleExpertJobHistory = await adapter.seoArticleExpertJobHistoryRepository.create({
-      data: { post, from_date, to_date, company, city, duties, achievements, description, seo_expert_id }
+      data: {
+        post,
+        from_date,
+        to_date: to_date ?? null,
+        company,
+        city,
+        duties,
+        achievements,
+        description,
+        seo_expert_id,
+      },
     })
 
     if (!seoArticleExpertJobHistory) {
       throw new NotFoundError({
-        code: 'EXPERT_EXPERIENCE_NOT_FOUND'
+        code: 'EXPERT_EXPERIENCE_NOT_FOUND',
       })
     }
 

@@ -2,7 +2,10 @@ import { body, param } from 'express-validator'
 import { Middlewares } from '../../middlewares'
 
 export const buildSEOArticleProofreadingRules = ({ authRequired, validateSchema }: Middlewares) => {
-  const getSEOArticleProofreadingRules = [param('seoArticleProofreadingId').isString(), validateSchema]
+  const getSEOArticleProofreadingRules = [
+    param('seoArticleProofreadingId').isString(),
+    validateSchema,
+  ]
   /**
    * @openapi
    * components:
@@ -22,7 +25,7 @@ export const buildSEOArticleProofreadingRules = ({ authRequired, validateSchema 
     authRequired({ adminOnly: true }),
     body('expert_id').isString(),
     body('article_id').isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -48,7 +51,7 @@ export const buildSEOArticleProofreadingRules = ({ authRequired, validateSchema 
     authRequired({ adminOnly: true }),
     body('expert_id').isString(),
     body('articleIds').isArray().notEmpty(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -67,12 +70,12 @@ export const buildSEOArticleProofreadingRules = ({ authRequired, validateSchema 
   const updateSEOArticleProofreadingRules = [
     authRequired({ adminOnly: true }),
     param('seoArticleProofreadingId').isString(),
-    validateSchema
+    validateSchema,
   ]
   const deleteSEOArticleProofreadingRules = [
     authRequired({ adminOnly: true }),
     param('seoArticleProofreadingId').isString(),
-    validateSchema
+    validateSchema,
   ]
 
   return {
@@ -80,6 +83,6 @@ export const buildSEOArticleProofreadingRules = ({ authRequired, validateSchema 
     createManySEOArticleProofreadingRules,
     createSEOArticleProofreadingRules,
     updateSEOArticleProofreadingRules,
-    deleteSEOArticleProofreadingRules
+    deleteSEOArticleProofreadingRules,
   }
 }

@@ -12,7 +12,7 @@ export type GenerateInviteToken = (data: { enterpriseId: string; userId: string 
 export const buildGenerateInviteToken = ({ adapter }: UseCaseParams): GenerateInviteToken => {
   return async ({ enterpriseId, userId }) => {
     const employee = await adapter.employeeRepository.get({
-      where: { user_id: userId, enterprise_id: enterpriseId }
+      where: { user_id: userId, enterprise_id: enterpriseId },
     })
     if (!employee || employee.role !== EnterpriseRole.OWNER) {
       throw new ForbiddenError()
@@ -22,8 +22,8 @@ export const buildGenerateInviteToken = ({ adapter }: UseCaseParams): GenerateIn
       inviteToken: signJWT({
         enterpriseId: enterpriseId,
         expiresIn: '90d',
-        keyEncryptionKey: null
-      })
+        keyEncryptionKey: null,
+      }),
     }
   }
 }

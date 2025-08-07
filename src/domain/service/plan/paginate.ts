@@ -1,7 +1,11 @@
 import { Adapter, PlanRepository } from '@/domain/types'
 import { IPlan } from '@/domain/entity/plan'
 
-export type Paginate = (data: { query: Parameters<PlanRepository['list']>[0]; page?: number; quantity?: number }) => Promise<
+export type Paginate = (data: {
+  query: Parameters<PlanRepository['list']>[0]
+  page?: number
+  quantity?: number
+}) => Promise<
   | {
       data: Array<IPlan>
       pages: number
@@ -14,27 +18,27 @@ export const buildPaginate = ({ planRepository }: Adapter): Paginate => {
     if (typeof page != 'undefined' && page < 1) {
       return {
         data: [],
-        pages: 0
+        pages: 0,
       }
     }
 
     const chats = await planRepository.list({
       ...query,
       ...(page && { skip: (page - 1) * quantity }),
-      ...(page && { take: quantity })
+      ...(page && { take: quantity }),
     })
 
     const pages = page
       ? Math.ceil(
           (await planRepository.count({
-            where: query?.where
-          })) / quantity
+            where: query?.where,
+          })) / quantity,
         )
       : 1
 
     return {
       data: chats,
-      pages
+      pages,
     }
   }
 }

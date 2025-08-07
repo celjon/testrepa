@@ -1,10 +1,12 @@
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
-import { IModelAccountQueue } from '@/domain/entity/modelAccountQueue'
+import { IModelAccountQueue } from '@/domain/entity/model-account-queue'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type List = (data?: Prisma.ModelAccountQueueFindManyArgs) => Promise<Array<IModelAccountQueue> | never>
+export type List = (
+  data?: Prisma.ModelAccountQueueFindManyArgs,
+) => Promise<Array<IModelAccountQueue> | never>
 
 export const buildList = ({ db }: Params): List => {
   return async (data) => {

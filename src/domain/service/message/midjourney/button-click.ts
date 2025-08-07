@@ -1,8 +1,9 @@
+import { config } from '@/config'
 import { Adapter } from '@/domain/types'
 import { ChatService } from '../../chat'
 import { JobService } from '../../job'
 import { IMessage } from '@/domain/entity/message'
-import { IMessageButton } from '@/domain/entity/messageButton'
+import { IMessageButton } from '@/domain/entity/message-button'
 import { NotFoundError } from '@/domain/errors'
 import { FileType, MessageStatus, ModelAccountStatus } from '@prisma/client'
 import { ModelService } from '../../model'
@@ -10,11 +11,11 @@ import { MidjourneyService } from '../../midjourney'
 import { UserService } from '../../user'
 import { SubscriptionService } from '../../subscription'
 import { ModerationService } from '../../moderation'
-import { DefineButtonsAndImages } from './defineButtons'
+import { DefineButtonsAndImages } from './define-buttons'
 import { Callback } from './callback'
 import { MessageStorage } from '../storage/types'
 import { IUser } from '@/domain/entity/user'
-import { ProcessMj, ProcessMjParams } from './processMj'
+import { ProcessMj, ProcessMjParams } from './process-mj'
 import { determinePlatform } from '@/domain/entity/action'
 
 type Params = Adapter & {
@@ -31,7 +32,12 @@ type Params = Adapter & {
   processMj: ProcessMj
 }
 
-export type MidjourneyButtonClick = (params: { button: IMessageButton; user: IUser; keyEncryptionKey: string | null }) => Promise<IMessage>
+export type MidjourneyButtonClick = (params: {
+  button: IMessageButton
+  user: IUser
+  keyEncryptionKey: string | null
+  developerKeyId?: string
+}) => Promise<IMessage>
 
 export const buildMidjourneyButtonClick = ({
   defineButtonsAndImages,
@@ -46,28 +52,46 @@ export const buildMidjourneyButtonClick = ({
   fileRepository,
   chatRepository,
   modelService,
-  userRepository,
-  subscriptionService
+  subscriptionService,
 }: Params): MidjourneyButtonClick => {
-  return async ({ button, user, keyEncryptionKey }) => {
-    if (!button.mj_account_id || !button.mj_message_id || !button.mj_native_label || !button.mj_native_custom) {
+  return async ({ button, user, keyEncryptionKey, developerKeyId }) => {
+    if (
+      !button.mj_account_id ||
+      !button.mj_message_id ||
+      !button.mj_native_label ||
+      !button.mj_native_custom
+    ) {
       throw new NotFoundError({
-        code: 'MESSAGE_BUTTON_NOT_FOUND'
+        code: 'MESSAGE_BUTTON_NOT_FOUND',
       })
     }
 
     if (!button.message || !button.message.chat) {
       throw new NotFoundError({
-        code: 'MESSAGE_NOT_FOUND'
+        code: 'MESSAGE_NOT_FOUND',
       })
     }
 
     let { chat, user_id: userId, platform, model, model_version, mj_mode } = button.message
-    const { mj_account_id: accountId, mj_native_custom: buttonCustom, mj_message_id: nativeMessageId } = button
+    if (!userId) {
+      throw new NotFoundError({
+        code: 'USER_NOT_FOUND',
+      })
+    }
+
+    const subscription = await userService.getActualSubscription(user)
+
+    await subscriptionService.checkBalance({ subscription, estimate: 0 })
+
+    const {
+      mj_account_id: accountId,
+      mj_native_custom: buttonCustom,
+      mj_message_id: nativeMessageId,
+    } = button
 
     const mjJob = await jobService.create({
       name: 'MODEL_GENERATION',
-      chat
+      chat,
     })
 
     let mjMessage = await messageStorage.create({
@@ -81,21 +105,21 @@ export const buildMidjourneyButtonClick = ({
           user_id: userId,
           model_id: chat.model_id,
           ...(model && {
-            model_id: model.id
+            model_id: model.id,
           }),
           model_version: model_version,
           mj_mode: mj_mode,
-          job_id: mjJob.id
+          job_id: mjJob.id,
         },
         include: {
           model: {
             include: {
-              icon: true
-            }
+              icon: true,
+            },
           },
-          job: true
-        }
-      }
+          job: true,
+        },
+      },
     })
 
     chatService.eventStream.emit({
@@ -103,9 +127,9 @@ export const buildMidjourneyButtonClick = ({
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: mjMessage
-        }
-      }
+          message: mjMessage,
+        },
+      },
     })
     ;(async () => {
       try {
@@ -119,34 +143,34 @@ export const buildMidjourneyButtonClick = ({
               message: {
                 id: mjMessage.id,
                 job_id: mjJob.id,
-                job: mjJob.job
-              }
-            }
-          }
+                job: mjJob.job,
+              },
+            },
+          },
         })
 
         const account = await modelAccountRepository.get({
           where: {
             id: accountId,
-            status: ModelAccountStatus.FAST
-          }
+            status: ModelAccountStatus.FAST,
+          },
         })
 
         if (!account || !account.mj_channel_id || !account.mj_server_id || !account.mj_token)
           throw new NotFoundError({
-            code: 'MIDJOURNEY_QUEUES_NOT_FOUND'
+            code: 'MIDJOURNEY_QUEUES_NOT_FOUND',
           })
 
         const imagineParams: ProcessMjParams = {
           modelFunction: 'button',
           message: {
-            ...mjMessage
+            ...mjMessage,
           },
           callback: callback({ mjJob, chat, messageId: mjMessage.id }),
           button: {
             messageId: nativeMessageId,
-            buttonCustom
-          }
+            buttonCustom,
+          },
         }
         const buttonClickResult = await processMj({
           account,
@@ -154,92 +178,62 @@ export const buildMidjourneyButtonClick = ({
             accountId,
             ChannelId: account.mj_channel_id,
             SalaiToken: account.mj_token,
-            ServerId: account.mj_server_id
+            ServerId: account.mj_server_id,
           },
-          imagineParams
+          imagineParams,
         })
 
         if (!buttonClickResult) return mjJob
 
         await mjJob.update({
-          mj_native_message_id: nativeMessageId
+          mj_native_message_id: nativeMessageId,
         })
 
         const { messageImages, messageButtons } = await defineButtonsAndImages({
           generationResult: buttonClickResult,
-          messageId: mjMessage.id
+          messageId: mjMessage.id,
         })
 
-        const caps = await modelService.getCaps({
+        const caps = await modelService.getCaps.image({
           model: mjJob.chat.model!,
-          message: mjMessage!
+          message: mjMessage!,
         })
-
-        if (!userId) {
-          throw new NotFoundError({
-            code: 'USER_NOT_FOUND'
-          })
-        }
-
-        const user = await userRepository.get({
-          where: {
-            id: userId
-          },
-          include: {
-            employees: {
-              include: {
-                enterprise: true
-              }
-            }
-          }
-        })
-
-        if (!user) {
-          throw new NotFoundError({
-            code: 'USER_NOT_FOUND'
-          })
-        }
 
         const employee = user.employees && user.employees.length > 0 ? user.employees[0] : null
-        const userSubscription = await userService.getActualSubscription(user)
-
-        if (!userSubscription) {
-          throw new NotFoundError({
-            code: 'USER_SUBSCRIPTION_NOT_FOUND'
-          })
-        }
 
         const writeOffResult = await subscriptionService.writeOffWithLimitNotification({
-          subscription: userSubscription,
+          subscription: subscription!,
           amount: caps,
           meta: {
             userId,
             enterpriseId: employee?.enterprise_id,
             platform: determinePlatform(platform ?? undefined, !!employee?.enterprise_id),
-            model_id: mjJob.chat.model_id!
-          }
+            model_id: mjJob.chat.model_id!,
+            provider_id: config.model_providers.midjourney.id,
+            developerKeyId,
+          },
         })
         const { transaction, subscription: updatedSubscription } = writeOffResult
 
         chat =
           (await chatRepository.update({
             where: {
-              id: chat.id
+              id: chat.id,
             },
             data: {
               total_caps: {
-                increment: caps
-              }
-            }
+                increment: caps,
+              },
+            },
           })) ?? chat
 
         const files = await fileRepository.createMany(
           messageImages.map((messageImage) => ({
             data: {
               type: FileType.IMAGE,
-              path: messageImage.original?.path
-            }
-          }))
+              path: messageImage.original?.path,
+            },
+          })),
         )
 
         const imageUrls: string[] = []
@@ -253,7 +247,7 @@ export const buildMidjourneyButtonClick = ({
         }
 
         await mjJob.update({
-          mj_native_message_id: nativeMessageId
+          mj_native_message_id: nativeMessageId,
         })
 
         await mjJob.done()
@@ -261,27 +255,27 @@ export const buildMidjourneyButtonClick = ({
         mjMessage =
           (await messageRepository.update({
             where: {
-              id: mjMessage.id
+              id: mjMessage.id,
             },
             data: {
               status: MessageStatus.DONE,
               transaction_id: transaction.id,
               additional_content: {
-                imageUrls
+                imageUrls,
               },
               images: {
-                connect: messageImages.map(({ id }) => ({ id }))
+                connect: messageImages.map(({ id }) => ({ id })),
               },
               buttons: {
-                connect: messageButtons.map(({ id }) => ({ id }))
+                connect: messageButtons.map(({ id }) => ({ id })),
               },
               attachments: {
                 createMany: {
                   data: files.map((file) => ({
-                    file_id: file.id
-                  }))
-                }
-              }
+                    file_id: file.id,
+                  })),
+                },
+              },
             },
             include: {
               transaction: true,
@@ -290,33 +284,33 @@ export const buildMidjourneyButtonClick = ({
                   icon: true,
                   parent: {
                     include: {
-                      icon: true
-                    }
-                  }
-                }
+                      icon: true,
+                    },
+                  },
+                },
               },
               images: {
                 include: {
                   original: true,
                   preview: true,
-                  buttons: true
-                }
+                  buttons: true,
+                },
               },
               buttons: {
                 where: {
-                  disabled: false
-                }
+                  disabled: false,
+                },
               },
               all_buttons: {
-                distinct: ['action']
+                distinct: ['action'],
               },
               job: true,
               attachments: {
                 include: {
-                  file: true
-                }
-              }
-            }
+                  file: true,
+                },
+              },
+            },
           })) ?? mjMessage
 
         chatService.eventStream.emit({
@@ -325,41 +319,43 @@ export const buildMidjourneyButtonClick = ({
             name: 'UPDATE',
             data: {
               chat: {
-                total_caps: chat.total_caps
-              }
-            }
-          }
+                total_caps: chat.total_caps,
+              },
+            },
+          },
         })
         chatService.eventStream.emit({
           chat,
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: mjMessage!
-            }
-          }
+              message: mjMessage!,
+            },
+          },
         })
         chatService.eventStream.emit({
           chat,
           event: {
             name: 'TRANSACTION_CREATE',
             data: {
-              transaction
-            }
-          }
+              transaction,
+            },
+          },
         })
 
         chatService.eventStream.emit({
           chat,
           event: {
-            name: userService.hasEnterpriseActualSubscription(user) ? 'ENTERPRISE_SUBSCRIPTION_UPDATE' : 'SUBSCRIPTION_UPDATE',
+            name: userService.hasEnterpriseActualSubscription(user)
+              ? 'ENTERPRISE_SUBSCRIPTION_UPDATE'
+              : 'SUBSCRIPTION_UPDATE',
             data: {
               subscription: {
                 id: updatedSubscription.id,
-                balance: updatedSubscription.balance
-              }
-            }
-          }
+                balance: updatedSubscription.balance,
+              },
+            },
+          },
         })
       } catch (error) {
         await mjJob.setError(error)
@@ -372,10 +368,10 @@ export const buildMidjourneyButtonClick = ({
               message: {
                 id: mjMessage.id,
                 job_id: mjJob.id,
-                job: mjJob.job
-              }
-            }
-          }
+                job: mjJob.job,
+              },
+            },
+          },
         })
         throw error
       }

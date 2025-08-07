@@ -21,10 +21,13 @@ const powers = {
   BASIC: 2,
   PREMIUM: 3,
   DELUXE: 4,
-  ELITE: 5
+  ELITE: 5,
 }
 
-function isBetterThen(user1: UserWithSubscriptionAndPlan, user2: UserWithSubscriptionAndPlan): boolean {
+function isBetterThen(
+  user1: UserWithSubscriptionAndPlan,
+  user2: UserWithSubscriptionAndPlan,
+): boolean {
   if ((user2.disabled || user2.inactive) && !user1.disabled && !user1.inactive) return true
   if ((user1.disabled || user1.inactive) && !user2.disabled && !user2.inactive) return false
 
@@ -41,7 +44,10 @@ async function getUser(pool: Pool, email: string): Promise<User> {
   return userDto[0]
 }
 
-async function getUserWithSubscription(pool: Pool, email: string): Promise<UserWithSubscriptionAndPlan> {
+async function getUserWithSubscription(
+  pool: Pool,
+  email: string,
+): Promise<UserWithSubscriptionAndPlan> {
   const query = `
     select us.id, us.email, us.disabled, us.inactive, us.tokens, pl.type as plan
     from (
@@ -61,7 +67,7 @@ async function main() {
     password: POSTGRES_PASSWORD,
     host: POSTGRES_HOST,
     port: parseInt(POSTGRES_PORT!),
-    database: POSTGRES_DB
+    database: POSTGRES_DB,
   })
   const client = await pool.connect()
 
@@ -90,7 +96,7 @@ async function main() {
 
               const [userWithLowerEmail, userWithUpperEmail] = await Promise.all([
                 getUserWithSubscription(pool, lowerEmail),
-                getUserWithSubscription(pool, user.email)
+                getUserWithSubscription(pool, user.email),
               ])
 
               let idForRemoval
@@ -104,13 +110,18 @@ async function main() {
                 idForUpdate = userWithUpperEmail.id
               }
 
-              await pool.query('update users set email = null, tg_id = null where id = $1', [idForRemoval])
-              await pool.query('update users set email = $1 where id = $2', [lowerEmail, idForUpdate])
+              await pool.query('update users set email = null, tg_id = null where id = $1', [
+                idForRemoval,
+              ])
+              await pool.query('update users set email = $1 where id = $2', [
+                lowerEmail,
+                idForUpdate,
+              ])
             } else {
               await pool.query('update users set email = $1 where id = $2', [lowerEmail, user.id])
             }
-          })()
-        )
+          })(),
+        ),
       )
     }
   } finally {

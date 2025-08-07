@@ -1,7 +1,8 @@
-import { AuthRequest } from '../types'
 import { Response } from 'express'
-import { DeliveryParams } from '@/delivery/types'
+import { config } from '@/config'
 import { toJSONString } from '@/lib'
+import { DeliveryParams } from '@/delivery/types'
+import { AuthRequest } from '../types'
 
 type Params = Pick<DeliveryParams, 'preset'>
 
@@ -31,20 +32,20 @@ export const buildList = ({ preset }: Params): List => {
       userId: req.user?.id,
       search: req.query.search as string | undefined,
       ...(categories.length > 0 && {
-        categories
+        categories,
       }),
       ...(models.length > 0 && {
-        models
+        models,
       }),
       favorite: req.query.favorite === '1',
       private: req.query.private === '1',
       ...(req.query.page && {
-        page: +(req.query.page as string)
+        page: +(req.query.page as string),
       }),
       ...(req.query.quantity && {
-        quantity: +(req.query.quantity as string)
+        quantity: +(req.query.quantity as string),
       }),
-      locale: (req.query.locale ?? 'en').toString()
+      locale: (req.query.locale ?? config.frontend.default_locale).toString(),
     })
 
     return res.status(200).header('Content-Type', 'application/json').send(toJSONString(data))

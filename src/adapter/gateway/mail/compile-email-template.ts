@@ -3,7 +3,7 @@ import path from 'path'
 import Handlebars from 'handlebars'
 import inlineCSS from 'inline-css'
 import { config } from '@/config'
-import { getTranlation, Translation } from './translation'
+import { getTargetLocale, getTranslation, Translation } from './translation'
 
 Handlebars.registerHelper('if_eq', function (a, b, opts) {
   if (a == b) {
@@ -66,43 +66,46 @@ type IndexLayoutParams = {
   body: string
 }
 
-export const buildCompileEmailTemplate = () => {
+export type CompileTemplate = <TemplateParams>(
+  templateName: string,
+) => (params: TemplateParams, locale?: string) => Promise<string>
+
+export const buildCompileEmailTemplate = (): CompileTemplate => {
   const layoutTemplate = compileTemplate<IndexLayoutParams>('layouts/index.hbs')
 
   const conf: TemplateConfig = {
     realAddress: config.http.real_address,
     frontendAddress: config.frontend.address,
-    locale: 'ru'
+    locale: config.frontend.default_locale,
   }
 
   return <TemplateParams>(templateName: string) => {
     const bodyTemplate = compileTemplate<TemplateParams>(templateName)
 
     return (params: TemplateParams, locale?: string) => {
-      let targetLocale = locale ?? 'ru'
-      targetLocale = targetLocale === 'kz' ? 'ru' : targetLocale
+      const targetLocale = getTargetLocale(locale)
 
       const html = layoutTemplate({
         body: bodyTemplate({
           ...params,
           config: {
             ...conf,
-            locale: targetLocale
-          }
+            locale: targetLocale,
+          },
         }),
 
         config: {
           ...conf,
-          locale: targetLocale
+          locale: targetLocale,
         },
 
-        t: getTranlation('indexLayout', targetLocale)
+        t: getTranslation('indexLayout', targetLocale),
       })
 
       // styles must be inlined to work in emails
       return inlineCSS(html, {
         url: '/',
-        preserveMediaQueries: true
+        preserveMediaQueries: true,
       })
     }
   }

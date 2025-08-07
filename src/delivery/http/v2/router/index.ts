@@ -18,11 +18,11 @@ export const buildRouter = (handler: Express.Router, { logger: loggerMiddleware 
       limit: '20mb',
       verify: (req, _, buf) => {
         const url = req.url
-        if (url?.includes('stripe')) {
+        if (url?.includes('stripe') || url?.includes('hashbon')) {
           ;(req as StripeRawRequest).rawBody = buf.toString()
         }
-      }
-    })
+      },
+    }),
   )
 
   router.use(loggerMiddleware)

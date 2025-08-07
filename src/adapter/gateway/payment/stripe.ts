@@ -19,12 +19,12 @@ export const buildStripe = ({ stripe }: Params): Stripe => {
             currency: data.currency,
             unit_amount: data.price * 100,
             product_data: {
-              name: data.item?.name as string
-            }
+              name: data.item?.name as string,
+            },
           },
-          quantity: 1
-        }
-      ]
+          quantity: 1,
+        },
+      ],
     })
 
     return session

@@ -18,6 +18,6 @@ export const buildResize =
 
     return {
       buffer: data,
-      info
+      info,
     }
   }

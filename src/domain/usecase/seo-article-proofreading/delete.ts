@@ -6,15 +6,17 @@ export type Delete = (params: { id: string }) => Promise<ISEOArticleProofreading
 
 export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
   return async ({ id }) => {
-    let seoArticleProofreading = await adapter.seoArticleProofreadingRepository.get({ where: { id } })
+    let seoArticleProofreading = await adapter.seoArticleProofreadingRepository.get({
+      where: { id },
+    })
     if (seoArticleProofreading) {
       seoArticleProofreading = await adapter.seoArticleProofreadingRepository.delete({
-        where: { id }
+        where: { id },
       })
     }
     if (!seoArticleProofreading) {
       throw new NotFoundError({
-        code: 'PROOFREADING_NOT_FOUND'
+        code: 'PROOFREADING_NOT_FOUND',
       })
     }
 

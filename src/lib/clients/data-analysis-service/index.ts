@@ -5,18 +5,22 @@ import { InternalError } from '@/domain/errors'
 import { RawFile } from '@/domain/entity/file'
 
 export type DataAnalysisServiceClient = {
-  clusterizeExcel: (params: { excelFile: RawFile; sheetName?: string; targetColumns: string[] }) => Promise<ClusterizationResult>
+  clusterizeExcel: (params: {
+    excelFile: RawFile
+    sheetName?: string
+    targetColumns: string[]
+  }) => Promise<ClusterizationResult>
 }
 
 export const newClient = ({
-  api_url
+  api_url,
 }: {
   api_url: string
 }): {
   client: DataAnalysisServiceClient
 } => {
   const axiosInstance = axios.create({
-    baseURL: api_url
+    baseURL: api_url,
   })
 
   return {
@@ -27,7 +31,7 @@ export const newClient = ({
 
           formData.append('excel_file', excelFile.buffer, {
             filename: excelFile.originalname,
-            contentType: excelFile.mimetype
+            contentType: excelFile.mimetype,
           })
           if (sheetName) {
             formData.append('sheet_name', sheetName)
@@ -38,7 +42,7 @@ export const newClient = ({
 
           const response = await axiosInstance.post('/api/v1/clusterizer/clusterize', formData, {
             headers: { ...formData.getHeaders() },
-            timeout: 380_000 // ms
+            timeout: 380_000, // ms
           })
 
           return response.data
@@ -48,15 +52,15 @@ export const newClient = ({
               message: e.message,
               data: {
                 data: e.response?.data,
-                status: e.status
+                status: e.status,
               },
-              code: e.code
+              code: e.code,
             })
           }
 
           throw e
         }
-      }
-    }
+      },
+    },
   }
 }

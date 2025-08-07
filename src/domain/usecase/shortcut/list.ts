@@ -7,8 +7,8 @@ export const buildList = ({ adapter }: UseCaseParams): List => {
   return async ({ userId }) => {
     const shortcuts = await adapter.shortcutRepository.list({
       where: {
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     return shortcuts

@@ -4,9 +4,13 @@ import { AdapterParams } from '@/adapter/types'
 
 type Params = Pick<AdapterParams, 'db'>
 
-type Upsert = (data?: Prisma.ModelUsageBucketUpsertArgs) => Promise<IModelUsageBucket | null | never>
+type Upsert = (
+  data?: Prisma.ModelUsageBucketUpsertArgs,
+) => Promise<IModelUsageBucket | null | never>
 
-type DeleteMany = (data: Prisma.ModelUsageBucketDeleteManyArgs) => Promise<Prisma.BatchPayload | never>
+type DeleteMany = (
+  data: Prisma.ModelUsageBucketDeleteManyArgs,
+) => Promise<Prisma.BatchPayload | never>
 
 export type ModelUsageBucketRepository = {
   upsert: Upsert
@@ -21,6 +25,6 @@ export const buildModelUsageBucketRepository = ({ db }: Params): ModelUsageBucke
     },
     deleteMany: (data) => {
       return db.client.modelUsageBucket.deleteMany(data)
-    }
+    },
   }
 }

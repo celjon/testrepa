@@ -1,6 +1,6 @@
 import { IJobInstance, JobMap } from '@/domain/entity/job'
 import { Adapter } from '@/domain/types'
-import { CreateInstance } from './createInstance'
+import { CreateInstance } from './create-instance'
 
 type Params = {
   createInstance: CreateInstance

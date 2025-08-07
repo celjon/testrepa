@@ -1,6 +1,6 @@
 import { Adapter } from '@/domain/types'
 import { IFile, RawFile } from '@/domain/entity/file'
-import { IMessageImage } from '@/domain/entity/messageImage'
+import { IMessageImage } from '@/domain/entity/message-image'
 import { InternalError } from '@/domain/errors'
 import { FileType, MessageButtonAction } from '@prisma/client'
 import { extname } from 'path'
@@ -12,7 +12,11 @@ type Params = Adapter & {
   fileService: FileService
 }
 
-export type UploadFiles = (params: { files: RawFile[]; user: IUser; keyEncryptionKey: string | null }) => Promise<{
+export type UploadFiles = (params: {
+  files: RawFile[]
+  user: IUser
+  keyEncryptionKey: string | null
+}) => Promise<{
   userMessageImages: IMessageImage[]
   userMessageAttachmentsFiles: IFile[]
 }>
@@ -22,7 +26,7 @@ export const buildUploadFiles = ({
   fileRepository,
   messageImageRepository,
   cryptoGateway,
-  fileService
+  fileService,
 }: Params): UploadFiles => {
   return async ({ files, user, keyEncryptionKey }) => {
     const images = files.filter((file) => isImage(file.originalname))
@@ -32,7 +36,7 @@ export const buildUploadFiles = ({
     if (user.encryptedDEK && user.useEncryption && keyEncryptionKey) {
       dek = await cryptoGateway.decryptDEK({
         edek: user.encryptedDEK,
-        kek: keyEncryptionKey
+        kek: keyEncryptionKey,
       })
     }
 
@@ -41,45 +45,53 @@ export const buildUploadFiles = ({
         const { path, isEncrypted } = await fileService.write({
           buffer,
           ext: extname(originalname),
-          dek
+          dek,
         })
 
         return Promise.all([
           imageGateway.metadata({
-            buffer
+            buffer,
           }),
           fileRepository.create({
             data: {
               type: FileType.IMAGE,
               path,
-              isEncrypted
-            }
-          })
+              isEncrypted,
+            },
+          }),
         ])
-      })
+      }),
     )
-    const userMessageOriginalImagesMetadata = userMessageOriginalImagesFileAndMetadata.map(([metadata]) => metadata)
-    const userMessageOriginalImagesFile = userMessageOriginalImagesFileAndMetadata.map(([, file]) => file)
+    const userMessageOriginalImagesMetadata = userMessageOriginalImagesFileAndMetadata.map(
+      ([metadata]) => metadata,
+    )
+    const userMessageOriginalImagesFile = userMessageOriginalImagesFileAndMetadata.map(
+      ([, file]) => file,
+    )
 
     const userMessagePreviewImagesResizeResult = await Promise.all(
       images.map(({ buffer }) =>
         imageGateway.resize({
           buffer,
-          height: images.length === 1 ? 384 : 256
-        })
-      )
+          height: images.length === 1 ? 384 : 256,
+        }),
+      ),
     )
-    const userMessagePreviewImagesBuffer = userMessagePreviewImagesResizeResult.map(({ buffer }) => buffer)
-    const userMessagePreviewImagesMetadata = userMessagePreviewImagesResizeResult.map(({ info }) => info)
+    const userMessagePreviewImagesBuffer = userMessagePreviewImagesResizeResult.map(
+      ({ buffer }) => buffer,
+    )
+    const userMessagePreviewImagesMetadata = userMessagePreviewImagesResizeResult.map(
+      ({ info }) => info,
+    )
 
     const userMessagePreviewImagesWriteResult = await Promise.all(
       userMessagePreviewImagesBuffer.map(async (buffer, index) => {
         return fileService.write({
           buffer,
           ext: extname(images[index].originalname),
-          dek
+          dek,
         })
-      })
+      }),
     )
 
     const userMessagePreviewImagesFile = await Promise.all(
@@ -88,19 +100,21 @@ export const buildUploadFiles = ({
           data: {
             type: FileType.IMAGE,
             path,
-            isEncrypted
-          }
-        })
-      )
+            isEncrypted,
+          },
+        }),
+      ),
     )
 
     const [userMessageImages, userMessageAttachmentsFiles] = await Promise.all([
       Promise.all(
         images.map((_, index) => {
           const originalFile = userMessageOriginalImagesFile[index]
-          const { width: originalWidth = 512, height: originalHeight = 512 } = userMessageOriginalImagesMetadata[index]
+          const { width: originalWidth = 512, height: originalHeight = 512 } =
+            userMessageOriginalImagesMetadata[index]
           const previewFile = userMessagePreviewImagesFile[index]
-          const { width: previewWidth, height: previewHeight } = userMessagePreviewImagesMetadata[index]
+          const { width: previewWidth, height: previewHeight } =
+            userMessagePreviewImagesMetadata[index]
 
           if (!originalFile || !previewFile) {
             throw new InternalError()
@@ -114,33 +128,33 @@ export const buildUploadFiles = ({
               preview_height: previewHeight,
               original: {
                 connect: {
-                  id: originalFile.id
-                }
+                  id: originalFile.id,
+                },
               },
               preview: {
                 connect: {
-                  id: previewFile.id
-                }
+                  id: previewFile.id,
+                },
               },
               buttons: {
                 createMany: {
                   data: [
                     {
-                      action: MessageButtonAction.DOWNLOAD
-                    }
-                  ]
-                }
-              }
-            }
+                      action: MessageButtonAction.DOWNLOAD,
+                    },
+                  ],
+                },
+              },
+            },
           })
-        })
+        }),
       ),
       Promise.all(
         documents.map(async (document) => {
           const { path, isEncrypted } = await fileService.write({
             buffer: document.buffer,
             ext: extname(document.originalname),
-            dek
+            dek,
           })
 
           const file = await fileRepository.create({
@@ -149,8 +163,8 @@ export const buildUploadFiles = ({
               name: document.originalname,
               path: path,
               size: document.buffer.byteLength,
-              isEncrypted
-            }
+              isEncrypted,
+            },
           })
 
           if (!file) {
@@ -158,8 +172,8 @@ export const buildUploadFiles = ({
           }
 
           return file
-        })
-      )
+        }),
+      ),
     ])
 
     return { userMessageImages, userMessageAttachmentsFiles }

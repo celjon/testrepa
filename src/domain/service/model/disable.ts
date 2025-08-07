@@ -8,35 +8,35 @@ export const buildDisable = ({ modelRepository }: Adapter): Disable => {
     const key = getPlatformDisabledKey(platform)
     const model = await modelRepository.update({
       where: {
-        id
+        id,
       },
       data: {
-        [key]: true
-      }
+        [key]: true,
+      },
     })
 
     if (model && model.parent_id) {
       const parentModel = await modelRepository.get({
         where: {
-          id: model.parent_id
+          id: model.parent_id,
         },
         include: {
           children: {
             where: {
-              [key]: false
-            }
-          }
-        }
+              [key]: false,
+            },
+          },
+        },
       })
 
       if (parentModel && parentModel.children && parentModel.children.length === 0) {
         await modelRepository.update({
           where: {
-            id: model.parent_id
+            id: model.parent_id,
           },
           data: {
-            [key]: true
-          }
+            [key]: true,
+          },
         })
       }
     }

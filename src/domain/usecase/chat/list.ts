@@ -22,9 +22,18 @@ export type List = (data: {
 >
 
 export const buildList = ({ service }: UseCaseParams): List => {
-  return async ({ userId, groupId, groupIds, search, sort, page, sortDirection = 'desc', quantity = 10 }) => {
+  return async ({
+    userId,
+    groupId,
+    groupIds,
+    search,
+    sort,
+    page,
+    sortDirection = 'desc',
+    quantity = 10,
+  }) => {
     let platform: { not: Platform } | undefined = {
-      not: Platform.TELEGRAM
+      not: Platform.TELEGRAM,
     }
     if (groupId === 'telegram') platform = undefined
 
@@ -34,24 +43,24 @@ export const buildList = ({ service }: UseCaseParams): List => {
       const chats = await service.chat.paginate({
         query: {
           where: {
-            group_id: group_id !== null ? group_id : (groupIds ? { in: groupIds } : null),
+            group_id: group_id !== null ? group_id : groupIds ? { in: groupIds } : null,
             user_id: userId,
             name: {
               contains: search,
-              mode: 'insensitive'
+              mode: 'insensitive',
             },
             deleted: false,
-            platform
+            platform,
           },
           include: {
             model: {
-              include: { icon: true }
-            }
+              include: { icon: true },
+            },
           },
-          orderBy: sort ? { [sort]: sortDirection } : undefined
+          orderBy: sort ? { [sort]: sortDirection } : undefined,
         },
         page,
-        quantity
+        quantity,
       })
 
       return chats

@@ -20,7 +20,7 @@ export const buildTelegramAuthorize = ({ auth }: Params): TelegramAuthorize => {
       botSecretKey,
       invitedBy,
       yandexMetricClientId,
-      yandexMetricYclid
+      yandexMetricYclid,
     })
     return res.status(200).json(data)
   }

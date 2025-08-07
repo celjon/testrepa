@@ -20,22 +20,29 @@ export type UploadVideo = (params: {
   userMessageVideo: IVideo | null
 }>
 
-export const buildUploadVideo = ({ assemblyAiGateway, mediaGateway, videoRepository, cryptoGateway, fileService }: Params): UploadVideo => {
+export const buildUploadVideo = ({
+  assemblyAiGateway,
+  mediaGateway,
+  videoRepository,
+  cryptoGateway,
+  fileService,
+}: Params): UploadVideo => {
   return async ({ videoFile, user, keyEncryptionKey, prompt, temperature }) => {
     if (!videoFile) {
       return {
-        userMessageVideo: null
+        userMessageVideo: null,
       }
     }
 
     const videoFileBuffer = videoFile.buffer
 
-    const { duration: videoDuration, content: videoTranscriptionResult } = await mediaGateway.getData({
-      file: videoFile,
-      assemblyAiGateway,
-      prompt,
-      temperature
-    })
+    const { duration: videoDuration, content: videoTranscriptionResult } =
+      await mediaGateway.getData({
+        file: videoFile,
+        assemblyAiGateway,
+        prompt,
+        temperature,
+      })
 
     let videoContent = videoTranscriptionResult
     let dek = null
@@ -43,12 +50,12 @@ export const buildUploadVideo = ({ assemblyAiGateway, mediaGateway, videoReposit
     if (user.encryptedDEK && user.useEncryption && keyEncryptionKey) {
       dek = await cryptoGateway.decryptDEK({
         edek: user.encryptedDEK,
-        kek: keyEncryptionKey
+        kek: keyEncryptionKey,
       })
 
       videoContent = await cryptoGateway.encrypt({
         dek,
-        data: videoContent
+        data: videoContent,
       })
       isEncrypted = true
     }
@@ -56,7 +63,7 @@ export const buildUploadVideo = ({ assemblyAiGateway, mediaGateway, videoReposit
     const { path, isEncrypted: isEncryptedFile } = await fileService.write({
       buffer: videoFileBuffer,
       ext: extname(videoFile.originalname),
-      dek
+      dek,
     })
 
     const userMessageVideo = await videoRepository.create({
@@ -70,10 +77,10 @@ export const buildUploadVideo = ({ assemblyAiGateway, mediaGateway, videoReposit
             name: videoFile.originalname,
             path: path,
             size: videoFile.size,
-            isEncrypted: isEncryptedFile
-          }
-        }
-      }
+            isEncrypted: isEncryptedFile,
+          },
+        },
+      },
     })
 
     userMessageVideo.content = videoTranscriptionResult

@@ -7,25 +7,32 @@ export const initializeQueues = (cfg: QueueInitConfig) => {
     port: cfg.redis.port,
     host: cfg.redis.host,
     password: cfg.redis.password,
-    maxRetriesPerRequest: null
+    maxRetriesPerRequest: null,
   })
 
   return {
     queues: {
       softLimitNotifications: new Queue('soft-limit-notifications', {
-        connection
+        connection,
       }),
       repeatableJob: new Queue<RepeatableJob>('repeatable-jobs', {
-        connection
+        connection,
       }),
-      updateModelAccountHARFiles: new Queue<UpdateModelAccountHARFileJob>('update-model-account-har-files', {
-        connection
-      })
+      updateModelAccountHARFiles: new Queue<UpdateModelAccountHARFileJob>(
+        'update-model-account-har-files',
+        {
+          connection,
+        },
+      ),
     },
-    createWorker: (queueName: string, processor: Processor, opts?: Omit<WorkerOptions, 'connection'>) =>
+    createWorker: (
+      queueName: string,
+      processor: Processor,
+      opts?: Omit<WorkerOptions, 'connection'>,
+    ) =>
       new Worker(queueName, processor, {
         ...opts,
-        connection
-      })
+        connection,
+      }),
   }
 }

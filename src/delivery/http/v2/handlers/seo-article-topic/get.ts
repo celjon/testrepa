@@ -9,7 +9,7 @@ export type GetSEOArticleTopic = (req: AuthRequest, res: Response) => Promise<vo
 export const buildGetSEOArticleTopic = ({ seoArticleTopic }: Params): GetSEOArticleTopic => {
   return async (req, res) => {
     const result = await seoArticleTopic.getSEOArticleTopic({
-      id: req.params.seoArticleTopicId
+      id: req.params.seoArticleTopicId,
     })
 
     res.status(200).json(result)

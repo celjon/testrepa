@@ -9,25 +9,28 @@ export const buildModelRules = ({ authRequired, validateSchema }: Middlewares) =
     authRequired({}),
     body('modelId').notEmpty().isString(),
     body('platform').notEmpty().isString().isIn([Platform.API, Platform.WEB, Platform.TELEGRAM]),
-    validateSchema
+    validateSchema,
   ]
 
   const enableModelRules = [
     authRequired({}),
     body('modelId').notEmpty().isString(),
     body('platform').notEmpty().isString().isIn([Platform.API, Platform.WEB, Platform.TELEGRAM]),
-    validateSchema
+    validateSchema,
   ]
 
   const listModelsRules = [
-    check('platform').optional().isString().isIn([Platform.API, Platform.WEB, Platform.TELEGRAM, 'telegram']),
-    validateSchema
+    check('platform')
+      .optional()
+      .isString()
+      .isIn([Platform.API, Platform.WEB, Platform.TELEGRAM, 'telegram']),
+    validateSchema,
   ]
 
   return {
     updateModelRules,
     disableModelRules,
     enableModelRules,
-    listModelsRules
+    listModelsRules,
   }
 }

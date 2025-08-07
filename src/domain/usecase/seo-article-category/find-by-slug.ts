@@ -8,8 +8,8 @@ export const buildFindBySlug = ({ adapter }: UseCaseParams): FindBySlug => {
     const category = await adapter.seoArticleCategoryRepository.get({
       where: { slug: slug },
       include: {
-        topics: true
-      }
+        topics: true,
+      },
     })
 
     return category

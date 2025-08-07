@@ -1,6 +1,9 @@
 import { Adapter } from '@/adapter'
 import { buildPaginate, Paginate } from './paginate'
-import { buildSendLinksToGeneratedArticles, SendLinksToGeneratedArticles } from './send-links-to-generated-articles'
+import {
+  buildSendLinksToGeneratedArticles,
+  SendLinksToGeneratedArticles,
+} from './send-links-to-generated-articles'
 
 type Params = Adapter
 
@@ -13,6 +16,6 @@ export const buildArticleService = (params: Params): ArticleService => {
   const sendLinksToGeneratedArticles = buildSendLinksToGeneratedArticles(params)
   return {
     paginate,
-    sendLinksToGeneratedArticles
+    sendLinksToGeneratedArticles,
   }
 }

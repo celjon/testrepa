@@ -7,7 +7,7 @@ import { buildListAll, ListAll } from './list-all'
 import { buildUpdate, Update } from './update'
 import { buildGetProviders, GetProviders } from './get-providers'
 import { buildUpdateProvider, UpdateProvider } from './update-provider'
-import { buildCreateCustom, CreateCustom } from './account-queue/create-custom'
+import { buildCreateCustom, CreateCustom } from './create-custom'
 import { buildGetCustomization, GetCustomization } from './get-customization'
 import { buildUpdateCustom, UpdateCustom } from './update-custom'
 import { buildDeleteCustom, DeleteCustom } from './delete-custom'
@@ -27,10 +27,19 @@ import { buildInit, Init } from './init'
 import { buildGetModelProviders, GetModelProviders } from './get-model-providers'
 import { buildListCompact, ListCompact } from './list-compact'
 import { buildCheckAccountQueue, CheckAccountQueue } from './account-queue/check-account-queue'
-import { AutoUpdateAccountHARFile, buildAutoUpdateAccountHARFile } from './account-queue/auto-update-account-har-file'
-import { AutoUpdateAccountQueueHARFiles, buildAutoUpdateAccountQueueHARFiles } from './account-queue/auto-update-account-queue-har-files'
-import { buildResetAccountModels, ResetAccountModels } from './account-queue/reset-account-models'
+import {
+  AutoUpdateAccountHARFile,
+  buildAutoUpdateAccountHARFile,
+} from './account-queue/auto-update-account-har-file'
+import {
+  AutoUpdateAccountQueueHARFiles,
+  buildAutoUpdateAccountQueueHARFiles,
+} from './account-queue/auto-update-account-queue-har-files'
 import { UpdatePopularityScores, buildUpdatePopularityScores } from './update-popularity-scores'
+import { UpdateAccountsPhases } from '@/domain/service/model/account-balancer/g4f/update-accounts-phases'
+import { ResetAccountModels } from '@/domain/service/model/account-balancer/g4f/reset-account-models'
+import { CheckModelSubstitutions } from '@/domain/service/model/account-balancer/g4f/check-model-substitutions'
+import { ResetAccounts } from '@/domain/service/model/account-balancer/g4f/reset-accounts'
 
 export type ModelUseCase = {
   init: Init
@@ -63,8 +72,11 @@ export type ModelUseCase = {
   nextAccount: NextAccount
   getModelProviders: GetModelProviders
   checkAccountQueue: CheckAccountQueue
+  checkG4FModelSubstitutions: CheckModelSubstitutions
   resetAccountModels: ResetAccountModels
+  resetAccounts: ResetAccounts
   updatePopularityScores: UpdatePopularityScores
+  updateG4FAccountsPhases: UpdateAccountsPhases
 }
 
 export const buildModelUseCase = (params: UseCaseParams): ModelUseCase => {
@@ -129,7 +141,10 @@ export const buildModelUseCase = (params: UseCaseParams): ModelUseCase => {
     nextAccount,
     getModelProviders,
     checkAccountQueue: buildCheckAccountQueue(params),
-    resetAccountModels: buildResetAccountModels(params),
-    updatePopularityScores: buildUpdatePopularityScores(params)
+    checkG4FModelSubstitutions: params.service.model.accountBalancer.g4f.checkModelSubstitutions,
+    resetAccountModels: params.service.model.accountBalancer.g4f.resetAccountModels,
+    resetAccounts: params.service.model.accountBalancer.g4f.resetAccounts,
+    updatePopularityScores: buildUpdatePopularityScores(params),
+    updateG4FAccountsPhases: params.service.model.accountBalancer.g4f.updateAccountsPhases,
   }
 }

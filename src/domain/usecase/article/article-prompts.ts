@@ -48,7 +48,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       article:
         'Создай информационную статью по указанной теме, основанную на проверенных фактах. Используй стиль качественной журналистики: информативный заголовок, лид с ключевой информацией, основная часть с раскрытием темы, заключение. Ссылайся на авторитетные источники, включай статистику и экспертные мнения. Придерживайся объективности и сбалансированности в представлении информации.',
       storyTelling:
-        'Разработай детальный кейс-стади по указанной ситуации или примеру. Структурируй материал: контекст и предыстория, описание конкретной ситуации, выявление ключевых проблем, анализ принятых решений, описание результатов и последствий, извлеченные уроки. Используй фактический материал, причинно-следственные связи и аналитический подход. Сделай акцент на практической применимости опыта.'
+        'Разработай детальный кейс-стади по указанной ситуации или примеру. Структурируй материал: контекст и предыстория, описание конкретной ситуации, выявление ключевых проблем, анализ принятых решений, описание результатов и последствий, извлеченные уроки. Используй фактический материал, причинно-следственные связи и аналитический подход. Сделай акцент на практической применимости опыта.',
     },
 
     language: 'Русский',
@@ -255,7 +255,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - Придавай повествованию эмоциональную окраску, вызывающую сопереживание.
       - Применяй метафоры, эпитеты и другие тропы. Создавай уникальный авторский голос.
       - Стремись к погружению читателя в описываемый мир.
-      `
+      `,
     },
     articleLinkStyle: {
       NONE: 'Не включайте никакие ссылки или упоминания источников в текст. Излагайте информацию без указания её происхождения.',
@@ -285,7 +285,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
        `,
 
       MENTION:
-        'Указывайте источники информации в тексте (например, "по данным исследования Университета...", "как отмечают эксперты..."), но без прямых ссылок и URL-адресов.'
+        'Указывайте источники информации в тексте (например, "по данным исследования Университета...", "как отмечают эксперты..."), но без прямых ссылок и URL-адресов.',
     },
 
     keywords: dedent`
@@ -364,7 +364,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - - Предоставьте только текст новой главы, без дополнительных комментариев, тегов.
       - - Не обращайтесь к пользователю в ответе и не объясняйте свой ответ.
       - - Переведите название главы на русский.
-    `
+    `,
   },
 
   en: {
@@ -392,7 +392,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       article:
         'Create an informational article on the given topic, based on verified facts. Use a quality journalism style: informative headline, lead with key information, main part with topic development, conclusion. Refer to authoritative sources, include statistics and expert opinions. Maintain objectivity and balance in presenting information.',
       storyTelling:
-        'Develop a detailed case study on the given situation or example. Structure the material: context and background, description of the specific situation, identification of key problems, analysis of decisions made, description of results and consequences, lessons learned. Use factual material, causal connections, and analytical approach. Emphasize the practical applicability of the experience.'
+        'Develop a detailed case study on the given situation or example. Structure the material: context and background, description of the specific situation, identification of key problems, analysis of decisions made, description of results and consequences, lessons learned. Use factual material, causal connections, and analytical approach. Emphasize the practical applicability of the experience.',
     },
 
     language: 'English',
@@ -595,7 +595,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - Give the narrative an emotional color, evoking empathy.
       - Apply metaphors, epithets, and other tropes. Create a unique authorial voice.
       - Strive for immersion of the reader in the described world.
-      `
+      `,
     },
     articleLinkStyle: {
       NONE: 'Do not include any links or source mentions in the text. Present information without indicating its origin.',
@@ -626,7 +626,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       `,
 
       MENTION:
-        'Indicate information sources in the text (for example, "according to University research...", "as experts note..."), but without direct links and URLs.'
+        'Indicate information sources in the text (for example, "according to University research...", "as experts note..."), but without direct links and URLs.',
     },
 
     keywords: dedent`
@@ -691,7 +691,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - - Provide only the text of the new chapter, without additional comments, tags.
       - - Don't address the user in the response and don't explain your answer.
       - - Translate the chapter title to english.
-    `
+    `,
   },
 
   es: {
@@ -719,7 +719,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       article:
         'Crear un artículo informativo sobre el tema dado, basado en hechos verificados. Utilice un estilo de periodismo de calidad: título informativo, lead con información clave, parte principal con desarrollo del tema, conclusión. Haga referencia a fuentes autorizadas, incluya estadísticas y opiniones de expertos. Mantenga la objetividad y el equilibrio en la presentación de la información.',
       storyTelling:
-        'Desarrollar un caso de estudio detallado sobre la situación o ejemplo dado. Estructura el material: contexto y antecedentes, descripción de la situación específica, identificación de problemas clave, análisis de las decisiones tomadas, descripción de los resultados y consecuencias, lecciones aprendidas. Utilice material factual, conexiones causales y enfoque analítico. Enfatice la aplicabilidad práctica de la experiencia.'
+        'Desarrollar un caso de estudio detallado sobre la situación o ejemplo dado. Estructura el material: contexto y antecedentes, descripción de la situación específica, identificación de problemas clave, análisis de las decisiones tomadas, descripción de los resultados y consecuencias, lecciones aprendidas. Utilice material factual, conexiones causales y enfoque analítico. Enfatice la aplicabilidad práctica de la experiencia.',
     },
 
     language: 'Español',
@@ -922,7 +922,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - Da al texto un color emocional, evocando empatía.
       - Aplica metáforas, epítetos y otros tropos. Crea una voz autoral única.
       - Procura la inmersión del lector en el mundo descrito.
-      `
+      `,
     },
     articleLinkStyle: {
       NONE: 'No incluya enlaces ni menciones de fuentes en el texto. Presente la información sin indicar su origen.',
@@ -953,7 +953,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       `,
 
       MENTION:
-        'Indique las fuentes de información en el texto (por ejemplo, "según la investigación de la Universidad...", "como señalan los expertos..."), pero sin enlaces directos ni URLs.'
+        'Indique las fuentes de información en el texto (por ejemplo, "según la investigación de la Universidad...", "como señalan los expertos..."), pero sin enlaces directos ni URLs.',
     },
 
     keywords: dedent`
@@ -1017,7 +1017,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - - Proporcionar solo el texto del nuevo capítulo, sin comentarios adicionales, etiquetas, tags.
       - - No dirigirse al usuario en la respuesta y no explicar su respuesta.
       - - Traducir el título del capítulo al español.
-    `
+    `,
   },
   pt: {
     generationMode: {
@@ -1044,7 +1044,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       article:
         'Crie um artigo informativo sobre o tópico dado, baseado em fatos verificados. Use um estilo de jornalismo de qualidade: título atraente, lead com informações-chave, parte principal com desenvolvimento do tópico, conclusão. Referencie fontes autorizadas, inclua estatísticas e opiniões de especialistas. Mantenha objetividade e equilíbrio ao apresentar informações.',
       storyTelling:
-        'Desenvolva um estudo de caso detalhado sobre a situação ou exemplo dado. Estruture o material: contexto e background, descrição da situação específica, identificação de problemas-chave, análise de decisões tomadas, descrição de resultados e consequências, lições aprendidas. Use material factual, conexões causais e abordagem analítica. Destaque a aplicabilidade prática da experiência.'
+        'Desenvolva um estudo de caso detalhado sobre a situação ou exemplo dado. Estruture o material: contexto e background, descrição da situação específica, identificação de problemas-chave, análise de decisões tomadas, descrição de resultados e consequências, lições aprendidas. Use material factual, conexões causais e abordagem analítica. Destaque a aplicabilidade prática da experiência.',
     },
 
     language: 'Português',
@@ -1247,7 +1247,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - Dê à narrativa uma cor emocional, evocando empatia.
       - Aplique metáforas, epítetos e outros tropos. Crie uma voz autoral única.
       - Busque a imersão do leitor no mundo descrito.
-      `
+      `,
     },
     articleLinkStyle: {
       NONE: 'Não inclua links ou menções de fontes no texto. Apresente informações sem indicar sua origem.',
@@ -1278,7 +1278,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       `,
 
       MENTION:
-        'Indique fontes de informação no texto (por exemplo, "de acordo com pesquisa da Universidade...", "como observam os especialistas..."), mas sem links diretos e URLs.'
+        'Indique fontes de informação no texto (por exemplo, "de acordo com pesquisa da Universidade...", "como observam os especialistas..."), mas sem links diretos e URLs.',
     },
 
     keywords: dedent`
@@ -1342,7 +1342,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - - Forneça apenas o texto do novo capítulo, sem comentários adicionais, tags.
       - - Não se dirija ao usuário na resposta e não explique sua resposta.
       - - Traduzir o título do capítulo para o português.
-    `
+    `,
   },
   fr: {
     generationMode: {
@@ -1357,7 +1357,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       abstract: `Préparez un résumé, en résumant brièvement le contenu des sources sur le sujet donné. Assurez une présentation objective des idées clés, des concepts et des conclusions des matériaux originaux. Structurez le texte logiquement, en mettant en évidence les principaux blocs thématiques. Maintenez la neutralité de la présentation sans ajouter d'interprétations personnelles. Incluez des références bibliographiques aux sources utilisées.`,
       courseWork: `Développez un travail de cours académique sur le sujet donné avec une structure stricte : page de titre, table des matières, introduction avec justification de la pertinence et méthodologie, partie principale avec chapitres et paragraphes, conclusion avec conclusions, bibliographie. Utilisez un style scientifique, une terminologie professionnelle, une argumentation logique. Appuyez-vous sur des recherches actuelles avec une citation et un formatage corrects des références.`,
       article: `Créez un article informatif sur le sujet donné, basé sur des faits vérifiés. Utilisez un style de journalisme de qualité : titre informatif, accroche avec les informations clés, partie principale avec développement du sujet, conclusion. Référez-vous à des sources autoritaires, incluez des statistiques et des opinions d'experts. Maintenez l'objectivité et l'équilibre dans la présentation des informations.`,
-      storyTelling: `Développez une étude de cas détaillée sur la situation ou l'exemple donné. Structurez le matériel : contexte et arrière-plan, description de la situation spécifique, identification des problèmes clés, analyse des décisions prises, description des résultats et des conséquences, leçons apprises. Utilisez du matériel factuel, des connexions causales et une approche analytique. Mettez l'accent sur l'applicabilité pratique de l'expérience.`
+      storyTelling: `Développez une étude de cas détaillée sur la situation ou l'exemple donné. Structurez le matériel : contexte et arrière-plan, description de la situation spécifique, identification des problèmes clés, analyse des décisions prises, description des résultats et des conséquences, leçons apprises. Utilisez du matériel factuel, des connexions causales et une approche analytique. Mettez l'accent sur l'applicabilité pratique de l'expérience.`,
     },
 
     language: 'Français',
@@ -1562,7 +1562,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - Donnez au récit une couleur émotionnelle, éveillant l'empathie.
       - Appliquez des métaphores, des épithètes et d'autres tropes. Créez une voix auteuriale unique.
       - Étudiez l'immersion du lecteur dans le monde décrit.
-      `
+      `,
     },
     articleLinkStyle: {
       NONE: "N'incluez aucun lien ou mention de source dans le texte. Présentez l'information sans indiquer son origine.",
@@ -1593,7 +1593,7 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       `,
 
       MENTION:
-        'Indiquez les sources d\'information dans le texte (par exemple, "selon la recherche de l\'Université...", "comme le notent les experts..."), mais sans liens directs ni URLs.'
+        'Indiquez les sources d\'information dans le texte (par exemple, "selon la recherche de l\'Université...", "comme le notent les experts..."), mais sans liens directs ni URLs.',
     },
 
     keywords: dedent`
@@ -1657,8 +1657,8 @@ export const articlePrompts: Record<string, ArticlePrompts> = {
       - - Fournissez uniquement le texte du nouveau chapitre, sans commentaires supplémentaires, tags.
       - - Ne vous adressez pas à l'utilisateur dans la réponse et n'expliquez pas votre réponse.
       - - Traduisez le titre du chapitre en français.
-    `
-  }
+    `,
+  },
 }
 
 export const getGenerateArticlePrompt = (params: {
@@ -1681,7 +1681,9 @@ export const getGenerateArticlePrompt = (params: {
   const keywords = params.keywords ? `<keywords>${params.keywords}.</keywords>` : ''
 
   const selectedArticleStyle =
-    params.style === ArticleStyle.CUSTOM ? `<example>${params.customStyle}</example>` : articleStyle[params.style]
+    params.style === ArticleStyle.CUSTOM
+      ? `<example>${params.customStyle}</example>`
+      : articleStyle[params.style]
 
   return dedent`${
     params.sourceContent
@@ -1725,7 +1727,7 @@ export const getGenerateArticleChapterPrompt = ({
   generatedContent,
   symbolsCount,
   linkStyle,
-  keywords
+  keywords,
 }: {
   language: string
   chapter: ArticleStructuredChapter

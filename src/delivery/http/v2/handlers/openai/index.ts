@@ -49,9 +49,13 @@ const buildRegisterRoutes = (methods: OpenaiMethods, middlewares: Middlewares) =
       '/audio/transcriptions',
       authRequired(),
       fileUpload({ saveFiles: false }).any(),
-      createRouteHandler(methods.transcriptions.create)
+      createRouteHandler(methods.transcriptions.create),
     )
-    namespace.post('/audio/translations', authRequired(), createRouteHandler(methods.translations.create))
+    namespace.post(
+      '/audio/translations',
+      authRequired(),
+      createRouteHandler(methods.translations.create),
+    )
     namespace.post('/audio/speech', authRequired(), createRouteHandler(methods.speech.create)),
       namespace.post('/moderations', authRequired(), createRouteHandler(methods.moderations.create))
     namespace.post('/embeddings', authRequired(), createRouteHandler(methods.embeddings))
@@ -69,22 +73,22 @@ export const buildOpenaiHandler = (params: Params): IHandler => {
         embeddings: buildEmbeddings(params),
         models: buildModels(params),
         images: {
-          create: buildImagesCreate(params)
+          create: buildImagesCreate(params),
         },
         transcriptions: {
-          create: buildTranscriptionsCreate(params)
+          create: buildTranscriptionsCreate(params),
         },
         translations: {
-          create: buildTranslationsCreate(params)
+          create: buildTranslationsCreate(params),
         },
         speech: {
-          create: buildSpeechCreate(params)
+          create: buildSpeechCreate(params),
         },
         moderations: {
-          create: buildModerationsCreate(params)
-        }
+          create: buildModerationsCreate(params),
+        },
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

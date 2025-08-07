@@ -13,7 +13,11 @@ export const buildReferralRules = ({ authRequired, validateSchema }: Middlewares
    *            templateId:
    *                type: string
    */
-  const createRules = [authRequired(), check('templateId').exists().isString().not().isEmpty(), validateSchema]
+  const createRules = [
+    authRequired(),
+    check('templateId').exists().isString().not().isEmpty(),
+    validateSchema,
+  ]
 
   /**
    * @openapi
@@ -26,7 +30,11 @@ export const buildReferralRules = ({ authRequired, validateSchema }: Middlewares
    *            details:
    *                type: object
    */
-  const withdrawRules = [authRequired(), check('details').exists().isObject().not().isEmpty(), validateSchema]
+  const withdrawRules = [
+    authRequired(),
+    check('details').exists().isObject().not().isEmpty(),
+    validateSchema,
+  ]
 
   const listReferralRules = [authRequired()]
   const deleteReferralRules = [authRequired()]
@@ -35,6 +43,6 @@ export const buildReferralRules = ({ authRequired, validateSchema }: Middlewares
     createRules,
     withdrawRules,
     listReferralRules,
-    deleteReferralRules
+    deleteReferralRules,
   }
 }

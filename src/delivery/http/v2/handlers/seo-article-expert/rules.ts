@@ -33,7 +33,7 @@ export const buildSEOArticleExpertRules = ({ authRequired, validateSchema }: Mid
    *             form:
    *               type: string
    *             graduationYear:
-   *               type: integer
+   *               type: string
    *             faculty:
    *               type: string
    *             specialty:
@@ -55,7 +55,7 @@ export const buildSEOArticleExpertRules = ({ authRequired, validateSchema }: Mid
     body('city').isString(),
     body('country').isString(),
     body('qualification').isString(),
-    validateSchema
+    validateSchema,
   ]
   /**
    * @openapi
@@ -82,7 +82,7 @@ export const buildSEOArticleExpertRules = ({ authRequired, validateSchema }: Mid
    *             form:
    *               type: string
    *             graduationYear:
-   *               type: integer
+   *               type: string
    *             faculty:
    *               type: string
    *             specialty:
@@ -90,14 +90,22 @@ export const buildSEOArticleExpertRules = ({ authRequired, validateSchema }: Mid
    *         qualification:
    *           type: string
    */
-  const updateSEOArticleExpertRules = [authRequired({ adminOnly: true }), param('seoExpertId').isString(), validateSchema]
-  const deleteSEOArticleExpertRules = [authRequired({ adminOnly: true }), param('seoExpertId').isString(), validateSchema]
+  const updateSEOArticleExpertRules = [
+    authRequired({ adminOnly: true }),
+    param('seoExpertId').isString(),
+    validateSchema,
+  ]
+  const deleteSEOArticleExpertRules = [
+    authRequired({ adminOnly: true }),
+    param('seoExpertId').isString(),
+    validateSchema,
+  ]
 
   return {
     getSEOArticleExpertRules,
     findBySlugRules,
     createSEOArticleExpertRules,
     updateSEOArticleExpertRules,
-    deleteSEOArticleExpertRules
+    deleteSEOArticleExpertRules,
   }
 }

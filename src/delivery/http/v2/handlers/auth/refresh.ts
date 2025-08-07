@@ -7,7 +7,8 @@ export type Refresh = (req: AuthRequest, res: Response) => Promise<Response>
 export const buildRefresh = ({ auth }: Params): Refresh => {
   return async (req, res) => {
     const result = await auth.refresh({
-      refreshToken: req.body.refreshToken
+      refreshToken: req.body.refreshToken,
+      accessToken: req.body.accessToken,
     })
     return res.status(200).json(result)
   }

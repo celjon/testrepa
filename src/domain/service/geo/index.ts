@@ -1,6 +1,6 @@
 import { Adapter } from '@/domain/types'
-import { buildDetermineLocation, DetermineLocation } from './determineLocation'
-import { buildDeterminePaymentRegion, DeterminePaymentRegion } from './determinePaymentRegion'
+import { buildDetermineLocation, DetermineLocation } from './determine-location'
+import { buildDeterminePaymentRegion, DeterminePaymentRegion } from './determine-payment-region'
 
 export type GeoService = {
   determineLocation: DetermineLocation
@@ -13,6 +13,6 @@ export const buildGeoService = (params: Adapter): GeoService => {
 
   return {
     determineLocation,
-    determinePaymentRegion
+    determinePaymentRegion,
   }
 }

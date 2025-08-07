@@ -41,7 +41,11 @@ export type ExtractBibliography = (params: {
   capsSpend: number
 }>
 
-export const buildExtractBibliography = ({ adapter, service, getChildModel }: Params): ExtractBibliography => {
+export const buildExtractBibliography = ({
+  adapter,
+  service,
+  getChildModel,
+}: Params): ExtractBibliography => {
   return async ({ textSource, language, userId, model_id }) => {
     const { text, meta, link } = textSource
     const prompt = dedent`
@@ -101,7 +105,7 @@ export const buildExtractBibliography = ({ adapter, service, getChildModel }: Pa
 
     const { model } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
 
     const content = JSON.stringify({ text, meta })
@@ -111,20 +115,20 @@ export const buildExtractBibliography = ({ adapter, service, getChildModel }: Pa
       messages: [
         {
           role: 'user',
-          content
-        }
+          content,
+        },
       ],
       settings: {
         model: model.prefix + model.id,
         system_prompt: prompt,
-        temperature: 0
+        temperature: 0,
       },
-      response_format: bibliographyResponseFormat
+      response_format: bibliographyResponseFormat,
     })
 
     if (!response.usage) {
       throw new InvalidDataError({
-        code: 'UNABLE_TO_EXTRACT_BIBLIOGRAPHY'
+        code: 'UNABLE_TO_EXTRACT_BIBLIOGRAPHY',
       })
     }
     const messageContent = response.message.content?.trim()
@@ -166,9 +170,9 @@ export const buildExtractBibliography = ({ adapter, service, getChildModel }: Pa
     bibliographic.url = link
     bibliographic.accessDate = new Date().toLocaleDateString('ru-RU')
 
-    const caps = await service.model.getCaps({
+    const caps = await service.model.getCaps.text({
       model,
-      usage: response.usage
+      usage: response.usage,
     })
 
     return { bibliographic, capsSpend: caps }

@@ -4,7 +4,7 @@ type Params = Pick<Adapter, 'modelUsageBucketRepository'>
 
 export type IncrementUsage = (params: { modelIds: string[] }) => Promise<void>
 
-export const buildIncrementUsage = ({ modelUsageBucketRepository,  }: Params): IncrementUsage => {
+export const buildIncrementUsage = ({ modelUsageBucketRepository }: Params): IncrementUsage => {
   return async ({ modelIds }) => {
     const today = new Date()
     today.setHours(0, 0, 0, 0) // Set to the beginning of the day
@@ -14,17 +14,17 @@ export const buildIncrementUsage = ({ modelUsageBucketRepository,  }: Params): I
         where: {
           model_id_bucket_date: {
             model_id: modelId,
-            bucket_date: today
-          }
+            bucket_date: today,
+          },
         },
         create: {
           bucket_date: today,
           model_id: modelId,
-          usage_count: 1
+          usage_count: 1,
         },
         update: {
-          usage_count: { increment: 1 }
-        }
+          usage_count: { increment: 1 },
+        },
       })
     }
   }

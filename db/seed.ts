@@ -8,74 +8,74 @@ export const plans: Array<Omit<Plan, 'id'>> = [
     type: PlanType.FREE,
     price: cfg.plans['FREE'].price_usd,
     tokens: cfg.plans['FREE'].tokens,
-    currency: Currency.USD
+    currency: Currency.USD,
   },
   {
     type: PlanType.BASIC,
     price: cfg.plans['BASIC'].price_usd,
     tokens: cfg.plans['BASIC'].tokens,
-    currency: Currency.USD
+    currency: Currency.USD,
   },
   {
     type: PlanType.PREMIUM,
     price: cfg.plans['PREMIUM'].price_usd,
     tokens: cfg.plans['PREMIUM'].tokens,
-    currency: Currency.USD
+    currency: Currency.USD,
   },
   {
     type: PlanType.FREE,
     price: cfg.plans['FREE'].price_rub,
     tokens: cfg.plans['FREE'].tokens,
-    currency: Currency.RUB
+    currency: Currency.RUB,
   },
   {
     type: PlanType.BASIC,
     price: cfg.plans['BASIC'].price_rub,
     tokens: cfg.plans['BASIC'].tokens,
-    currency: Currency.RUB
+    currency: Currency.RUB,
   },
   {
     type: PlanType.PREMIUM,
     price: cfg.plans['PREMIUM'].price_rub,
     tokens: cfg.plans['PREMIUM'].tokens,
-    currency: Currency.RUB
+    currency: Currency.RUB,
   },
   {
     type: PlanType.DELUXE,
     price: cfg.plans['DELUXE'].price_rub,
     tokens: cfg.plans['DELUXE'].tokens,
-    currency: Currency.RUB
+    currency: Currency.RUB,
   },
   {
     type: PlanType.DELUXE,
     price: cfg.plans['DELUXE'].price_usd,
     tokens: cfg.plans['DELUXE'].tokens,
-    currency: Currency.USD
+    currency: Currency.USD,
   },
   {
     type: PlanType.DELUXE,
     price: cfg.plans['DELUXE'].price_usd,
     tokens: cfg.plans['DELUXE'].tokens,
-    currency: Currency.EUR
+    currency: Currency.EUR,
   },
   {
     type: PlanType.ELITE,
     price: cfg.plans['ELITE'].price_rub,
     tokens: cfg.plans['ELITE'].tokens,
-    currency: Currency.RUB
+    currency: Currency.RUB,
   },
   {
     type: PlanType.ELITE,
     price: cfg.plans['ELITE'].price_usd,
     tokens: cfg.plans['ELITE'].tokens,
-    currency: Currency.USD
+    currency: Currency.USD,
   },
   {
     type: PlanType.ELITE,
     price: cfg.plans['ELITE'].price_usd,
     tokens: cfg.plans['ELITE'].tokens,
-    currency: Currency.EUR
-  }
+    currency: Currency.EUR,
+  },
 ]
 
 const users: Array<{
@@ -88,16 +88,16 @@ const users: Array<{
     email: 'admin@admin.ru',
     password: bcrypt.hashSync(cfg.admin.password, 10) as string,
     role: Role.ADMIN,
-    emailVerified: true
-  }
+    emailVerified: true,
+  },
 ]
 
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL as string
-    }
-  }
+      url: process.env.DATABASE_URL as string,
+    },
+  },
 })
 
 async function main() {
@@ -110,12 +110,12 @@ async function main() {
         where: {
           planUnique: {
             type: plan.type,
-            currency: plan.currency
-          }
+            currency: plan.currency,
+          },
         },
         create: plan,
-        update: {}
-      })
+        update: {},
+      }),
     )
   }
 
@@ -124,15 +124,15 @@ async function main() {
     jobs.push(
       prisma.user.upsert({
         where: {
-          email: user.email
+          email: user.email,
         },
         create: user,
         update: {
           password: user.password,
           role: user.role,
-          emailVerified: user.emailVerified
-        }
-      })
+          emailVerified: user.emailVerified,
+        },
+      }),
     )
   }
 

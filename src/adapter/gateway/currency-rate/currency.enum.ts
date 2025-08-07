@@ -41,7 +41,7 @@ enum CurrencyEnum {
   RSD,
   ZAR,
   KRW,
-  JPY
+  JPY,
 }
 
 export { CurrencyEnum }

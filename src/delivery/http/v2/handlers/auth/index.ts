@@ -1,17 +1,25 @@
 import { buildGetMe, GetMe } from './me'
 import { buildTelegramAuthorize, TelegramAuthorize } from './telegram'
 import { buildRefresh, Refresh } from './refresh'
-import { Authorize, buildAuthorize } from './authorize'
+import { buildAuthorize, Authorize } from './authorize'
 import { buildRegister, Register } from './register'
-import { buildSendResetLink, SendResetLink } from './sendResetLink'
-import { buildResetPassword, ResetPassword } from './resetPassword'
-import { buildGenerateTelegramConnectionToken, GenerateTelegramConnectionToken } from './generate-telegram-connection-token'
-import { buildGenerateTelegramConnectionTokenPython, GenerateTelegramConnectionTokenPython } from './generate-telegram-connection-token-python'
+import { buildSendResetLink, SendResetLink } from './send-reset-link'
+import { buildResetPassword, ResetPassword } from './reset-password'
+import {
+  buildGenerateTelegramConnectionToken,
+  GenerateTelegramConnectionToken,
+} from './generate-telegram-connection-token'
+import {
+  buildGenerateTelegramConnectionTokenPython,
+  GenerateTelegramConnectionTokenPython,
+} from './generate-telegram-connection-token-python'
 import { buildConnectTelegram, ConnectTelegram } from './connect-telegram'
 import { buildConnectTelegramPython, ConnectTelegramPython } from './connect-telegram-python'
-import { buildGenerateTelegramUnlinkToken, GenerateTelegramUnlinkToken } from './generateTelegramUnlinkToken'
-import { buildUnlinkTelegram, UnlinkTelegram } from './unlinkTelegram'
-
+import {
+  buildGenerateTelegramUnlinkToken,
+  GenerateTelegramUnlinkToken,
+} from './generate-telegram-unlink-token'
+import { buildUnlinkTelegram, UnlinkTelegram } from './unlink-telegram'
 
 import Express from 'express'
 import { IHandler } from '../types'
@@ -19,15 +27,17 @@ import { createRouteHandler } from '../../routeHandler'
 import { buildAuthRules } from './rules'
 import { DeliveryParams } from '@/delivery/types'
 import { buildFingerprintAuthorize, FingerprintAuthorize } from './fingerprint'
-import { buildVerifyEmailHandler, VerifyEmailHandler } from './verifyEmail'
-import { buildOAuthAuthorize, OAuthAuthorize } from './oauthAuthorize'
-import { buildGetOAuthConsentURL, GetOAuthConsentURL } from './getOAuthConsentURL'
+import { buildVerifyEmailHandler, VerifyEmailHandler } from './verify-email'
+import { buildOAuthAuthorize, OAuthAuthorize } from './oauth-authorize'
+import { buildGetOAuthConsentURL, GetOAuthConsentURL } from './get-oauth-consent-url'
 import { Middlewares } from '../../middlewares'
-import { buildChangeEmail, ChangeEmail } from './changeEmail'
-import { buildEnableEncryption, EnableEncryption } from './enableEncryption'
-import { buildToggleReceiveEmails, ToggleReceiveEmails } from './toggleReceiveEmails'
-import { buildChangePassword, ChangePassword } from './changePassword'
-import { buildUpdateYandexMetric, UpdateYandexMetric } from './updateYandexMetric'
+import { buildChangeEmail, ChangeEmail } from './change-email'
+import { buildEnableEncryption, EnableEncryption } from './enable-encryption'
+import { buildToggleReceiveEmails, ToggleReceiveEmails } from './toggle-receive-emails'
+import { buildChangePassword, ChangePassword } from './change-password'
+import { buildUpdateYandexMetric, UpdateYandexMetric } from './update-yandex-metric'
+import { buildLogout, Logout } from './logout'
+import { buildLogoutAll, LogoutAll } from './logout-all'
 
 type Params = Pick<DeliveryParams, 'auth' | 'middlewares'>
 
@@ -54,6 +64,8 @@ export type AuthMethods = {
   toggleReceiveEmails: ToggleReceiveEmails
   changePassword: ChangePassword
   updateYandexMetric: UpdateYandexMetric
+  logout: Logout
+  logoutAll: LogoutAll
 }
 
 const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => {
@@ -76,7 +88,9 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
     unlinkTelegramRules,
     toggleReceiveEmailsRules,
     changePasswordRules,
-    updateYandexMetricRules
+    updateYandexMetricRules,
+    logoutRules,
+    logoutAllRules,
   } = buildAuthRules(middlewares)
 
   return (root: Express.Router) => {
@@ -110,7 +124,11 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                    code_verifier:
      *                      type: string
      */
-    namespace.get('/oauth/consent-url', getOAuthConsentURLRules, createRouteHandler(methods.getOAuthConsentURL))
+    namespace.get(
+      '/oauth/consent-url',
+      getOAuthConsentURLRules,
+      createRouteHandler(methods.getOAuthConsentURL),
+    )
 
     /**
      * @openapi
@@ -277,7 +295,11 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *        200:
      *           description: Email sent.
      */
-    namespace.post('/request-reset-password', sendResetLinkRules, createRouteHandler(methods.sendResetLink))
+    namespace.post(
+      '/request-reset-password',
+      sendResetLinkRules,
+      createRouteHandler(methods.sendResetLink),
+    )
 
     /**
      * @openapi
@@ -320,7 +342,7 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
     namespace.get(
       '/telegram-connection-token',
       generateTelegramConnectionTokenRules,
-      createRouteHandler(methods.generateTelegramConnectionToken)
+      createRouteHandler(methods.generateTelegramConnectionToken),
     )
 
     /**
@@ -344,9 +366,8 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
     namespace.get(
       '/telegram-connection-token-python',
       generateTelegramConnectionTokenRules,
-      createRouteHandler(methods.generateTelegramConnectionTokenPython)
+      createRouteHandler(methods.generateTelegramConnectionTokenPython),
     )
-
 
     /**
      * @openapi
@@ -371,7 +392,11 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                schema:
      *                      $ref: '#/components/entities/User'
      */
-    namespace.post('/connect-telegram', connectTelegramRules, createRouteHandler(methods.connectTelegram))
+    namespace.post(
+      '/connect-telegram',
+      connectTelegramRules,
+      createRouteHandler(methods.connectTelegram),
+    )
 
     /**
      * @openapi
@@ -396,7 +421,11 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                schema:
      *                      $ref: '#/components/entities/User'
      */
-    namespace.post('/connect-telegram-python', connectTelegramRules, createRouteHandler(methods.connectTelegramPython))
+    namespace.post(
+      '/connect-telegram-python',
+      connectTelegramRules,
+      createRouteHandler(methods.connectTelegramPython),
+    )
 
     /**
      * @openapi
@@ -416,7 +445,11 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                    telegramUnlinkToken:
      *                      type: string
      */
-    namespace.get('/telegram-unlink-token', generateTelegramUnlinkTokenRules, createRouteHandler(methods.generateTelegramUnlinkToken))
+    namespace.get(
+      '/telegram-unlink-token',
+      generateTelegramUnlinkTokenRules,
+      createRouteHandler(methods.generateTelegramUnlinkToken),
+    )
 
     /**
      * @openapi
@@ -441,9 +474,17 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                schema:
      *                      $ref: '#/components/entities/User'
      */
-    namespace.post('/unlink-telegram', unlinkTelegramRules, createRouteHandler(methods.unlinkTelegram))
+    namespace.post(
+      '/unlink-telegram',
+      unlinkTelegramRules,
+      createRouteHandler(methods.unlinkTelegram),
+    )
 
-    namespace.post('/fingerprint', fingerprintAuthorizationRules, createRouteHandler(methods.fingerprint))
+    namespace.post(
+      '/fingerprint',
+      fingerprintAuthorizationRules,
+      createRouteHandler(methods.fingerprint),
+    )
 
     /**
      * @openapi
@@ -493,7 +534,11 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                 schema:
      *                    $ref: '#/components/entities/Subscription'
      */
-    namespace.post('/receive-emails', toggleReceiveEmailsRules, createRouteHandler(methods.toggleReceiveEmails))
+    namespace.post(
+      '/receive-emails',
+      toggleReceiveEmailsRules,
+      createRouteHandler(methods.toggleReceiveEmails),
+    )
 
     /**
      * @openapi
@@ -540,7 +585,11 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                    refreshToken:
      *                      type: string
      */
-    namespace.post('/encryption/enable', enableEncryptionRules, createRouteHandler(methods.enableEncryption))
+    namespace.post(
+      '/encryption/enable',
+      enableEncryptionRules,
+      createRouteHandler(methods.enableEncryption),
+    )
 
     /**
      * @swagger
@@ -548,6 +597,8 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *   post:
      *     summary: Change password
      *     tags: [Auth]
+     *     security:
+     *       - bearerAuth: []
      *     requestBody:
      *       required: true
      *       content:
@@ -571,7 +622,11 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                    refreshToken:
      *                      type: string
      */
-    namespace.post('/change-password', changePasswordRules, createRouteHandler(methods.changePassword))
+    namespace.post(
+      '/change-password',
+      changePasswordRules,
+      createRouteHandler(methods.changePassword),
+    )
 
     /**
      * @openapi
@@ -602,7 +657,58 @@ const buildRegisterRoutes = (methods: AuthMethods, middlewares: Middlewares) => 
      *                schema:
      *                    $ref: '#/components/entities/User'
      */
-    namespace.patch('/update-yandex-metric', updateYandexMetricRules, createRouteHandler(methods.updateYandexMetric))
+    namespace.patch(
+      '/update-yandex-metric',
+      updateYandexMetricRules,
+      createRouteHandler(methods.updateYandexMetric),
+    )
+
+    /**
+     * @openapi
+     * /auth/logout:
+     *   post:
+     *     tags: [Auth]
+     *     security:
+     *      - bearerAuth: []
+     *     produces:
+     *       - application/json
+     *     requestBody:
+     *       in: body
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/rules/refreshToken'
+     *     responses:
+     *        200:
+     *           description: Authorized user.
+     *           content:
+     *              application/json:
+     *                schema:
+     *                  properties:
+     *                    message:
+     *                      type: string
+     */
+    namespace.post('/logout', logoutRules, createRouteHandler(methods.logout))
+    /**
+     * @openapi
+     * /auth/logout-all:
+     *   get:
+     *     tags: [Auth]
+     *     security:
+     *      - bearerAuth: []
+     *     produces:
+     *       - application/json
+     *     responses:
+     *        200:
+     *           content:
+     *              application/json:
+     *                schema:
+     *                  properties:
+     *                    message:
+     *                      type: string
+     */
+    namespace.get('/logout-all', logoutAllRules, createRouteHandler(methods.logoutAll))
 
     root.use('/auth', namespace)
   }
@@ -630,6 +736,8 @@ export const buildAuthHandler = (params: Params): IHandler => {
   const toggleReceiveEmails = buildToggleReceiveEmails(params)
   const changePassword = buildChangePassword(params)
   const updateYandexMetric = buildUpdateYandexMetric(params)
+  const logout = buildLogout(params)
+  const logoutAll = buildLogoutAll(params)
 
   return {
     registerRoutes: buildRegisterRoutes(
@@ -655,9 +763,11 @@ export const buildAuthHandler = (params: Params): IHandler => {
         unlinkTelegram,
         toggleReceiveEmails,
         changePassword,
-        updateYandexMetric
+        updateYandexMetric,
+        logout,
+        logoutAll,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

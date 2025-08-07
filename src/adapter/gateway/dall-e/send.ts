@@ -1,15 +1,20 @@
-import { AdapterParams } from '@/adapter/types'
-import { logger } from '@/lib/logger'
-import { IMessage } from '@/domain/entity/message'
 import { isAxiosError } from 'axios'
-import { BaseError, InternalError } from '@/domain/errors'
-import { IChatImageSettings } from '@/domain/entity/chatSettings'
 import { ImageGenerateParams } from 'openai/resources'
-import { getB64Extension } from '@/lib/utils/getB64Extension'
+import { APIError } from 'openai'
+import { logger } from '@/lib/logger'
+import { getB64Extension } from '@/lib/utils/get-b64-extension'
+import { AdapterParams } from '@/adapter/types'
+import { IMessage } from '@/domain/entity/message'
+import { BaseError, ForbiddenError, InternalError } from '@/domain/errors'
+import { IChatImageSettings } from '@/domain/entity/chat-settings'
 
 type Params = Pick<AdapterParams, 'openaiDalleBalancer'>
 
-export type Send = (params: { message: IMessage; settings: Partial<IChatImageSettings>; endUserId: string }) => Promise<{
+export type Send = (params: {
+  message: IMessage
+  settings: Partial<IChatImageSettings>
+  endUserId: string
+}) => Promise<{
   images: {
     base64: string
     buffer: Buffer
@@ -32,17 +37,17 @@ export const buildSend = ({ openaiDalleBalancer }: Params): Send => {
         prompt: `${message.full_content ?? message.content ?? ''} ${message.voice?.content ?? ''} ${message.video?.content ?? ''}`,
         size: (settings.size ?? '1024x1024') as ImageGenerateParams['size'],
         ...(settings.model !== 'dall-e-2' && {
-          quality: (settings.quality ?? 'standard') as ImageGenerateParams['quality']
+          quality: (settings.quality ?? 'standard') as ImageGenerateParams['quality'],
         }),
         ...(settings.style &&
           settings.style !== 'default' && {
-            style: settings.style as ImageGenerateParams['style']
+            style: settings.style as ImageGenerateParams['style'],
           }),
         ...(settings.model !== 'gpt-image-1' && {
-          response_format: 'b64_json'
+          response_format: 'b64_json',
         }),
         ...(settings.model === 'gpt-image-1' && { moderation: 'low' }),
-        user: endUserId
+        user: endUserId,
       })
 
       if (!data) {
@@ -66,22 +71,34 @@ export const buildSend = ({ openaiDalleBalancer }: Params): Send => {
           ? {
               input_text_tokens: usage.input_tokens_details.text_tokens,
               input_image_tokens: usage.input_tokens_details.image_tokens,
-              output_image_tokens: usage.output_tokens
+              output_image_tokens: usage.output_tokens,
             }
-          : null
+          : null,
       }
     } catch (error) {
       if (isAxiosError(error)) {
         if (error.response) {
           logger.error({
             location: 'dalleGateway.send',
-            message: `${JSON.stringify(error?.response?.data || '')}`
+            message: `${JSON.stringify(error?.response?.data || '')}`,
           })
 
           throw new BaseError({
             httpStatus: error.response.status,
             message: `OpenAi error: ${error.response.data.error?.code}`,
-            code: error.response.data.error?.code || 'OPENAI_ERROR'
+            code: error.response.data.error?.code || 'OPENAI_ERROR',
+          })
+        }
+      }
+
+      if (error instanceof APIError) {
+        if (
+          error.message?.includes('Request was rejected as a result of the safety system. ') ||
+          error.error?.type?.includes('image_generation_user_error')
+        ) {
+          throw new ForbiddenError({
+            code: 'PROVIDER_VIOLATION',
+            message: `Content rejected by the AI provider's safety systems`,
           })
         }
       }

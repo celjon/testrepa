@@ -8,7 +8,7 @@ import {
   buildGetLastSoftLimitNotification,
   buildSetLastSoftLimitNotification,
   GetLastSoftLimitNotification,
-  SetLastSoftLimitNotification
+  SetLastSoftLimitNotification,
 } from './notifications'
 import { buildFindMany, FindMany } from '@/adapter/repository/subscription/find-many'
 
@@ -40,6 +40,6 @@ export const buildSubscriptionRepository = (params: Params): SubscriptionReposit
     list,
     count,
     getLastSoftLimitNotificationDate: buildGetLastSoftLimitNotification(params),
-    setLastSoftLimitNotificationDate: buildSetLastSoftLimitNotification(params)
+    setLastSoftLimitNotificationDate: buildSetLastSoftLimitNotification(params),
   }
 }

@@ -18,12 +18,21 @@ import { buildGetEmployeesStatsStream, GetEmployeesStatsStream } from './get-emp
 import { buildGetEmployeesStatsExcel, GetEmployeesStatsExcel } from './get-employees-stats-excel'
 import {
   buildGetEmployeesStatsTotalTokensUsedExcel,
-  GetEmployeesStatsTotalTokensUsedExcel
+  GetEmployeesStatsTotalTokensUsedExcel,
 } from './get-employees-stats-total-tokens-used-excel'
 import {
   buildGetInvoicingForCreditEnterprisesExcel,
-  GetInvoicingForCreditEnterprisesExcel
+  GetInvoicingForCreditEnterprisesExcel,
 } from './get-invoicing-for-credit-enterprises-excel'
+import { buildUpdateSpentInMonth, UpdateSpentInMonth } from './update-spent-in-month'
+import {
+  buildChangeEmployeeSpendLimit,
+  ChangeEmployeeSpendLimit,
+} from './change-employee-spend-limit'
+import { buildUpdateEmployeeGroups, UpdateEmployeeGroups } from './update-employee-groups'
+import { buildCreateEmployeeGroups, CreateEmployeeGroups } from './create-employee-groups'
+import { buildDeleteEmployeeGroups, DeleteEmployeeGroups } from './delete-employee-groups'
+import { buildListEmployeeGroup, ListEmployeeGroup } from './list-employee-group'
 
 export type EnterpriseUseCase = {
   list: List
@@ -45,6 +54,12 @@ export type EnterpriseUseCase = {
   getEmployeesStatsExcel: GetEmployeesStatsExcel
   getEmployeesStatsTotalTokensUsedExcel: GetEmployeesStatsTotalTokensUsedExcel
   getInvoicingForCreditEnterprisesExcel: GetInvoicingForCreditEnterprisesExcel
+  updateSpentInMonth: UpdateSpentInMonth
+  changeEmployeeSpendLimit: ChangeEmployeeSpendLimit
+  updateEmployeeGroups: UpdateEmployeeGroups
+  createEmployeeGroups: CreateEmployeeGroups
+  deleteEmployeeGroups: DeleteEmployeeGroups
+  listEmployeeGroup: ListEmployeeGroup
 }
 
 export const buildEnterpriseUseCase = (params: UseCaseParams): EnterpriseUseCase => {
@@ -58,7 +73,21 @@ export const buildEnterpriseUseCase = (params: UseCaseParams): EnterpriseUseCase
   const join = buildJoin(params)
   const toggleCommonPool = buildToggleCommonPool(params)
   const get = buildGet(params)
-
+  const updateSpentInMonth = buildUpdateSpentInMonth(params)
+  const changeEmployeeSpendLimit = buildChangeEmployeeSpendLimit(params)
+  const getInvoicingForCreditEnterprisesExcel = buildGetInvoicingForCreditEnterprisesExcel(params)
+  const getEmployeesStatsExcel = buildGetEmployeesStatsExcel(params)
+  const getEmployeesStatsTotalTokensUsedExcel = buildGetEmployeesStatsTotalTokensUsedExcel(params)
+  const getEmployeesStatsStream = buildGetEmployeesStatsStream(params)
+  const addUsageConstraint = buildAddUsageConstraint(params)
+  const removeUsageConstraint = buildRemoveUsageConstraint(params)
+  const listUsageConstraints = buildListUsageConstraints(params)
+  const addEmployeeModel = buildAddEmployeeModel(params)
+  const removeEmployeeModel = buildRemoveEmployeeModel(params)
+  const updateEmployeeGroups = buildUpdateEmployeeGroups(params)
+  const createEmployeeGroups = buildCreateEmployeeGroups(params)
+  const deleteEmployeeGroups = buildDeleteEmployeeGroups(params)
+  const listEmployeeGroup = buildListEmployeeGroup(params)
   return {
     list,
     create,
@@ -70,14 +99,20 @@ export const buildEnterpriseUseCase = (params: UseCaseParams): EnterpriseUseCase
     join,
     toggleCommonPool,
     get,
-    getInvoicingForCreditEnterprisesExcel: buildGetInvoicingForCreditEnterprisesExcel(params),
-    getEmployeesStatsExcel: buildGetEmployeesStatsExcel(params),
-    getEmployeesStatsTotalTokensUsedExcel: buildGetEmployeesStatsTotalTokensUsedExcel(params),
-    getEmployeesStatsStream: buildGetEmployeesStatsStream(params),
-    addUsageConstraint: buildAddUsageConstraint(params),
-    removeUsageConstraint: buildRemoveUsageConstraint(params),
-    listUsageConstraints: buildListUsageConstraints(params),
-    addEmployeeModel: buildAddEmployeeModel(params),
-    removeEmployeeModel: buildRemoveEmployeeModel(params)
+    updateSpentInMonth,
+    changeEmployeeSpendLimit,
+    getInvoicingForCreditEnterprisesExcel,
+    getEmployeesStatsExcel,
+    getEmployeesStatsTotalTokensUsedExcel,
+    getEmployeesStatsStream,
+    addUsageConstraint,
+    removeUsageConstraint,
+    listUsageConstraints,
+    addEmployeeModel,
+    removeEmployeeModel,
+    updateEmployeeGroups,
+    createEmployeeGroups,
+    deleteEmployeeGroups,
+    listEmployeeGroup,
   }
 }

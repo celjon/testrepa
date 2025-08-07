@@ -11,7 +11,7 @@ export const buildDelete = ({ db }: Params): Delete => {
     const topic = await db.client.sEOArticleTopic.delete(data)
     const validatedTopic: ISEOArticleTopic = {
       ...topic,
-      name: topic.name as LocalizedName
+      name: topic.name as LocalizedName,
     }
     return validatedTopic
   }

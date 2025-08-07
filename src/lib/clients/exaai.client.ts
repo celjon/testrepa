@@ -1,4 +1,4 @@
-import { SearchParams, SearchResultsAndContents } from '@/adapter/gateway/webSearch/types'
+import { SearchParams, SearchResultsAndContents } from '@/adapter/gateway/web-search/types'
 import Exa from 'exa-js'
 
 export type ExaAIClient = {
@@ -14,14 +14,16 @@ export const newClient = ({ apiKey }: Params): { client: ExaAIClient } => {
 
   return {
     client: {
-      getSearchResultsAndContents: async (params: SearchParams): Promise<SearchResultsAndContents> => {
+      getSearchResultsAndContents: async (
+        params: SearchParams,
+      ): Promise<SearchResultsAndContents> => {
         const response = await exa.searchAndContents(params.query, {
           numResults: params.numResults,
-          livecrawl: 'always',
+          livecrawl: 'preferred',
           text: true,
           type: 'keyword',
           filterEmptyResults: true,
-          excludeDomains: ['www.youtube.com', 'youtu.be', 'youtube.com']
+          excludeDomains: ['www.youtube.com', 'youtu.be', 'youtube.com'],
         })
 
         return {
@@ -30,7 +32,7 @@ export const newClient = ({ apiKey }: Params): { client: ExaAIClient } => {
             url: res.url,
             title: res.title,
             snippet: null,
-            content: res.text ?? ''
+            content: res.text ?? '',
           })),
           costDollars: (
             response as unknown as {
@@ -38,9 +40,9 @@ export const newClient = ({ apiKey }: Params): { client: ExaAIClient } => {
                 total: number
               }
             }
-          ).costDollars.total
+          ).costDollars.total,
         }
-      }
-    }
+      },
+    },
   }
 }

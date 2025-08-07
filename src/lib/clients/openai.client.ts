@@ -2,14 +2,13 @@ import OpenAi from 'openai'
 
 export const newClient = (openAiKey: string) => {
   const client = new OpenAi({
-    apiKey: openAiKey
+    apiKey: openAiKey,
   })
 
   return {
-    client
+    client,
   }
 }
-
 
 export interface IOpenAIModel {
   id: string

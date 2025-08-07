@@ -9,12 +9,12 @@ export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
     let seoArticleExpert = await adapter.seoArticleExpertRepository.get({ where: { id } })
     if (seoArticleExpert) {
       seoArticleExpert = await adapter.seoArticleExpertRepository.delete({
-        where: { id }
+        where: { id },
       })
     }
     if (!seoArticleExpert) {
       throw new NotFoundError({
-        code: 'EXPERT_NOT_FOUND'
+        code: 'EXPERT_NOT_FOUND',
       })
     }
 

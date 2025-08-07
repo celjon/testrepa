@@ -12,7 +12,7 @@ export class MidjourneyMessage {
     }
     this.config = {
       ...DefaultMJConfig,
-      ...defaults
+      ...defaults,
     }
   }
 
@@ -57,7 +57,7 @@ export class MidjourneyMessage {
           progress: 'done',
           options: formatOptions(item.components),
           width,
-          height
+          height,
         }
         return msg
       }
@@ -85,13 +85,13 @@ export class MidjourneyMessage {
   async RetrieveMessages(limit = this.config.Limit) {
     const headers = {
       'Content-Type': 'application/json',
-      Authorization: this.config.SalaiToken
+      Authorization: this.config.SalaiToken,
     }
     const response = await this.config.fetch(
       `${this.config.DiscordBaseUrl}/api/v10/channels/${this.config.ChannelId}/messages?limit=${limit}`,
       {
-        headers
-      }
+        headers,
+      },
     )
     if (!response.ok) {
       this.log('error config', { config: this.config })
@@ -127,7 +127,7 @@ export class MidjourneyMessage {
           request,
           callback: (any: any) => {
             resolve(any)
-          }
+          },
         },
         (error: any, result: any) => {
           if (error) {
@@ -135,12 +135,18 @@ export class MidjourneyMessage {
           } else {
             resolve(result)
           }
-        }
+        },
       )
     })
   }
 
-  private processRequest = async ({ request, callback }: { request: any; callback: (any: any) => void }) => {
+  private processRequest = async ({
+    request,
+    callback,
+  }: {
+    request: any
+    callback: (any: any) => void
+  }) => {
     const httpStatus = await this.RetrieveMessages(request)
     callback(httpStatus)
     await sleep(this.config.ApiInterval)

@@ -1,4 +1,5 @@
 import { FileType, MessageStatus, Platform } from '@prisma/client'
+import { getErrorString } from '@/lib'
 import { logger } from '@/lib/logger'
 import { Adapter } from '@/domain/types'
 import { ChatService } from '../../chat'
@@ -16,10 +17,10 @@ import { UploadVoice } from '../upload/voice'
 import { UploadFiles } from '../upload/files'
 import { MessageStorage } from '../storage/types'
 import { FileService } from '../../file'
-import { TransalatePrompt } from '../translatePrompt'
+import { TransalatePrompt } from '../translate-prompt'
 import { IEmployee } from '@/domain/entity/employee'
 import { RawFile } from '@/domain/entity/file'
-import { SendVideoByProvider } from './sendByProvider'
+import { SendVideoByProvider } from './send-by-provider'
 
 type Params = Adapter & {
   uploadFiles: UploadFiles
@@ -49,6 +50,7 @@ export type SendVideo = (params: {
   sentPlatform?: Platform
   onEnd?: (params: { userMessage: IMessage; assistantMessage: IMessage | null }) => unknown
   stream: boolean
+  developerKeyId?: string
 }) => Promise<IMessage>
 
 export const buildSendVideo = ({
@@ -68,22 +70,35 @@ export const buildSendVideo = ({
   modelRepository,
   cryptoGateway,
   fileService,
-  videoRepository
+  videoRepository,
 }: Params): SendVideo => {
-  return async ({ userMessage, chat, user, employee, keyEncryptionKey, subscription, files, voiceFile, platform, onEnd, stream }) => {
+  return async ({
+    userMessage,
+    chat,
+    user,
+    employee,
+    keyEncryptionKey,
+    subscription,
+    files,
+    voiceFile,
+    platform,
+    onEnd,
+    stream,
+    developerKeyId,
+  }) => {
     const { settings } = chat
     if (!settings || !settings.video) {
       throw new NotFoundError({
         code: 'SETTINGS_NOT_FOUND',
-        message: 'Settings "replicateVideo" not found'
+        message: 'Settings "replicateVideo" not found',
       })
     }
     const videoSettings = settings.video
     const model =
       (await modelRepository.get({
         where: {
-          id: videoSettings.model
-        }
+          id: videoSettings.model,
+        },
       })) ??
       chat.model ??
       null
@@ -91,13 +106,13 @@ export const buildSendVideo = ({
     if (!model) {
       throw new NotFoundError({
         code: 'MODEL_NOT_FOUND',
-        message: `Model ${videoSettings.model} not found`
+        message: `Model ${videoSettings.model} not found`,
       })
     }
 
     const videoJob = await jobService.create({
       name: 'MODEL_GENERATION',
-      chat
+      chat,
     })
 
     let videoMessage = await messageStorage.create({
@@ -111,7 +126,7 @@ export const buildSendVideo = ({
           user_id: user.id,
           model_id: model.id,
           job_id: videoJob.id,
-          created_at: new Date(userMessage.created_at.getTime() + 1)
+          created_at: new Date(userMessage.created_at.getTime() + 1),
         },
         include: {
           model: {
@@ -119,14 +134,14 @@ export const buildSendVideo = ({
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
-          job: true
-        }
-      }
+          job: true,
+        },
+      },
     })
 
     chatService.eventStream.emit({
@@ -134,16 +149,17 @@ export const buildSendVideo = ({
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: videoMessage
-        }
-      }
+          message: videoMessage,
+        },
+      },
     })
     const updateVideoMessage = async () => {
       try {
-        const [{ userMessageImages, userMessageAttachmentsFiles }, { userMessageVoice }] = await Promise.all([
-          uploadFiles({ files, user, keyEncryptionKey }),
-          uploadVoice({ voiceFile, user, keyEncryptionKey })
-        ])
+        const [{ userMessageImages, userMessageAttachmentsFiles }, { userMessageVoice }] =
+          await Promise.all([
+            uploadFiles({ files, user, keyEncryptionKey }),
+            uploadVoice({ voiceFile, user, keyEncryptionKey }),
+          ])
 
         userMessage =
           (await messageStorage.update({
@@ -151,23 +167,23 @@ export const buildSendVideo = ({
             keyEncryptionKey,
             data: {
               where: {
-                id: userMessage.id
+                id: userMessage.id,
               },
               data: {
                 images: {
-                  connect: userMessageImages.map(({ id }) => ({ id }))
+                  connect: userMessageImages.map(({ id }) => ({ id })),
                 },
                 attachments: {
                   createMany: {
                     data: userMessageAttachmentsFiles.map((userMessageAttachmentFile) => ({
-                      file_id: userMessageAttachmentFile.id
-                    }))
-                  }
+                      file_id: userMessageAttachmentFile.id,
+                    })),
+                  },
                 },
                 ...(userMessageVoice && {
-                  voice_id: userMessageVoice.id
+                  voice_id: userMessageVoice.id,
                 }),
-                platform
+                platform,
               },
               include: {
                 user: true,
@@ -175,21 +191,21 @@ export const buildSendVideo = ({
                   include: {
                     original: true,
                     preview: true,
-                    buttons: true
-                  }
+                    buttons: true,
+                  },
                 },
                 attachments: {
                   include: {
-                    file: true
-                  }
+                    file: true,
+                  },
                 },
                 voice: {
                   include: {
-                    file: true
-                  }
-                }
-              }
-            }
+                    file: true,
+                  },
+                },
+              },
+            },
           })) ?? userMessage
 
         chatService.eventStream.emit({
@@ -197,52 +213,62 @@ export const buildSendVideo = ({
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: userMessage
-            }
-          }
+              message: userMessage,
+            },
+          },
         })
 
         let userMessageContent = `${userMessage.full_content ?? userMessage.content ?? ''} ${userMessage.voice?.content ?? ''} ${userMessage.video?.content ?? ''}`
 
+        const caps = await modelService.getCaps.video({
+          model,
+          settings,
+        })
+
+        //estimate
+        await subscriptionService.checkBalance({ subscription, estimate: caps })
+
         await moderationService.moderate({
           userId: user.id,
           messageId: userMessage.id,
-          content: userMessageContent ?? ''
+          content: userMessageContent ?? '',
         })
         if (userMessage.images) {
-          const { flagged: isNFSW } = await moderationService.visionModerate({
-            imagePaths: userMessage.images.map((image) => image.original?.path).filter((url) => !!url) as string[],
-            userId: user.id
+          const { flagged: isNSFW } = await moderationService.visionModerate({
+            imagePaths: userMessage.images
+              .map((image) => image.original?.path)
+              .filter((url) => !!url) as string[],
+            userId: user.id,
           })
 
-          if (isNFSW) {
+          if (isNSFW) {
             await Promise.all([
               messageStorage.update({
                 user,
                 keyEncryptionKey,
                 data: {
                   where: {
-                    id: userMessage.id
+                    id: userMessage.id,
                   },
                   data: {
-                    disabled: isNFSW
-                  }
-                }
+                    disabled: isNSFW,
+                  },
+                },
               }),
               messageImageRepository.updateMany({
                 where: {
                   id: {
-                    in: userMessage.images.map((image) => image.id)
-                  }
+                    in: userMessage.images.map((image) => image.id),
+                  },
                 },
                 data: {
-                  is_nsfw: isNFSW
-                }
-              })
+                  is_nsfw: isNSFW,
+                },
+              }),
             ])
 
             throw new ForbiddenError({
-              code: 'VIOLATION'
+              code: 'VIOLATION',
             })
           }
         }
@@ -252,10 +278,6 @@ export const buildSendVideo = ({
           userMessageContent = await translatePrompt({ content: userMessageContent })
         }
 
-        const caps = await modelService.getCaps({
-          model,
-          settings
-        })
         await videoJob.start()
 
         chatService.eventStream.emit({
@@ -266,18 +288,18 @@ export const buildSendVideo = ({
               message: {
                 id: videoMessage.id,
                 job_id: videoJob.id,
-                job: videoJob.job
-              }
-            }
-          }
+                job: videoJob.job,
+              },
+            },
+          },
         })
 
-        const video = await sendVideoByProvider({
+        const { video, provider_id } = await sendVideoByProvider({
           providerId: null,
           model,
           message: userMessage,
           settings: videoSettings,
-          user
+          user,
         })
 
         let dek = null
@@ -286,19 +308,19 @@ export const buildSendVideo = ({
         if (user.encryptedDEK && user.useEncryption && keyEncryptionKey) {
           dek = await cryptoGateway.decryptDEK({
             edek: user.encryptedDEK,
-            kek: keyEncryptionKey
+            kek: keyEncryptionKey,
           })
 
           videoContent = await cryptoGateway.encrypt({
             dek,
-            data: videoContent
+            data: videoContent,
           })
           isVideoContentEncrypted = true
         }
         const originalVideo = await fileService.write({
           buffer: video.buffer,
           ext: video.ext,
-          dek
+          dek,
         })
 
         const videoFile = await videoRepository.create({
@@ -312,10 +334,10 @@ export const buildSendVideo = ({
                 name: originalVideo.name,
                 path: originalVideo.path,
                 size: originalVideo.buffer.length,
-                isEncrypted: originalVideo.isEncrypted
-              }
-            }
-          }
+                isEncrypted: originalVideo.isEncrypted,
+              },
+            },
+          },
         })
 
         await videoJob.done()
@@ -327,8 +349,10 @@ export const buildSendVideo = ({
             userId: user.id,
             enterpriseId: employee?.enterprise_id,
             platform,
-            model_id: model.id
-          }
+            model_id: model.id,
+            provider_id,
+            developerKeyId,
+          },
         })
         const { transaction } = writeOffResult
 
@@ -339,9 +363,9 @@ export const buildSendVideo = ({
             where: { id: chat.id },
             data: {
               total_caps: {
-                increment: caps
-              }
-            }
+                increment: caps,
+              },
+            },
           })) ?? chat
 
         videoMessage =
@@ -353,7 +377,7 @@ export const buildSendVideo = ({
               data: {
                 status: MessageStatus.DONE,
                 transaction_id: transaction.id,
-                video_id: videoFile.id
+                video_id: videoFile.id,
               },
               include: {
                 transaction: true,
@@ -362,23 +386,23 @@ export const buildSendVideo = ({
                     icon: true,
                     parent: {
                       include: {
-                        icon: true
-                      }
-                    }
-                  }
+                        icon: true,
+                      },
+                    },
+                  },
                 },
                 video: {
                   include: {
-                    file: true
-                  }
+                    file: true,
+                  },
                 },
                 buttons: true,
                 all_buttons: {
-                  distinct: ['action']
+                  distinct: ['action'],
                 },
-                job: true
-              }
-            }
+                job: true,
+              },
+            },
           })) ?? videoMessage
 
         chatService.eventStream.emit({
@@ -387,52 +411,57 @@ export const buildSendVideo = ({
             name: 'UPDATE',
             data: {
               chat: {
-                total_caps: chat.total_caps
-              }
-            }
-          }
+                total_caps: chat.total_caps,
+              },
+            },
+          },
         })
         chatService.eventStream.emit({
           chat,
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: videoMessage
-            }
-          }
+              message: videoMessage,
+            },
+          },
         })
         chatService.eventStream.emit({
           chat,
           event: {
             name: 'TRANSACTION_CREATE',
             data: {
-              transaction
-            }
-          }
+              transaction,
+            },
+          },
         })
 
         chatService.eventStream.emit({
           chat,
           event: {
-            name: userService.hasEnterpriseActualSubscription(user) ? 'ENTERPRISE_SUBSCRIPTION_UPDATE' : 'SUBSCRIPTION_UPDATE',
+            name: userService.hasEnterpriseActualSubscription(user)
+              ? 'ENTERPRISE_SUBSCRIPTION_UPDATE'
+              : 'SUBSCRIPTION_UPDATE',
             data: {
               subscription: {
                 id: subscription.id,
-                balance: subscription.balance
-              }
-            }
-          }
+                balance: subscription.balance,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: videoMessage
+          assistantMessage: videoMessage,
         })
       } catch (error) {
-        logger.error('SendReplicateVideo', error, {
+        logger.error({
+          location: 'SendReplicateVideo',
+          message: getErrorString(error),
           userId: user.id,
           email: user.email ?? user.tg_id,
-          chatId: chat.id
+          chatId: chat.id,
+          modelId: model.id,
         })
         await videoJob.setError(error)
 
@@ -444,15 +473,15 @@ export const buildSendVideo = ({
               message: {
                 id: videoMessage.id,
                 job_id: videoJob.id,
-                job: videoJob.job
-              }
-            }
-          }
+                job: videoJob.job,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: videoMessage
+          assistantMessage: videoMessage,
         })
 
         throw error

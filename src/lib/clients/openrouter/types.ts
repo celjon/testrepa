@@ -49,7 +49,6 @@ export type ProviderInfo = {
 }
 
 export type ModelStats = {
-  date: string
   endpoint_id: string
   p50_throughput: number
   p50_latency: number
@@ -120,7 +119,7 @@ export type OpenRouterModelWithEndpoints = {
   limit_rpd?: number | null
   has_completions: boolean
   has_chat_completions: boolean
-  stats: ModelStats[]
+  stats?: ModelStats
   status?: number
 }
 

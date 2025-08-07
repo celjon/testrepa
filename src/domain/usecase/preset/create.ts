@@ -25,7 +25,7 @@ export const buildCreate =
 
     if (images.length > 0) {
       throw new ForbiddenError({
-        code: 'IMAGES_NOT_SUPPORTED'
+        code: 'IMAGES_NOT_SUPPORTED',
       })
     }
 
@@ -35,34 +35,36 @@ export const buildCreate =
       documents.map((document) =>
         adapter.documentGateway.toMarkdown({
           buffer: document.buffer,
-          type: getDocumentType(document.originalname)
-        })
-      )
+          type: getDocumentType(document.originalname),
+        }),
+      ),
     )
-    const moderatedDocuments = await Promise.all(markdownDocs.map((markdownDoc) => adapter.moderationGateway.moderate(markdownDoc)))
+    const moderatedDocuments = await Promise.all(
+      markdownDocs.map((markdownDoc) => adapter.moderationGateway.moderate(markdownDoc)),
+    )
 
     if (access === PresetAccess.PUBLIC) {
       await service.moderation.moderate({
         userId: userId,
         content: name,
-        contentCategory: 'presetName'
+        contentCategory: 'presetName',
       })
 
       await service.moderation.moderate({
         userId: userId,
         content: description,
-        contentCategory: 'presetDescription'
+        contentCategory: 'presetDescription',
       })
 
       await service.moderation.moderate({
         userId: userId,
         content: systemPrompt,
-        contentCategory: 'presetSystemPrompt'
+        contentCategory: 'presetSystemPrompt',
       })
 
       if (moderatedDocuments.some((document) => document.flagged)) {
         throw new ForbiddenError({
-          code: 'FILES_VIOLATION'
+          code: 'FILES_VIOLATION',
         })
       }
     }
@@ -71,9 +73,9 @@ export const buildCreate =
       documents.map((document) =>
         adapter.storageGateway.write({
           buffer: document.buffer,
-          ext: extname(document.originalname)
-        })
-      )
+          ext: extname(document.originalname),
+        }),
+      ),
     )
 
     const dbDocuments = (await Promise.all(
@@ -84,15 +86,15 @@ export const buildCreate =
             name: documents[index].originalname,
             size: documents[index].size,
             url: document.url,
-            path: document.path
-          }
-        })
-      )
+            path: document.path,
+          },
+        }),
+      ),
     ).then((docs) => docs.filter((doc) => !!doc))) as IFile[]
 
     const presetAttachments = dbDocuments.map((document, index) => ({
       file_id: document.id,
-      is_nsfw: moderatedDocuments[index].flagged
+      is_nsfw: moderatedDocuments[index].flagged,
     }))
 
     const preset = await adapter.presetRepository.create({
@@ -103,30 +105,30 @@ export const buildCreate =
         system_prompt: systemPrompt,
         attachments: {
           createMany: {
-            data: presetAttachments
-          }
+            data: presetAttachments,
+          },
         },
         access,
         author_id: userId,
         categories: {
           connect: categoriesIds.map((categoryId) => ({
-            id: categoryId
-          }))
+            id: categoryId,
+          })),
         },
         users: {
           connect: {
-            id: userId
-          }
-        }
+            id: userId,
+          },
+        },
       },
       include: {
         attachments: {
           include: {
-            file: true
-          }
+            file: true,
+          },
         },
-        categories: true
-      }
+        categories: true,
+      },
     })
 
     preset.favorite = true

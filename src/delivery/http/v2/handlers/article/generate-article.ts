@@ -9,12 +9,12 @@ export const buildGenerateArticleMiddleware = ({ fileUpload }: Middlewares) => {
   const webFilesMiddleware = fileUpload({ saveFiles: false }).fields([
     {
       name: 'sourceFile',
-      maxCount: 1
+      maxCount: 1,
     },
     {
       name: 'customStyleFile',
-      maxCount: 1
-    }
+      maxCount: 1,
+    },
   ])
 
   return (req: Request, res: Response, next: NextFunction) => {
@@ -51,7 +51,8 @@ export const buildGenerateArticle = ({ article }: Params): GenerateArticle => {
       symbolsCount: Number(req.body.symbolsCount),
       keywords: req.body.keywords,
       sourceFile: sourceFiles.length > 0 ? sourceFiles[0] : undefined,
-      sourceLink: req.body.sourceLink
+      sourceLink: req.body.sourceLink,
+      developerKeyId: req.user.developerKeyId,
     })
 
     setSSEHeaders(res)
@@ -70,13 +71,13 @@ export const buildGenerateArticle = ({ article }: Params): GenerateArticle => {
         res.write(`data: ${JSON.stringify(error)}\n\n`)
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.on('error', () => {
       logger.warn({
         location: 'article.generateArticle',
-        message: 'Unexpected sse connection error'
+        message: 'Unexpected sse connection error',
       })
     })
 

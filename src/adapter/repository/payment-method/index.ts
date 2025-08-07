@@ -1,7 +1,7 @@
 import { AdapterParams } from '@/adapter/types'
 import { buildGet, Get } from './get'
 import { buildCreate, Create } from './create'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 
 type Params = Pick<AdapterParams, 'db'>
 
@@ -17,6 +17,6 @@ export const buildPaymentMethodRepository = (params: Params): PaymentMethodRepos
   return {
     get,
     create,
-    updateMany
+    updateMany,
   }
 }

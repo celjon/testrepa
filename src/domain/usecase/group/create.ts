@@ -17,13 +17,13 @@ export const buildCreate = ({ adapter }: UseCaseParams): Create => {
     if (presetId) {
       preset = await adapter.presetRepository.get({
         where: {
-          id: presetId
-        }
+          id: presetId,
+        },
       })
 
       if (!preset) {
         throw new NotFoundError({
-          code: 'PRESET_NOT_FOUND'
+          code: 'PRESET_NOT_FOUND',
         })
       }
     }
@@ -34,22 +34,22 @@ export const buildCreate = ({ adapter }: UseCaseParams): Create => {
         ...(preset && { preset_id: preset.id }),
         name,
         highlight,
-        order
-      }
+        order,
+      },
     })
 
     await adapter.groupRepository.updateMany({
       where: {
         user_id: userId,
         id: {
-          not: group.id
-        }
+          not: group.id,
+        },
       },
       data: {
         order: {
-          increment: 1
-        }
-      }
+          increment: 1,
+        },
+      },
     })
 
     return group

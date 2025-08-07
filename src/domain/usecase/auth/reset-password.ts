@@ -14,19 +14,19 @@ export const buildResetPassword = ({ adapter }: UseCaseParams): ResetPassword =>
 
     if (!userId) {
       throw new ForbiddenError({
-        code: 'INVALID_TOKEN'
+        code: 'INVALID_TOKEN',
       })
     }
 
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new ForbiddenError({
-        code: 'INVALID_TOKEN'
+        code: 'INVALID_TOKEN',
       })
     }
 
@@ -37,14 +37,20 @@ export const buildResetPassword = ({ adapter }: UseCaseParams): ResetPassword =>
 
     await adapter.userRepository.update({
       where: {
-        id: userId
+        id: userId,
       },
       data: {
         password: newPassword,
+        emailVerified: true,
+        inactive: false,
         useEncryption: false,
         encryptedDEK: null,
         kekSalt: null,
-      }
+      },
+    })
+
+    await adapter.refreshTokenRepository.deleteMany({
+      where: { user_id: userId },
     })
 
     return

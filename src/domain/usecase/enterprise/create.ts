@@ -16,20 +16,30 @@ export type Create = (data: {
   userId?: string
 }) => Promise<IEnterprise | null | never>
 
-export const buildCreate = ({ adapter }: UseCaseParams): Create => {
-  return async ({ name, agreement_conclusion_date, rubs_per_million_caps, type, common_pool, tokens, plan, ownerId, userId }) => {
+export const buildCreate = ({ adapter, service }: UseCaseParams): Create => {
+  return async ({
+    name,
+    agreement_conclusion_date,
+    rubs_per_million_caps,
+    type,
+    common_pool,
+    tokens,
+    plan,
+    ownerId,
+    userId,
+  }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
+        id: userId,
       },
       include: {
         employees: true,
         subscription: {
           include: {
-            plan: true
-          }
-        }
-      }
+            plan: true,
+          },
+        },
+      },
     })
 
     const isAdmin = user?.role === Role.ADMIN
@@ -47,12 +57,12 @@ export const buildCreate = ({ adapter }: UseCaseParams): Create => {
     } else {
       owner = await adapter.userRepository.get({
         where: {
-          id: ownerId
+          id: ownerId,
         },
         include: {
           employees: true,
-          subscription: true
-        }
+          subscription: true,
+        },
       })
     }
 
@@ -66,13 +76,13 @@ export const buildCreate = ({ adapter }: UseCaseParams): Create => {
 
     const existingEmployee = await adapter.employeeRepository.get({
       where: {
-        user_id: ownerId
-      }
+        user_id: ownerId,
+      },
     })
 
     if (existingEmployee) {
       throw new ForbiddenError({
-        message: 'You are an employee of another organization'
+        message: 'You are an employee of another organization',
       })
     }
 
@@ -89,45 +99,51 @@ export const buildCreate = ({ adapter }: UseCaseParams): Create => {
         common_pool: common_pool,
         subscription: {
           create: {
-            balance: resultTokens,
-            plan_id: resultPlan
-          }
+            balance: 0,
+            plan_id: resultPlan,
+          },
         },
         employees: {
           create: {
             user_id: ownerId,
-            role: EnterpriseRole.OWNER
-          }
+            role: EnterpriseRole.OWNER,
+          },
         },
         actions: {
           create: {
             type: actions.REGISTRATION,
-            user_id: user.id
-          }
-        }
+            user_id: user.id,
+          },
+        },
       },
       include: {
         employees: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
         subscription: {
           include: {
-            plan: true
-          }
-        }
-      }
+            plan: true,
+          },
+        },
+      },
     })
 
     if (isAdmin) {
       await adapter.subscriptionRepository.update({
         where: {
-          user_id: ownerId
+          user_id: ownerId,
         },
         data: {
-          plan_id: plan
-        }
+          plan_id: plan,
+        },
+      })
+
+      await service.subscription.replenish({
+        subscription: enterprise.subscription!,
+        amount: resultTokens,
+        meta: { from_user_id: userId },
       })
     }
 

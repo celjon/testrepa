@@ -20,18 +20,18 @@ export const buildUpdatePopularityScores = ({ adapter }: Params): UpdatePopulari
     deletionCutoff.setHours(0, 0, 0, 0)
 
     const { modelsUpdated } = await adapter.modelRepository.updatePopularityScores({
-      cutOffDate: popularityCutOff
+      cutOffDate: popularityCutOff,
     })
 
     const { count } = await adapter.modelUsageBucketRepository.deleteMany({
       where: {
-        bucket_date: { lt: deletionCutoff }
-      }
+        bucket_date: { lt: deletionCutoff },
+      },
     })
 
     return {
       modelsUpdated,
-      bucketsDeleted: count
+      bucketsDeleted: count,
     }
   }
 }

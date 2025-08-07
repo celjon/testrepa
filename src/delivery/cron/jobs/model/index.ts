@@ -33,7 +33,7 @@ export const buildModelJob = (params: Params): IJob => {
     start: buildStart({
       init,
       parse,
-      balanceAccount
-    })
+      balanceAccount,
+    }),
   }
 }

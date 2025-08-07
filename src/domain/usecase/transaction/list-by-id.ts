@@ -15,8 +15,8 @@ export const buildListById = ({ adapter, service }: UseCaseParams): ListById => 
   return async ({ userId, page, id }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     // TODO: permission service
@@ -29,16 +29,48 @@ export const buildListById = ({ adapter, service }: UseCaseParams): ListById => 
       query: {
         where: {
           user_id: id,
-          deleted: false
+          deleted: false,
+        },
+        include: {
+          actions: {
+            select: {
+              id: true,
+              model_id: true,
+              platform: true,
+            },
+          },
         },
         orderBy: {
-          created_at: 'desc'
-        }
+          created_at: 'desc',
+        },
       },
       page,
-      quantity: 30
+      quantity: 30,
+    })
+    return {
+      data: transactions.data.map((tx) => ({
+        ...tx,
+        action: tx.actions?.length ? tx.actions[0] : null,
+      })),
+      pages: transactions.pages,
+    }
+    //MIGRATION_ON_CLICKHOUSE temp off
+    /*const chTransactions = await service.transaction.chPaginate({
+      query: {
+        where: {
+          user_id: id,
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      },
+      page,
+      quantity: 30,
     })
 
-    return transactions
+    return {
+      data: chTransactions.data,
+      pages: chTransactions.pages,
+    }*/
   }
 }

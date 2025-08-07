@@ -5,14 +5,22 @@ import { IHandler } from '../types'
 import { buildArticleRules } from './rules'
 import { buildGenerateSubject, GenerateSubject } from './generate-subject'
 import { buildGeneratePlan, GeneratePlan } from './generate-plan'
-import { buildGenerateArticle, buildGenerateArticleMiddleware, GenerateArticle } from './generate-article'
+import {
+  buildGenerateArticle,
+  buildGenerateArticleMiddleware,
+  GenerateArticle,
+} from './generate-article'
 import { buildGeneratePlanHints, GeneratePlanHints } from './generate-plan-hints'
 import { Middlewares } from '../../middlewares'
 import { buildGenerateChapter, GenerateChapter } from './generate-chapter'
 import { buildGetArticle, GetArticle } from './get'
 import { buildAddChapterToPlan, AddChapterToPlan } from './add-chapter-to-plan'
 import { buildUpdateArticle, UpdateArticle } from './update'
-import { buildBatchGenerateArticles, buildBatchGenerateArticlesMiddleware, BatchGenerateArticles } from './batch-generate-articles'
+import {
+  buildBatchGenerateArticles,
+  buildBatchGenerateArticlesMiddleware,
+  BatchGenerateArticles,
+} from './batch-generate-articles'
 import { buildDeleteArticle, DeleteArticle } from './delete'
 import { buildDeleteMany, DeleteMany } from './delete-many'
 
@@ -44,7 +52,7 @@ const buildRegisterRoutes = (methods: ArticleMethods, middlewares: Middlewares) 
     getArticleRules,
     updateArticleRules,
     deleteArticleRules,
-    deleteManyArticlesRules
+    deleteManyArticlesRules,
   } = buildArticleRules(middlewares)
   const generateArticleMiddleware = buildGenerateArticleMiddleware(middlewares)
   const batchGenerateArticlesMiddleware = buildBatchGenerateArticlesMiddleware(middlewares)
@@ -122,7 +130,11 @@ const buildRegisterRoutes = (methods: ArticleMethods, middlewares: Middlewares) 
      *                 caps:
      *                   type: number
      */
-    namespace.post('/plan/hints', generatePlanHintsRules, createRouteHandler(methods.generatePlanHints))
+    namespace.post(
+      '/plan/hints',
+      generatePlanHintsRules,
+      createRouteHandler(methods.generatePlanHints),
+    )
 
     /**
      * @openapi
@@ -141,7 +153,11 @@ const buildRegisterRoutes = (methods: ArticleMethods, middlewares: Middlewares) 
      *           schema:
      *             $ref: '#/components/rules/addChapterToPlan'
      */
-    namespace.post('/plan/chapter', generatePlanHintsRules, createRouteHandler(methods.addChapterToPlan))
+    namespace.post(
+      '/plan/chapter',
+      generatePlanHintsRules,
+      createRouteHandler(methods.addChapterToPlan),
+    )
 
     /**
      * @openapi
@@ -167,7 +183,12 @@ const buildRegisterRoutes = (methods: ArticleMethods, middlewares: Middlewares) 
      *             schema:
      *               $ref: '#/components/entities/Article'
      */
-    namespace.post('/generate', generateArticleMiddleware, generateArticleRules, createRouteHandler(methods.generateArticle))
+    namespace.post(
+      '/generate',
+      generateArticleMiddleware,
+      generateArticleRules,
+      createRouteHandler(methods.generateArticle),
+    )
 
     /**
      * @openapi
@@ -208,7 +229,7 @@ const buildRegisterRoutes = (methods: ArticleMethods, middlewares: Middlewares) 
       '/batch-generate',
       batchGenerateArticlesMiddleware,
       batchGenerateArticlesRules,
-      createRouteHandler(methods.batchGenerateArticles)
+      createRouteHandler(methods.batchGenerateArticles),
     )
 
     /**
@@ -229,7 +250,11 @@ const buildRegisterRoutes = (methods: ArticleMethods, middlewares: Middlewares) 
      *       200:
      *         description: OK
      */
-    namespace.post('/generate-chapter', generateChapterRules, createRouteHandler(methods.generateChapter))
+    namespace.post(
+      '/generate-chapter',
+      generateChapterRules,
+      createRouteHandler(methods.generateChapter),
+    )
 
     /**
      * @openapi
@@ -308,7 +333,11 @@ const buildRegisterRoutes = (methods: ArticleMethods, middlewares: Middlewares) 
      *             schema:
      *               type: string
      */
-    namespace.delete('/delete-many', deleteManyArticlesRules, createRouteHandler(methods.deleteMany))
+    namespace.delete(
+      '/delete-many',
+      deleteManyArticlesRules,
+      createRouteHandler(methods.deleteMany),
+    )
     /**
      * @openapi
      * /article/{articleId}:
@@ -364,9 +393,9 @@ export const buildArticleHandler = (params: Params): IHandler => {
         get,
         update,
         deleteArticle,
-        deleteMany
+        deleteMany,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

@@ -22,13 +22,13 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
         where: { id: id },
         data: {
           name,
-          slug: name.ru ? slugification(name.ru) : undefined
-        }
+          slug: name.ru ? slugification(name.ru) : undefined,
+        },
       })
     }
     if (!seoArticleCategory) {
       throw new NotFoundError({
-        code: 'CATEGORY_NOT_FOUND'
+        code: 'CATEGORY_NOT_FOUND',
       })
     }
 

@@ -7,6 +7,6 @@ export type GroupService = {
 export const buildGroupService = (params: Adapter): GroupService => {
   const paginate = buildPaginate(params)
   return {
-    paginate
+    paginate,
   }
 }

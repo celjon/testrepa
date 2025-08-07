@@ -11,7 +11,7 @@ export const buildGet =
   async (req, res) => {
     const data = await job.get({
       jobId: req.params.id,
-      userId: req.user.id
+      userId: req.user.id,
     })
 
     return res.status(200).json(data)

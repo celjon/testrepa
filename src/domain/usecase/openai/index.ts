@@ -37,27 +37,27 @@ export type OpenaiUseCase = {
 export const buildOpenaiUseCase = (params: UseCaseParams): OpenaiUseCase => {
   return {
     translations: {
-      create: buildTranslationsCreate(params)
+      create: buildTranslationsCreate(params),
     },
     completions: {
       sync: buildCompletionsSync(params),
-      stream: buildCompletionsStream(params)
+      stream: buildCompletionsStream(params),
     },
     images: {
-      create: buildImagesCreate(params)
+      create: buildImagesCreate(params),
     },
     moderations: {
-      create: buildModerationsCreate(params)
+      create: buildModerationsCreate(params),
     },
     speech: {
-      create: buildSpeechCreate(params)
+      create: buildSpeechCreate(params),
     },
     transcriptions: {
-      create: buildTranscriptionsCreate(params)
+      create: buildTranscriptionsCreate(params),
     },
     embeddings: {
-      create: buildEmbeddingsCreate(params)
+      create: buildEmbeddingsCreate(params),
     },
-    models: buildModels(params)
+    models: buildModels(params),
   }
 }

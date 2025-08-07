@@ -7,7 +7,12 @@ export const buildCreateExcelStatsForAllEnterprises = (): CreateExcelStatsForAll
 
     const wsData: any[][] = []
     wsData.push(['', '', '', ...params[0].usedTokensForDates.map((year) => year.year)])
-    wsData.push(['Фирма', 'Создатель', 'Дата договора', ...params[0].usedTokensForDates.map((month) => month.month)])
+    wsData.push([
+      'Фирма',
+      'Создатель',
+      'Дата договора',
+      ...params[0].usedTokensForDates.map((month) => month.month),
+    ])
 
     for (const enterprise of params) {
       const { usedTokensForDates, name, creator, agreement_conclusion_date } = enterprise
@@ -15,7 +20,9 @@ export const buildCreateExcelStatsForAllEnterprises = (): CreateExcelStatsForAll
         name,
         creator,
         agreement_conclusion_date ? agreement_conclusion_date : '',
-        ...usedTokensForDates.map((date) => (date.usedTokens ? Math.trunc(Number(date.usedTokens)) : 0))
+        ...usedTokensForDates.map((date) =>
+          date.usedTokens ? Math.trunc(Number(date.usedTokens)) : 0,
+        ),
       ])
     }
 
@@ -44,7 +51,7 @@ export const buildCreateExcelStatsForAllEnterprises = (): CreateExcelStatsForAll
       { wch: 13 },
       { wch: 13 },
       { wch: 13 },
-      { wch: 13 }
+      { wch: 13 },
     ]
 
     XLSX.utils.book_append_sheet(wb, ws, 'Отчет')

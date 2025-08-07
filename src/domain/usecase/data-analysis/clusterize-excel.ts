@@ -15,7 +15,7 @@ export const buildClusterizeExcel = ({ service }: UseCaseParams): ClusterizeExce
       userId,
       excelFile,
       sheetName,
-      targetColumns
+      targetColumns,
     })
 
     return result

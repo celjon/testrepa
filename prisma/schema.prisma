@@ -164,6 +164,12 @@ enum ModelAccountStatus {
   RELAX
   BANNED
   VERIFYING
+  OFFLINE
+}
+
+enum ModelAccountModelStatus {
+  ACTIVE
+  INACTIVE
 }
 
 enum EnterprisePaymentPlanStatus {
@@ -194,7 +200,11 @@ enum EnterpriseCreator {
 enum Region {
   RU
   KZ
-  OTHER
+  GLOBAL
+}
+
+enum AuthProviderType {
+  APPLE
 }
 
 model Plan {
@@ -234,37 +244,41 @@ model Subscription {
   enterprise    Enterprise?                 @relation(name: "subscriptionEnterprise", fields: [enterprise_id], references: [id], onDelete: Cascade)
   payment_plan  EnterprisePaymentPlanStatus @default(DEBIT)
   balance       BigInt                      @default(0)
-  hard_limit    Int?
+  credit_limit  Int?
   soft_limit    Int?
   system_limit  Int?
   created_at    DateTime                    @default(now())
+
+  //DELETE AFTER RUM MIGRATION SCRIPT
+  hard_limit Int?
 
   @@map("subscriptions")
 }
 
 model Transaction {
-  id            String              @id @default(uuid())
-  provider      TransactionProvider
-  amount        Float
-  currency      Currency
-  meta          Json?
-  message       Message?            @relation(name: "transactionsMessage")
-  status        TransactionStatus
-  type          TransactionType
-  plan_id       String?
-  plan          Plan?               @relation(name: "transactionsPlan", fields: [plan_id], references: [id])
-  user_id       String?
-  user          User?               @relation(name: "transactionsUser", fields: [user_id], references: [id])
-  from_user_id  String?
-  from_user     User?               @relation(name: "transactionsFromUser", fields: [from_user_id], references: [id])
-  referral_id   String?
-  referral      Referral?           @relation(name: "transactionsReferral", fields: [referral_id], references: [id])
-  created_at    DateTime            @default(now())
-  external_id   String?
-  enterprise_id String?
-  enterprise    Enterprise?         @relation(name: "transactionsEnterprise", fields: [enterprise_id], references: [id])
-  actions       Action[]            @relation(name: "transactionActions")
-  deleted       Boolean             @default(false)
+  id               String              @id @default(uuid())
+  provider         TransactionProvider
+  amount           Float
+  currency         Currency
+  meta             Json?
+  message          Message?            @relation(name: "transactionsMessage")
+  status           TransactionStatus
+  type             TransactionType
+  plan_id          String?
+  plan             Plan?               @relation(name: "transactionsPlan", fields: [plan_id], references: [id])
+  user_id          String?
+  user             User?               @relation(name: "transactionsUser", fields: [user_id], references: [id])
+  from_user_id     String?
+  from_user        User?               @relation(name: "transactionsFromUser", fields: [from_user_id], references: [id])
+  referral_id      String?
+  referral         Referral?           @relation(name: "transactionsReferral", fields: [referral_id], references: [id])
+  created_at       DateTime            @default(now())
+  external_id      String?
+  enterprise_id    String?
+  enterprise       Enterprise?         @relation(name: "transactionsEnterprise", fields: [enterprise_id], references: [id])
+  actions          Action[]            @relation(name: "transactionActions")
+  deleted          Boolean             @default(false)
+  developer_key_id String?
 
   @@unique([provider, external_id], name: "transactionUnique")
   @@index([user_id], type: Hash)
@@ -341,6 +355,7 @@ model Chat {
   order           Int?         @default(0)
   deleted         Boolean      @default(false)
   report          Report[]     @relation(name: "reportChat")
+  queue_id        String?
 
   @@index(fields: [user_id], type: Hash)
   @@map("chats")
@@ -553,6 +568,7 @@ model ChatVideoSettings {
   model            String         @default("veo-2")
   aspect_ratio     String         @default("16:9")
   duration_seconds Int            @default(5)
+  quality          String         @default("standard")
   seed             Int            @default(0)
   created_at       DateTime       @default(now())
   settings         ChatSettings[] @relation(name: "chatVideoSettings")
@@ -658,24 +674,27 @@ model DeveloperKey {
   deleted    Boolean  @default(false)
   user       User     @relation(name: "developerKeyUser", fields: [user_id], references: [id], onDelete: Cascade)
   created_at DateTime @default(now())
+
+  @@unique([user_id, label])
 }
 
 model User {
-  id                         String  @id @default(uuid())
-  email                      String? @unique
-  emailVerified              Boolean @default(true)
-  tg_id                      String? @unique
+  id                         String   @id @default(uuid())
+  email                      String?  @unique
+  emailVerified              Boolean  @default(true)
+  tg_id                      String?  @unique
   tg_id_before               String?
   name                       String?
   password                   String?
   avatar                     String?
   avatar_id                  String?
-  avatar_file                File?   @relation(name: "avatar", fields: [avatar_id], references: [id])
+  avatar_file                File?    @relation(name: "avatar", fields: [avatar_id], references: [id])
   anonymousDeviceFingerprint String?
-  inactive                   Boolean @default(false)
-  disabled                   Boolean @default(false)
+  inactive                   Boolean  @default(false)
+  disabled                   Boolean  @default(false)
   yandexMetricClientId       String?
   yandexMetricYclid          String?
+  old_ids                    String[] @default([])
 
   encryptedDEK  Bytes?
   useEncryption Boolean @default(false)
@@ -707,8 +726,35 @@ model User {
   verificationCodes     VerificationCode[]    @relation(name: "userVerificationCode")
   articles              Article[]             @relation(name: "articleAuthor")
   oldEmail              OldEmail[]            @relation(name: "userEmails")
+  authProviders         AuthProvider[]        @relation(name: "userAuthProvider")
+  refresh_tokens        RefreshToken[]        @relation(name: "refreshTokens")
 
   @@map("users")
+}
+
+model AuthProvider {
+  id          String           @id @default(uuid())
+  external_id String?
+  email       String?
+  user_id     String
+  user        User             @relation(name: "userAuthProvider", fields: [user_id], references: [id], onDelete: Cascade)
+  provider    AuthProviderType
+
+  @@unique([provider, email])
+  @@unique([provider, external_id])
+  @@index([user_id], type: Hash)
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String
+  ip         String
+  user_agent String?
+  user_id    String
+  user       User     @relation(name: "refreshTokens", fields: [user_id], references: [id], onDelete: Cascade)
+  updated_at DateTime @default(now())
+
+  @@index([user_id], type: Hash)
 }
 
 model ReferralTemplate {
@@ -753,16 +799,30 @@ model ReferralParticipant {
   @@index([user_id], type: Hash)
 }
 
+model GiftCertificate {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  from_user_id   String
+  amount         BigInt
+  plan           PlanType
+  message        String?  @db.VarChar(4096)
+  recipient_name String?  @db.VarChar(255)
+  created_at     DateTime @default(now())
+
+  @@map("gift_certificates")
+}
+
 model Enterprise {
   id                        String            @id @default(uuid())
   name                      String
   type                      EnterpriseType    @default(REGULAR)
   creator                   EnterpriseCreator @default(USER)
   agreement_conclusion_date String?
-  rubs_per_million_caps     Int               @default(250)
+  rubs_per_million_caps     Int               @default(216)
   created_at                DateTime          @default(now())
   subscription              Subscription?     @relation(name: "subscriptionEnterprise")
   employees                 Employee[]        @relation(name: "employeesEnterprise")
+  employeesGroup            EmployeeGroup[]   @relation(name: "employeesGroupEnterprise")
   transactions              Transaction[]     @relation(name: "transactionsEnterprise")
 
   common_pool                Boolean                      @default(false)
@@ -785,15 +845,32 @@ model EnterpriseUsageConstraints {
 }
 
 model Employee {
-  id             String          @id @default(uuid())
-  user_id        String
-  user           User            @relation(name: "employeesUser", fields: [user_id], references: [id], onDelete: Cascade)
-  enterprise_id  String
-  enterprise     Enterprise      @relation(name: "employeesEnterprise", fields: [enterprise_id], references: [id], onDelete: Cascade)
-  role           EnterpriseRole  @default(EMPLOYEE)
-  allowed_models EmployeeModel[]
+  id                   String          @id @default(uuid())
+  user_id              String          @unique
+  user                 User            @relation(name: "employeesUser", fields: [user_id], references: [id], onDelete: Cascade)
+  enterprise_id        String
+  enterprise           Enterprise      @relation(name: "employeesEnterprise", fields: [enterprise_id], references: [id], onDelete: Cascade)
+  role                 EnterpriseRole  @default(EMPLOYEE)
+  allowed_models       EmployeeModel[]
+  spent_in_month       BigInt?         @default(0)
+  spend_limit_on_month BigInt?
+  employee_group_id    String?
+  employee_group       EmployeeGroup?  @relation(fields: [employee_group_id], references: [id])
 
   @@map("employees")
+}
+
+model EmployeeGroup {
+  id                   String     @id @default(uuid())
+  label                String     @unique
+  spend_limit_on_month BigInt?
+  enterprise_id        String
+  enterprise           Enterprise @relation(name: "employeesGroupEnterprise", fields: [enterprise_id], references: [id], onDelete: Cascade)
+
+  allowed_models EmployeeGroupModel[]
+  employees      Employee[]
+
+  @@map("employeeGroup")
 }
 
 model Shortcut {
@@ -886,36 +963,43 @@ model ModelAccountQueue {
 }
 
 model ModelAccount {
-  id                      String                @id @default(uuid())
-  name                    String?
-  status                  ModelAccountStatus    @default(CREATED)
-  next_active_id          String?
-  next_active             ModelAccount?         @relation(name: "modelNextActiveAccount", fields: [next_active_id], references: [id])
-  prev_active             ModelAccount[]        @relation(name: "modelNextActiveAccount")
-  auth_type               ModelAccountAuthType?
-  g4f_api_url             String?
-  g4f_auth                String?
-  g4f_har_file_id         String?
-  g4f_har_file            File?                 @relation(name: "modelAccountG4fHarFile", fields: [g4f_har_file_id], references: [id])
-  g4f_har_file_updated_at DateTime?
-  g4f_email               String?
-  g4f_password            String?
-  g4f_email_password      String?
-  g4f_imap_server         String?
-  mj_channel_id           String?
-  mj_server_id            String?
-  mj_token                String?
-  mj_personalization_key  String?
-  mj_concurrency          Int?
-  mj_active_generations   Int?
-  mj_used_count           Int?
-  queue_id                String?
-  queue                   ModelAccountQueue?    @relation(name: "modelAccountQueue", fields: [queue_id], references: [id])
-  models                  ModelAccountModel[]   @relation(name: "modelAccountModels")
-  first_account_queues    ModelAccountQueue[]   @relation(name: "modelAccountQueueFirstAccount")
-  active_account_queues   ModelAccountQueue[]   @relation(name: "modelAccountQueueActiveAccount")
-  disabled_at             DateTime?
-  created_at              DateTime              @default(now())
+  id                           String                @id @default(uuid())
+  name                         String?
+  status                       ModelAccountStatus    @default(CREATED)
+  next_active_id               String?
+  next_active                  ModelAccount?         @relation(name: "modelNextActiveAccount", fields: [next_active_id], references: [id])
+  prev_active                  ModelAccount[]        @relation(name: "modelNextActiveAccount")
+  auth_type                    ModelAccountAuthType?
+  g4f_api_url                  String?
+  g4f_auth                     String?
+  g4f_har_file_id              String?
+  g4f_har_file                 File?                 @relation(name: "modelAccountG4fHarFile", fields: [g4f_har_file_id], references: [id])
+  g4f_har_file_updated_at      DateTime?
+  g4f_email                    String?
+  g4f_password                 String?
+  g4f_email_password           String?
+  g4f_imap_server              String?
+  g4f_online_phase_seconds     Int?
+  g4f_offline_phase_seconds    Int?
+  g4f_phase_updated_at         DateTime?
+  mj_channel_id                String?
+  mj_server_id                 String?
+  mj_token                     String?
+  mj_personalization_key       String?
+  mj_concurrency               Int?
+  mj_active_generations        Int?
+  mj_used_count                Int?
+  usage_count                  Int                   @default(0)
+  usage_count_limit            Int                   @default(0)
+  usage_reset_interval_seconds Int?
+  usage_resetted_at            DateTime?
+  queue_id                     String?
+  queue                        ModelAccountQueue?    @relation(name: "modelAccountQueue", fields: [queue_id], references: [id])
+  models                       ModelAccountModel[]   @relation(name: "modelAccountModels")
+  first_account_queues         ModelAccountQueue[]   @relation(name: "modelAccountQueueFirstAccount")
+  active_account_queues        ModelAccountQueue[]   @relation(name: "modelAccountQueueActiveAccount")
+  disabled_at                  DateTime?
+  created_at                   DateTime              @default(now())
 
   @@index([status, queue_id])
 }
@@ -932,48 +1016,51 @@ model ModelAccountModel {
   usage_reset_interval_seconds Int?
   usage_resetted_at            DateTime?
 
-  account_id  String?
-  account     ModelAccount? @relation(name: "modelAccountModels", fields: [account_id], references: [id], onDelete: Cascade)
-  disabled_at DateTime?
-  created_at  DateTime      @default(now())
+  account_id    String?
+  account       ModelAccount?           @relation(name: "modelAccountModels", fields: [account_id], references: [id], onDelete: Cascade)
+  status        ModelAccountModelStatus @default(ACTIVE)
+  status_reason String?
+  disabled_at   DateTime?
+  created_at    DateTime                @default(now())
 }
 
 model Model {
-  id                  String              @id
+  id                  String               @id
   label               String?
   description         String?
   icon_id             String?
-  icon                File?               @relation(name: "modelIcon", fields: [icon_id], references: [id])
+  icon                File?                @relation(name: "modelIcon", fields: [icon_id], references: [id])
   pricing             Json?
-  auto_update_pricing Boolean             @default(true)
-  prefix              String              @default("")
-  context_length      Int                 @default(4095)
-  max_tokens          Int                 @default(4096)
+  auto_update_pricing Boolean              @default(true)
+  prefix              String               @default("")
+  context_length      Int                  @default(4095)
+  max_tokens          Int                  @default(4096)
   features            Json?
-  functions           ModelFunction[]     @relation(name: "functionModel")
+  functions           ModelFunction[]      @relation(name: "functionModel")
   provider_id         String?
-  provider            ModelProvider?      @relation(name: "modelProvider", fields: [provider_id], references: [id])
+  provider            ModelProvider?       @relation(name: "modelProvider", fields: [provider_id], references: [id])
   child_provider_id   String?
-  child_provider      ModelProvider?      @relation(name: "modelChildProvider", fields: [child_provider_id], references: [id])
-  providers           ModelProvider[]     @relation(name: "modelProviders")
+  child_provider      ModelProvider?       @relation(name: "modelChildProvider", fields: [child_provider_id], references: [id])
+  providers           ModelProvider[]      @relation(name: "modelProviders")
   owned_by            String
   parent_id           String?
-  parent              Model?              @relation(name: "modelParent", fields: [parent_id], references: [id])
+  parent              Model?               @relation(name: "modelParent", fields: [parent_id], references: [id])
   message_color       String?
-  children            Model[]             @relation(name: "modelParent")
-  disabled            Boolean             @default(true)
-  disabledWeb         Boolean             @default(false)
-  disabledTelegram    Boolean             @default(true)
-  order               Int                 @default(0)
-  used_count          Int                 @default(0)
-  custom              Boolean             @default(false)
+  children            Model[]              @relation(name: "modelParent")
+  disabled            Boolean              @default(true)
+  disabledWeb         Boolean              @default(false)
+  disabledTelegram    Boolean              @default(true)
+  order               Int                  @default(0)
+  used_count          Int                  @default(0)
+  custom              Boolean              @default(false)
   plans               PlanModel[]
-  chats               Chat[]              @relation(name: "chatModel")
-  messages            Message[]           @relation(name: "messageModel")
+  chats               Chat[]               @relation(name: "chatModel")
+  messages            Message[]            @relation(name: "messageModel")
   employees           EmployeeModel[]
-  presets             Preset[]            @relation(name: "presetModel")
-  account_models      ModelAccountModel[] @relation(name: "modelAccountModel")
-  articles            Article[]           @relation(name: "articleModel")
+  employeeGroups      EmployeeGroupModel[]
+  presets             Preset[]             @relation(name: "presetModel")
+  account_models      ModelAccountModel[]  @relation(name: "modelAccountModel")
+  articles            Article[]            @relation(name: "articleModel")
 
   popularity_score    Int                @default(0)
   model_usage_buckets ModelUsageBucket[]
@@ -1010,6 +1097,16 @@ model EmployeeModel {
   @@map("employee_models")
 }
 
+model EmployeeGroupModel {
+  id                String        @id @default(uuid())
+  employee_group_id String
+  model_id          String
+  employeeGroup     EmployeeGroup @relation(fields: [employee_group_id], references: [id], onDelete: Cascade)
+  model             Model         @relation(fields: [model_id], references: [id])
+
+  @@map("employeeGroupModels")
+}
+
 model File {
   id                       String             @id @default(uuid())
   type                     FileType?
@@ -1029,6 +1126,7 @@ model File {
   model_accounts           ModelAccount[]     @relation(name: "modelAccountG4fHarFile")
   preset_attachments       PresetAttachment[] @relation(name: "presetAttachmentFile")
   created_at               DateTime           @default(now())
+  deleted_at               DateTime?
 
   avatars User[] @relation(name: "avatar")
 }
@@ -1061,6 +1159,7 @@ enum Platform {
   API_TRANSLATIONS
   ENTERPRISE
   EASY_WRITER
+  PROMPT_QUEUE
 }
 
 model Action {
@@ -1068,6 +1167,7 @@ model Action {
   type           String
   platform       Platform?
   model_id       String?
+  provider_id    String?
   user_id        String?
   enterprise_id  String?
   transaction_id String?
@@ -1250,10 +1350,10 @@ model SEOArticleExpert {
 }
 
 model SEOArticleExpertJobHistory {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   post          String
   from_date     DateTime
-  to_date       DateTime
+  to_date       DateTime?
   company       String
   city          String
   duties        String[]
@@ -1292,4 +1392,21 @@ model CreditLimitSpend {
   limit_change      BigInt
   prev_credit_limit BigInt
   credit_limit      BigInt
+}
+
+model Clickhouse {
+  id             String   @id @default("transactions")
+  last_migration DateTime
+
+  @@map("clickhouse")
+}
+
+model ExchangeRate {
+  id           String   @id @default(uuid()) @db.Uuid
+  start_date   DateTime
+  caps_per_rub Float
+  caps_per_usd Float
+  created_at   DateTime @default(now())
+
+  @@map("exchange_rates")
 }

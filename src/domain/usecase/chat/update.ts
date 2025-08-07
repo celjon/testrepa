@@ -2,8 +2,15 @@ import { Prisma } from '@prisma/client'
 import { UseCaseParams } from '@/domain/usecase/types'
 import { IChat } from '@/domain/entity/chat'
 import { ForbiddenError, InternalError, NotFoundError } from '@/domain/errors'
-import { isAudioModel, isImageModel, isMidjourney, isReplicateImageModel, isSpeechModel, isTextModel } from '@/domain/entity/model'
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import {
+  isSpeechToTextModel,
+  isImageModel,
+  isMidjourney,
+  isReplicateImageModel,
+  isTextToSpeechModel,
+  isTextModel,
+} from '@/domain/entity/model'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 
 export type Update = (params: {
   userId: string
@@ -15,10 +22,22 @@ export type Update = (params: {
   initial?: boolean
   groupId?: string
   order?: number
+  queue_id?: string | null
 }) => Promise<IChat | never>
 
 export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
-  return async ({ userId, id, name, highlight, modelId, modelFunctionId, initial, groupId, order }) => {
+  return async ({
+    userId,
+    id,
+    name,
+    highlight,
+    modelId,
+    modelFunctionId,
+    initial,
+    groupId,
+    order,
+    queue_id,
+  }) => {
     const subscription = await service.user.getActualSubscriptionById(userId)
 
     if (!subscription || !subscription.plan) {
@@ -32,46 +51,46 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
     if (modelId) {
       const model = await adapter.modelRepository.get({
         where: {
-          id: modelId
-        }
+          id: modelId,
+        },
       })
 
       if (!model) {
         throw new NotFoundError({
-          code: 'MODEL_NOT_FOUND'
+          code: 'MODEL_NOT_FOUND',
         })
       }
 
       includeSettings.text = !!isTextModel(model) && {
         include: {
-          preset: true
-        }
+          preset: true,
+        },
       }
       includeSettings.image = isImageModel(model)
       includeSettings.mj = isMidjourney(model)
       includeSettings.replicateImage = isReplicateImageModel(model)
-      includeSettings.speech = isSpeechModel(model)
-      includeSettings.stt = isAudioModel(model)
+      includeSettings.speech = isTextToSpeechModel(model)
+      includeSettings.stt = isSpeechToTextModel(model)
     }
 
     let chat = await adapter.chatRepository.get({
       where: {
         id: id,
         user_id: userId,
-        deleted: false
+        deleted: false,
       },
       include: {
         model: true,
         model_function: true,
         settings: {
-          include: includeSettings
-        }
-      }
+          include: includeSettings,
+        },
+      },
     })
 
     if (!chat || !chat.model) {
       throw new NotFoundError({
-        code: 'CHAT_NOT_FOUND'
+        code: 'CHAT_NOT_FOUND',
       })
     }
 
@@ -80,44 +99,49 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
     if (modelId && modelId !== chat.model.id) {
       const model = await adapter.modelRepository.get({
         where: {
-          id: modelId
-        }
+          id: modelId,
+        },
       })
 
       if (!model) {
         throw new NotFoundError({
-          code: 'MODEL_NOT_FOUND'
+          code: 'MODEL_NOT_FOUND',
         })
       }
 
-      if (settings && settings.text && settings.text.preset && settings.text.preset.model_id !== modelId) {
+      if (
+        settings &&
+        settings.text &&
+        settings.text.preset &&
+        settings.text.preset.model_id !== modelId
+      ) {
         await adapter.chatSettingsRepository.update({
           where: {
-            id: settings.id
+            id: settings.id,
           },
           data: {
             text: {
               update: {
                 data: {
-                  preset_id: null
-                }
-              }
-            }
-          }
+                  preset_id: null,
+                },
+              },
+            },
+          },
         })
       }
 
       settings = await service.chat.settings.upsert({
         chat,
-        model,
-        plan
+        parentModel: model,
+        plan,
       })
 
       const modelFunction = await adapter.modelFunctionRepository.get({
         where: {
           model_id: model.id,
-          is_default: true
-        }
+          is_default: true,
+        },
       })
 
       modelFunctionId = modelFunction?.id ?? null
@@ -126,20 +150,20 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
     if (modelFunctionId && modelFunctionId !== chat.model_function_id) {
       const modelFunction = await adapter.modelFunctionRepository.get({
         where: {
-          id: modelFunctionId
-        }
+          id: modelFunctionId,
+        },
       })
 
       if (modelFunction === null) {
         throw new NotFoundError({
-          code: 'MODEL_FUNCTION_NOT_FOUND'
+          code: 'MODEL_FUNCTION_NOT_FOUND',
         })
       }
     }
 
     chat = await adapter.chatRepository.update({
       where: {
-        id
+        id,
       },
       data: {
         name,
@@ -148,33 +172,34 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
         ...(groupId && {
           group: {
             connect: {
-              id: groupId
-            }
-          }
+              id: groupId,
+            },
+          },
         }),
         ...(modelId && {
           model: {
             connect: {
-              id: modelId
-            }
-          }
+              id: modelId,
+            },
+          },
         }),
         ...(modelFunctionId && {
           model_function: {
             connect: {
-              id: modelFunctionId
-            }
-          }
+              id: modelFunctionId,
+            },
+          },
         }),
         ...(settings && {
           settings: {
             connect: {
-              id: settings.id
-            }
-          }
+              id: settings.id,
+            },
+          },
         }),
-        order
-      }
+        order,
+        queue_id,
+      },
     })
 
     if (!chat) {
@@ -186,9 +211,9 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
       event: {
         name: 'UPDATE',
         data: {
-          chat
-        }
-      }
+          chat,
+        },
+      },
     })
 
     return chat

@@ -1,5 +1,5 @@
 import { Worker } from 'node:cluster'
-import { OnMessage } from './onMessage'
+import { OnMessage } from './on-message'
 import { ProcessEventMap } from './types'
 
 type Params = {
@@ -10,7 +10,7 @@ export const buildOn = ({ onMessage }: Params) =>
   function On<EventName extends keyof ProcessEventMap>(
     eventName: EventName,
     event: ProcessEventMap[EventName],
-    worker?: Worker | Worker[]
+    worker?: Worker | Worker[],
   ) {
     return onMessage((message) => {
       if (message.eventName !== eventName) {

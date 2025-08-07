@@ -8,49 +8,53 @@ const ttlMarginMs = 15_000
 
 export type Decrypt = <F extends IFile | undefined>(params: { file: F; dek: Buffer }) => Promise<F>
 
-export const buildDecrypt = ({ temporaryFileRepository, storageGateway, cryptoGateway }: Adapter): Decrypt => {
+export const buildDecrypt = ({
+  temporaryFileRepository,
+  storageGateway,
+  cryptoGateway,
+}: Adapter): Decrypt => {
   return async ({ file, dek }) => {
     if (!file || !file.path || !file.isEncrypted) {
       return file
     }
 
     const shortTermFile = await temporaryFileRepository.get({
-      originalPath: `short-${file.path}`
+      originalPath: `short-${file.path}`,
     })
 
     if (shortTermFile && shortTermFile.ttlMs > ttlMarginMs) {
       return {
         ...file,
         path: shortTermFile.path,
-        isEncrypted: false
+        isEncrypted: false,
       }
     }
 
     const longTermFile = await temporaryFileRepository.get({
-      originalPath: `long-${file.path}`
+      originalPath: `long-${file.path}`,
     })
 
     if (longTermFile && longTermFile.ttlMs > ttlMarginMs) {
       const shortTermPath = await storageGateway.getTemporaryPath({
         path: longTermFile.path,
-        ttlMs: shortTermTTL + ttlMarginMs
+        ttlMs: shortTermTTL + ttlMarginMs,
       })
 
       await temporaryFileRepository.create({
         originalPath: `short-${file.path}`,
         decryptedPath: shortTermPath,
-        ttlMs: Math.min(shortTermTTL, longTermFile.ttlMs)
+        ttlMs: Math.min(shortTermTTL, longTermFile.ttlMs),
       })
 
       return {
         ...file,
         path: shortTermPath,
-        isEncrypted: false
+        isEncrypted: false,
       }
     }
 
     const encryptedBuffer = await storageGateway.read({
-      path: file.path
+      path: file.path,
     })
 
     if (encryptedBuffer.byteLength === 0) {
@@ -59,37 +63,37 @@ export const buildDecrypt = ({ temporaryFileRepository, storageGateway, cryptoGa
 
     const decryptedBuffer = await cryptoGateway.decryptBytes({
       dek,
-      encryptedData: encryptedBuffer
+      encryptedData: encryptedBuffer,
     })
 
     const tempFile = await storageGateway.writeTemporary({
       buffer: decryptedBuffer,
-      ext: extname(file.path)
+      ext: extname(file.path),
     })
     const longTermPath = tempFile.path
 
     const shortTermPath = await storageGateway.getTemporaryPath({
       path: longTermPath,
-      ttlMs: shortTermTTL + 5000
+      ttlMs: shortTermTTL + 5000,
     })
 
     await Promise.all([
       temporaryFileRepository.create({
         originalPath: `long-${file.path}`,
         decryptedPath: longTermPath,
-        ttlMs: longTermTTL
+        ttlMs: longTermTTL,
       }),
       temporaryFileRepository.create({
         originalPath: `short-${file.path}`,
         decryptedPath: shortTermPath,
-        ttlMs: shortTermTTL
-      })
+        ttlMs: shortTermTTL,
+      }),
     ])
 
     return {
       ...file,
       path: shortTermPath,
-      isEncrypted: false
+      isEncrypted: false,
     }
   }
 }

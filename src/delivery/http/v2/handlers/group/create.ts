@@ -12,7 +12,7 @@ export const buildCreateGroup = ({ group }: Params): CreateGroup => {
       name: req.body.name,
       presetId: req.body.preset_id,
       highlight: req.body.highlight,
-      order: req.body.order
+      order: req.body.order,
     })
 
     return res.status(200).json(data)

@@ -7,14 +7,14 @@ export const buildGetMe = ({ adapter }: UseCaseParams): GetMe => {
   return async ({ id }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id
+        id,
       },
       include: {
         groups: true,
         subscription: {
           include: {
-            plan: true
-          }
+            plan: true,
+          },
         },
         employees: {
           include: {
@@ -22,19 +22,19 @@ export const buildGetMe = ({ adapter }: UseCaseParams): GetMe => {
               include: {
                 subscription: {
                   include: {
-                    plan: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    plan: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })
 
     if (!user) {
       throw new UnauthorizedError({
-        code: 'UNAUTHORIZED'
+        code: 'UNAUTHORIZED',
       })
     }
 

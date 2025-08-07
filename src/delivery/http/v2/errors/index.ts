@@ -5,7 +5,7 @@ import {
   InternalError,
   InvalidDataError,
   NotFoundError,
-  UnauthorizedError
+  UnauthorizedError,
 } from '@/domain/errors'
 import httpStatus from 'http-status'
 
@@ -65,12 +65,12 @@ export class HttpError {
       return {
         message: this.error.message,
         code: this.error.code,
-        data: this.error.data
+        data: this.error.data,
       }
     }
 
     return {
-      message: this.error.message
+      message: this.error.message,
     }
   }
 }

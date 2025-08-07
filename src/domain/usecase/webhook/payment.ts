@@ -1,5 +1,11 @@
 import { UseCaseParams } from '@/domain/usecase/types'
-import { Currency, PlanType, TransactionProvider, TransactionStatus, TransactionType } from '@prisma/client'
+import {
+  Currency,
+  PlanType,
+  TransactionProvider,
+  TransactionStatus,
+  TransactionType,
+} from '@prisma/client'
 import { logger } from '@/lib/logger'
 import { isAxiosError } from 'axios'
 import { config } from '@/config'
@@ -19,7 +25,7 @@ export type Payment = (data: {
 }) => Promise<void>
 
 export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
-  return async ({ paymentId, provider, status, meta, locale = 'ru' }) => {
+  return async ({ paymentId, provider, status, meta, locale }) => {
     if (!paymentId) {
       throw new InvalidDataError()
     }
@@ -27,7 +33,7 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
       where: {
         external_id: paymentId,
         provider: provider,
-        deleted: false
+        deleted: false,
       },
       include: {
         plan: true,
@@ -37,34 +43,34 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
               include: {
                 referral: {
                   include: {
-                    template: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    template: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })
     if (!transaction) {
       throw new NotFoundError({
-        code: 'TRANSACTION_NOT_FOUND'
+        code: 'TRANSACTION_NOT_FOUND',
       })
     }
     if (transaction.status !== TransactionStatus.PENDING) {
       throw new ForbiddenError({
-        code: 'TRANSACTION_IS_NOT_IN_PENDING_STATE'
+        code: 'TRANSACTION_IS_NOT_IN_PENDING_STATE',
       })
     }
     await adapter.transactionRepository.update({
       where: {
         id: transaction.id,
-        deleted: false
+        deleted: false,
       },
       data: {
         status: status,
-        meta: meta
-      }
+        meta: meta,
+      },
     })
     if (status === TransactionStatus.SUCCEDED) {
       if (config?.metrics?.yandex?.counter) {
@@ -91,7 +97,10 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
           counter.hit()
           counter.reachGoal('paid_plan')
           if (transaction?.user?.id) {
-            if (transaction.user.yandexMetricClientId !== null || transaction.user.yandexMetricYclid !== null) {
+            if (
+              transaction.user.yandexMetricClientId !== null ||
+              transaction.user.yandexMetricYclid !== null
+            ) {
               try {
                 await adapter.yandexMetricGateway.sendOfflineConversion({
                   yandexMetricClientId: transaction.user.yandexMetricClientId,
@@ -100,12 +109,12 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
                   purchaseId: transaction.id,
                   goal: 'paid_plan',
                   price: transaction.plan?.price || 0,
-                  currency: transaction.currency
+                  currency: transaction.currency,
                 })
               } catch (error) {
                 logger.log({
                   level: 'error',
-                  message: `Error on send paid plan offline conversion:: ${JSON.stringify(error.response?.data)}`
+                  message: `Error on send paid plan offline conversion:: ${JSON.stringify(error.response?.data)}`,
                 })
               }
             }
@@ -114,7 +123,7 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
           if (isAxiosError(error)) {
             logger.log({
               level: 'error',
-              message: `payment: ${JSON.stringify(error.response?.data)}`
+              message: `payment: ${JSON.stringify(error.response?.data)}`,
             })
           }
         }
@@ -122,29 +131,31 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
       if (transaction.type === TransactionType.SUBSCRIPTION && transaction.plan) {
         const subscription = await adapter.subscriptionRepository.get({
           where: {
-            user_id: transaction.user_id!
+            user_id: transaction.user_id!,
           },
           include: {
             plan: true,
-            user: true
-          }
+            user: true,
+          },
         })
         if (!subscription?.plan) {
           throw new NotFoundError({
-            code: 'SUBSCRIPTION_NOT_FOUND'
+            code: 'SUBSCRIPTION_NOT_FOUND',
           })
         }
 
         await adapter.subscriptionRepository.update({
           where: {
-            user_id: transaction.user_id!
+            user_id: transaction.user_id!,
           },
           data: {
             plan_id:
-              subscription.plan.tokens > transaction.plan.tokens ? subscription.plan_id : transaction.plan_id,
+              subscription.plan.tokens > transaction.plan.tokens
+                ? subscription.plan_id
+                : transaction.plan_id,
             balance: { increment: transaction.plan.tokens },
-            created_at: new Date()
-          }
+            created_at: new Date(),
+          },
         })
 
         const referral = transaction.user?.referral_participants?.[0]?.referral
@@ -153,20 +164,20 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
           const alterPlan = await adapter.planRepository.get({
             where: {
               type: transaction.plan.type,
-              currency: referral.template.currency
-            }
+              currency: referral.template.currency,
+            },
           })
 
           if (alterPlan) {
             await adapter.referralRepository.update({
               where: {
-                id: referral.id
+                id: referral.id,
               },
               data: {
                 balance: {
-                  increment: alterPlan.price * (referral.template.encouragement_percentage / 100)
-                }
-              }
+                  increment: alterPlan.price * (referral.template.encouragement_percentage / 100),
+                },
+              },
             })
           }
         }
@@ -178,16 +189,16 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
             currency: Currency.BOTHUB_TOKEN,
             user_id: transaction.user_id,
             amount: transaction.plan.tokens,
-            provider: TransactionProvider.BOTHUB
-          }
+            provider: TransactionProvider.BOTHUB,
+          },
         })
 
         await adapter.actionRepository.create({
           data: {
             type: actions.SUBSCRIPTION_PURCHASE,
             transaction_id: transaction.id,
-            user_id: transaction.user_id
-          }
+            user_id: transaction.user_id,
+          },
         })
 
         if (transaction.from_user_id && transaction.user_id) {
@@ -196,7 +207,7 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
             await adapter.mailGateway.sendGiftTokenMail({
               to: subscription.user.email,
               tokens,
-              locale
+              locale,
             })
 
             await adapter.telegramGateway.notifyAboutPresent({
@@ -204,7 +215,7 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
               userId: transaction.user_id,
               fromUserId: transaction.from_user_id,
               tokens: tokens,
-              viaEmail: true
+              viaEmail: true,
             })
           } else {
             await adapter.telegramGateway.notifyAboutPresent({
@@ -212,7 +223,7 @@ export const buildPayment = ({ adapter }: UseCaseParams): Payment => {
               userId: transaction.user_id,
               fromUserId: transaction.from_user_id,
               tokens: tokens,
-              viaEmail: false
+              viaEmail: false,
             })
           }
         }

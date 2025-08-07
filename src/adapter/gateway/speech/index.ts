@@ -11,6 +11,6 @@ export const buildSpeechGateway = (params: Params): SpeechGateway => {
   const send = buildSend(params)
 
   return {
-    send
+    send,
   }
 }

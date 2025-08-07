@@ -9,8 +9,8 @@ export const buildBatchGenerateArticlesMiddleware = ({ fileUpload }: Middlewares
   const webFilesMiddleware = fileUpload({ saveFiles: false }).fields([
     {
       name: 'articlesParams',
-      maxCount: 1
-    }
+      maxCount: 1,
+    },
   ])
 
   return (req: Request, res: Response, next: NextFunction) => {
@@ -53,19 +53,20 @@ export const buildBatchGenerateArticles = ({ article }: Params): BatchGenerateAr
         linkStyle: article.linkStyle,
         symbolsCount: Number(article.symbolsCount),
         keywords: article.keywords ?? '',
-        isSEO: article.isSEO ?? false
+        isSEO: article.isSEO ?? false,
       }))
 
       //DONT AWAIT THIS
       article.batchGenerateArticles({
         articles: parsedArticles,
         email: req.body.email,
-        locale
+        locale,
+        developerKeyId: req.user.developerKeyId,
       })
 
       return res.status(200).json({
         message:
-          'After the generation is completed, an email with links to the generated articles will be sent to the email address you specified.'
+          'After the generation is completed, an email with links to the generated articles will be sent to the email address you specified.',
       })
     } catch (error) {
       return res.status(500).json({ error: 'Failed to process CSV file', details: error.message })

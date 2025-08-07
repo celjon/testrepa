@@ -14,17 +14,16 @@ export const buildPlatformTokens = ({ adapter }: UseCaseParams): PlatformTokens 
   return async ({ userId, dateFrom, dateTo }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user || user.role !== Role.ADMIN) {
       throw new ForbiddenError()
     }
+    //MIGRATION_ON_CLICKHOUSE
+    /*return await adapter.actionRepository.getPlatformTokens({ dateTo, dateFrom })*/
 
-    return adapter.actionRepository.getPlatformTokens({
-      dateTo,
-      dateFrom
-    })
+    return await adapter.actionRepository.chGetPlatformTokens({ dateTo, dateFrom })
   }
 }

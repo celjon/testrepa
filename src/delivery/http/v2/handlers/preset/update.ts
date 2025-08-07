@@ -8,8 +8,8 @@ export const buildUpdateMiddleware = ({ fileUpload }: Middlewares) => {
   const webFilesMiddleware = fileUpload({ saveFiles: false }).fields([
     {
       name: 'files',
-      maxCount: 5
-    }
+      maxCount: 5,
+    },
   ])
 
   return (req: Request, res: Response, next: NextFunction) => {
@@ -35,7 +35,7 @@ export const buildUpdate = ({ preset }: Params): Update => {
       files,
       attachmentsIds: req.body.attachmentsIds,
       access: req.body.access,
-      categoriesIds: req.body.categoriesIds
+      categoriesIds: req.body.categoriesIds,
     })
 
     return res.status(200).header('Content-Type', 'application/json').send(toJSONString(data))

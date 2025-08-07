@@ -1,36 +1,42 @@
-import { Currency, PrismaClient, TransactionProvider, TransactionStatus, TransactionType } from '@prisma/client'
+import {
+  Currency,
+  PrismaClient,
+  TransactionProvider,
+  TransactionStatus,
+  TransactionType,
+} from '@prisma/client'
 import chalk from 'chalk'
 
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL
-    }
+      url: process.env.DATABASE_URL,
+    },
   },
   log: [
     {
       emit: 'event',
-      level: 'query'
+      level: 'query',
     },
     {
       emit: 'stdout',
-      level: 'error'
+      level: 'error',
     },
     {
       emit: 'stdout',
-      level: 'info'
+      level: 'info',
     },
     {
       emit: 'stdout',
-      level: 'warn'
-    }
-  ]
+      level: 'warn',
+    },
+  ],
 })
 
 prisma.$on('query', (error) => {
   console.log(
     chalk.blue.bold('[Bothub Server]'),
-    `Query: ${error.query}.\n\tParams: ${error.params}.\n\tDuration: ${chalk.blue(`${error.duration}ms`)}.`
+    `Query: ${error.query}.\n\tParams: ${error.params}.\n\tDuration: ${chalk.blue(`${error.duration}ms`)}.`,
   )
 })
 
@@ -39,8 +45,8 @@ async function main() {
     const plan = await tx.plan.findFirst({
       where: {
         type: 'ELITE',
-        currency: 'RUB'
-      }
+        currency: 'RUB',
+      },
     })
 
     const enterprise = await tx.enterprise.create({
@@ -51,12 +57,12 @@ async function main() {
             balance: 1000000,
             plan: {
               connect: {
-                id: plan!.id
-              }
-            }
-          }
-        }
-      }
+                id: plan!.id,
+              },
+            },
+          },
+        },
+      },
     })
 
     await tx.employee.create({
@@ -65,16 +71,16 @@ async function main() {
           create: {
             email: 'big_comp_owner1_email@mail.com',
             emailVerified: true,
-            password: 'owner1_email@mail.com'
-          }
+            password: 'owner1_email@mail.com',
+          },
         },
         enterprise: {
           connect: {
-            id: enterprise.id
-          }
+            id: enterprise.id,
+          },
         },
-        role: 'OWNER'
-      }
+        role: 'OWNER',
+      },
     })
 
     for (let i = 0; i < 100; i++) {
@@ -89,20 +95,20 @@ async function main() {
                   balance: 1000,
                   plan: {
                     connect: {
-                      id: plan!.id
-                    }
-                  }
-                }
-              }
-            }
+                      id: plan!.id,
+                    },
+                  },
+                },
+              },
+            },
           },
           enterprise: {
             connect: {
-              id: enterprise.id
-            }
+              id: enterprise.id,
+            },
           },
-          role: 'EMPLOYEE'
-        }
+          role: 'EMPLOYEE',
+        },
       })
     }
 
@@ -116,7 +122,7 @@ async function main() {
         provider: TransactionProvider.BOTHUB,
         currency: Currency.BOTHUB_TOKEN,
         status: TransactionStatus.SUCCEDED,
-        type: TransactionType.WRITE_OFF
+        type: TransactionType.WRITE_OFF,
       }))
 
       const transactionData1 = Array.from({ length: 25000 }, () => ({
@@ -126,16 +132,16 @@ async function main() {
         provider: TransactionProvider.BOTHUB,
         currency: Currency.BOTHUB_TOKEN,
         status: TransactionStatus.SUCCEDED,
-        type: TransactionType.REPLINSH
+        type: TransactionType.REPLINSH,
       }))
 
       await tx.transaction.createMany({
         data: transactionData,
-        skipDuplicates: true
+        skipDuplicates: true,
       })
       await tx.transaction.createMany({
         data: transactionData1,
-        skipDuplicates: true
+        skipDuplicates: true,
       })
     }
   })

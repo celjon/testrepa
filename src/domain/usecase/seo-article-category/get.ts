@@ -7,12 +7,12 @@ export type Get = (params: { id: string }) => Promise<ISEOArticleCategory>
 export const buildGet = ({ adapter }: UseCaseParams): Get => {
   return async ({ id }) => {
     const seoArticleCategory = await adapter.seoArticleCategoryRepository.get({
-      where: { id }
+      where: { id },
     })
 
     if (!seoArticleCategory) {
       throw new NotFoundError({
-        code: 'CATEGORY_NOT_FOUND'
+        code: 'CATEGORY_NOT_FOUND',
       })
     }
 

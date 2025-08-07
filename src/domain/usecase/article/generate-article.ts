@@ -1,6 +1,6 @@
 import { extname } from 'path'
 import { concatMap, EMPTY, from, Observable, switchMap } from 'rxjs'
-import { ArticleLinkStyle, EnterpriseType, Platform } from '@prisma/client'
+import { ArticleLinkStyle, EnterpriseType, Platform, Role } from '@prisma/client'
 import { config } from '@/config'
 import { extractURLs, getDocumentType } from '@/lib'
 import { NotFoundError } from '@/domain/errors'
@@ -8,7 +8,11 @@ import { IArticle, IArticleLanguage, ValidArticleStyle } from '@/domain/entity/a
 import { determinePlatform } from '@/domain/entity/action'
 import { UseCaseParams } from '../types'
 import { ArticleStructuredPlan, File } from './types'
-import { getGenerateArticleChapterPrompt, getGenerateArticlePrompt, SYMBOLS_COUNT_LOW_LIMIT } from './article-prompts'
+import {
+  getGenerateArticleChapterPrompt,
+  getGenerateArticlePrompt,
+  SYMBOLS_COUNT_LOW_LIMIT,
+} from './article-prompts'
 import { HandleResponseStreamWithChat } from './handle-response-stream-with-chat'
 import { GetChildModel } from './get-child-model'
 import { GetStructuredPlan } from './get-structured-plan'
@@ -49,6 +53,7 @@ export type GenerateArticle = (params: {
   sourceLink?: string
   isSEO?: boolean
   isAdmin?: boolean
+  developerKeyId?: string
 }) => Promise<{
   responseStream$: Observable<{
     status: 'pending' | 'chapterDone' | 'done'
@@ -67,7 +72,7 @@ export const buildGenerateArticle = ({
   handleResponseStreamWithChat,
   getChildModel,
   getStructuredPlan,
-  addSourcesWithPDF
+  addSourcesWithPDF,
 }: Params): GenerateArticle => {
   const constantCosts = config.constantCosts
 
@@ -80,11 +85,12 @@ export const buildGenerateArticle = ({
     isSEO,
     isAdmin,
     language = IArticleLanguage.ru,
+    developerKeyId,
     ...params
   }) => {
     const { model, subscription, employee, plan, user } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
     let totalSpentCaps = params.spentCaps ?? 0
     let sourceContent = ''
@@ -92,9 +98,36 @@ export const buildGenerateArticle = ({
     if (sourceFile) {
       sourceContent += await adapter.documentGateway.toMarkdown({
         type: getDocumentType(extname(sourceFile.originalname)),
-        buffer: sourceFile.buffer
+        buffer: sourceFile.buffer,
       })
     }
+
+    let constantCost = subscription?.plan ? constantCosts[subscription.plan.type] * 10 : 0
+
+    if (employee?.enterprise?.type === EnterpriseType.CONTRACTED) {
+      constantCost = 0
+    }
+    let prompt = getGenerateArticlePrompt({
+      ...params,
+      language,
+      customStyle: params.customStyle ?? '',
+      sourceContent,
+    })
+
+    //estimate
+    if (user?.role !== Role.ADMIN) {
+      await service.subscription.checkBalance({
+        subscription,
+        estimate: await service.model.estimate.easyWriter({
+          model,
+          prompt,
+          constantCost,
+          symbolsCount: params.symbolsCount,
+        }),
+      })
+    }
+    await service.enterprise.checkMonthLimit({ userId })
+
     if (sourceLink) {
       const urls = extractURLs(sourceLink)
       if (urls.length > 0) {
@@ -102,13 +135,13 @@ export const buildGenerateArticle = ({
           urls.map(async (url) => {
             try {
               const { content } = await adapter.webSearchGateway.getMarkdownContent({
-                url
+                url,
               })
               sourceContent += content
             } catch (e) {
               logger.error('Failed to load content from url', url)
             }
-          })
+          }),
         )
       }
     }
@@ -120,7 +153,8 @@ export const buildGenerateArticle = ({
         plan: params.plan,
         language,
         symbolsCount: params.symbolsCount,
-        isAdmin
+        isAdmin,
+        developerKeyId,
       })
       if (spentCaps) totalSpentCaps += spentCaps
       sourceContent += sources
@@ -131,16 +165,16 @@ export const buildGenerateArticle = ({
       customStyle += '\n'
       customStyle += await adapter.documentGateway.toMarkdown({
         type: getDocumentType(extname(params.customStyleFile.originalname)),
-        buffer: params.customStyleFile.buffer
+        buffer: params.customStyleFile.buffer,
       })
     }
 
     let articlePlan: ArticleStructuredPlan = []
-    let prompt = getGenerateArticlePrompt({
+    prompt = getGenerateArticlePrompt({
       ...params,
       language,
       customStyle,
-      sourceContent
+      sourceContent,
     })
 
     if (subscription && params.symbolsCount >= SYMBOLS_COUNT_LOW_LIMIT) {
@@ -154,7 +188,8 @@ export const buildGenerateArticle = ({
         userId,
         model,
         subscription,
-        employee
+        employee,
+        developerKeyId,
       })
 
       prompt += `\n\n<structuredPlan>${JSON.stringify(articlePlan, null, 2)}</structuredPlan>`
@@ -163,24 +198,24 @@ export const buildGenerateArticle = ({
         {
           chapter: '',
           symbolsCount: 0,
-          type: 'general'
-        }
+          type: 'general',
+        },
       ]
     }
 
     let easyWriterGroup = await adapter.groupRepository.get({
       where: {
         name: 'Easy Writer',
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     if (!easyWriterGroup) {
       easyWriterGroup = await adapter.groupRepository.create({
         data: {
           name: 'Easy Writer',
-          user_id: userId
-        }
+          user_id: userId,
+        },
       })
     }
     const chat = await service.chat.initialize({
@@ -188,11 +223,11 @@ export const buildGenerateArticle = ({
       plan,
       name: params.subject,
       modelId: model.parent_id ?? model.id,
-      groupId: easyWriterGroup.id
+      groupId: easyWriterGroup.id,
     })
     if (!chat.settings) {
       throw new NotFoundError({
-        code: 'UNABLE_TO_CREATE_CHAT'
+        code: 'UNABLE_TO_CREATE_CHAT',
       })
     }
     await adapter.chatSettingsRepository.update({
@@ -202,10 +237,10 @@ export const buildGenerateArticle = ({
           update: {
             model: model.id,
             max_tokens: model.max_tokens,
-            temperature: params.creativity
-          }
-        }
-      }
+            temperature: params.creativity,
+          },
+        },
+      },
     })
 
     const userMessage = await service.message.storage.create({
@@ -219,9 +254,9 @@ export const buildGenerateArticle = ({
           disabled: false,
           content: prompt,
           full_content: prompt,
-          platform: determinePlatform(Platform.WEB, !!employee?.enterprise_id)
-        }
-      }
+          platform: determinePlatform(Platform.WEB, !!employee?.enterprise_id),
+        },
+      },
     })
 
     service.chat.eventStream.emit({
@@ -229,21 +264,15 @@ export const buildGenerateArticle = ({
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: userMessage
-        }
-      }
+          message: userMessage,
+        },
+      },
     })
 
     let article: IArticle | null = null
 
     let generationStopped = false
     let closeStream$: (() => void) | null = null
-
-    let constantCost = subscription?.plan ? constantCosts[subscription.plan.type] * 10 : 0
-
-    if (employee?.enterprise?.type === EnterpriseType.CONTRACTED) {
-      constantCost = 0
-    }
 
     const textStream$ = from(articlePlan).pipe(
       concatMap((chapter, chapterIndex) => {
@@ -258,7 +287,7 @@ export const buildGenerateArticle = ({
             generatedContent: article?.content ?? '',
             symbolsCount: params.symbolsCount,
             linkStyle: params.linkStyle,
-            keywords: params.keywords
+            keywords: params.keywords,
           })
 
           const chapterMessage = await service.message.storage.create({
@@ -271,9 +300,9 @@ export const buildGenerateArticle = ({
                 user_id: userId,
                 disabled: false,
                 content: chapterPrompt,
-                platform: determinePlatform(Platform.WEB, !!employee?.enterprise_id)
-              }
-            }
+                platform: determinePlatform(Platform.WEB, !!employee?.enterprise_id),
+              },
+            },
           })
 
           service.chat.eventStream.emit({
@@ -281,9 +310,9 @@ export const buildGenerateArticle = ({
             event: {
               name: 'MESSAGE_CREATE',
               data: {
-                message: chapterMessage
-              }
-            }
+                message: chapterMessage,
+              },
+            },
           })
 
           const chapterStream$ = await service.message.text.sendByProvider({
@@ -294,9 +323,9 @@ export const buildGenerateArticle = ({
             settings: {
               temperature: params.creativity,
               system_prompt: prompt,
-              max_tokens: model.max_tokens
+              max_tokens: model.max_tokens,
             },
-            planType: subscription?.plan?.type ?? null
+            planType: subscription?.plan?.type ?? null,
           })
 
           const { responseStream$, closeStream } = await handleResponseStreamWithChat({
@@ -309,7 +338,8 @@ export const buildGenerateArticle = ({
             employee,
             textStream$: chapterStream$,
             additionalCaps: chapterIndex === articlePlan.length - 1 ? constantCost : 0,
-            isAdmin
+            isAdmin,
+            developerKeyId,
           })
           closeStream$ = closeStream
 
@@ -345,8 +375,8 @@ export const buildGenerateArticle = ({
                     content: `${data.content}\n\n`,
                     spentCaps: totalSpentCaps,
 
-                    chat_id: chat.id
-                  }
+                    chat_id: chat.id,
+                  },
                 })
               } else {
                 article =
@@ -354,8 +384,8 @@ export const buildGenerateArticle = ({
                     where: { id: article.id },
                     data: {
                       content: `${article.content}${data.content}\n\n`,
-                      spentCaps: totalSpentCaps
-                    }
+                      spentCaps: totalSpentCaps,
+                    },
                   })) ?? article
               }
 
@@ -367,8 +397,8 @@ export const buildGenerateArticle = ({
                 article = await adapter.articleRepository.update({
                   where: { id: article.id },
                   data: {
-                    slug
-                  }
+                    slug,
+                  },
                 })
 
                 const keywords = params.keywords
@@ -376,10 +406,11 @@ export const buildGenerateArticle = ({
                   .map((kw) => kw.trim())
                   .filter(Boolean)
 
-                const keywordTopicPairs = await adapter.seoArticleTopicRepository.findByLocalizedKeywords({
-                  keywords,
-                  language
-                })
+                const keywordTopicPairs =
+                  await adapter.seoArticleTopicRepository.findByLocalizedKeywords({
+                    keywords,
+                    language,
+                  })
 
                 const uniqueKeywordCategoryPairs = new Map<
                   string,
@@ -401,14 +432,16 @@ export const buildGenerateArticle = ({
                   }
                 }
 
-                const topicsToCreate = Array.from(uniqueKeywordCategoryPairs.values()).map(({ name, slug, category_id }) => ({
-                  data: {
-                    name,
-                    slug,
-                    category_id,
-                    article_id: article!.id
-                  }
-                }))
+                const topicsToCreate = Array.from(uniqueKeywordCategoryPairs.values()).map(
+                  ({ name, slug, category_id }) => ({
+                    data: {
+                      name,
+                      slug,
+                      category_id,
+                      article_id: article!.id,
+                    },
+                  }),
+                )
 
                 if (topicsToCreate.length > 0) {
                   await adapter.seoArticleTopicRepository.createMany(topicsToCreate)
@@ -421,7 +454,7 @@ export const buildGenerateArticle = ({
                 spentCaps: data.spentCaps,
                 chatId: chat.id,
                 articleId: article.id,
-                slug: article.slug
+                slug: article.slug,
               }
             }
 
@@ -431,11 +464,11 @@ export const buildGenerateArticle = ({
               caps: data.caps,
               spentCaps: data.spentCaps,
               chatId: chat.id,
-              articleId: ''
+              articleId: '',
             }
-          })
+          }),
         )
-      })
+      }),
     )
 
     const closeStream = () => {
@@ -447,7 +480,7 @@ export const buildGenerateArticle = ({
 
     return {
       responseStream$: textStream$,
-      closeStream
+      closeStream,
     }
   }
 }

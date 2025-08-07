@@ -13,13 +13,13 @@ export const buildSwitch = ({ adapter, service }: UseCaseParams): Switch => {
   return async ({ userId, keyEncryptionKey, id, direction }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -31,25 +31,25 @@ export const buildSwitch = ({ adapter, service }: UseCaseParams): Switch => {
       data: {
         where: {
           id,
-          user_id: userId
+          user_id: userId,
         },
         data: {
-          choiced: false
-        }
-      }
+          choiced: false,
+        },
+      },
     })
 
     if (!currentMessage) {
       throw new NotFoundError({
         code: 'MESSAGE_NOT_FOUND',
-        message: 'Message not found'
+        message: 'Message not found',
       })
     }
 
     if (!currentMessage[nextOrPrevious]) {
       throw new NotFoundError({
         code: 'MESSAGE_NOT_FOUND',
-        message: `Message has no ${direction} version`
+        message: `Message has no ${direction} version`,
       })
     }
 
@@ -59,10 +59,10 @@ export const buildSwitch = ({ adapter, service }: UseCaseParams): Switch => {
       data: {
         where: {
           id: currentMessage[nextOrPrevious]!,
-          user_id: userId
+          user_id: userId,
         },
         data: {
-          choiced: true
+          choiced: true,
         },
         include: {
           model: {
@@ -70,10 +70,10 @@ export const buildSwitch = ({ adapter, service }: UseCaseParams): Switch => {
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
           set: true,
           transaction: true,
@@ -81,40 +81,40 @@ export const buildSwitch = ({ adapter, service }: UseCaseParams): Switch => {
             include: {
               original: true,
               preview: true,
-              buttons: true
-            }
+              buttons: true,
+            },
           },
           buttons: {
             where: {
-              disabled: false
-            }
+              disabled: false,
+            },
           },
           all_buttons: {
-            distinct: ['action']
+            distinct: ['action'],
           },
           attachments: {
             include: {
-              file: true
-            }
+              file: true,
+            },
           },
           voice: {
             include: {
-              file: true
-            }
+              file: true,
+            },
           },
           video: {
             include: {
-              file: true
-            }
-          }
-        }
-      }
+              file: true,
+            },
+          },
+        },
+      },
     })
 
     if (!nextMessage) {
       throw new NotFoundError({
         code: 'MESSAGE_NOT_FOUND',
-        message: `${direction} message not found`
+        message: `${direction} message not found`,
       })
     }
 

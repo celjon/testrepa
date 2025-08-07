@@ -9,12 +9,12 @@ export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
     let seoArticleCategory = await adapter.seoArticleCategoryRepository.get({ where: { id } })
     if (seoArticleCategory) {
       seoArticleCategory = await adapter.seoArticleCategoryRepository.delete({
-        where: { id }
+        where: { id },
       })
     }
     if (!seoArticleCategory) {
       throw new NotFoundError({
-        code: 'CATEGORY_NOT_FOUND'
+        code: 'CATEGORY_NOT_FOUND',
       })
     }
 

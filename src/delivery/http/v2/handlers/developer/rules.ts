@@ -6,13 +6,18 @@ export const buildDeveloperRules = ({ authRequired, validateSchema }: Middleware
   const listKeysRules = [authRequired()]
   const deleteKeyRules = [authRequired(), param('id').isString(), validateSchema]
   const deleteManyKeyRules = [authRequired(), body('ids').isArray(), validateSchema]
-  const updateKeyRules = [authRequired(), param('id').isString(), body('label').isString(), validateSchema]
+  const updateKeyRules = [
+    authRequired(),
+    param('id').isString(),
+    body('label').isString(),
+    validateSchema,
+  ]
 
   return {
     createKeyRules,
     listKeysRules,
     deleteKeyRules,
     deleteManyKeyRules,
-    updateKeyRules
+    updateKeyRules,
   }
 }

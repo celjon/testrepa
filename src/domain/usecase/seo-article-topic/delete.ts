@@ -9,12 +9,12 @@ export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
     let seoArticleTopic = await adapter.seoArticleTopicRepository.get({ where: { id } })
     if (seoArticleTopic) {
       seoArticleTopic = await adapter.seoArticleTopicRepository.delete({
-        where: { id }
+        where: { id },
       })
     }
     if (!seoArticleTopic) {
       throw new NotFoundError({
-        code: 'TOPIC_NOT_FOUND'
+        code: 'TOPIC_NOT_FOUND',
       })
     }
 

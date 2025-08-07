@@ -14,7 +14,7 @@ export const buildAdapter = (params: AdapterParams): Adapter => {
   return {
     ...gateway,
     ...repository,
-    queueManager
+    queueManager,
   }
 }
 

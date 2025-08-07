@@ -7,6 +7,6 @@ export type DataAnalysisService = {
 
 export const buildDataAnalysisService = (params: Adapter): DataAnalysisService => {
   return {
-    clusterizeExcel: buildClusterizeExcel(params)
+    clusterizeExcel: buildClusterizeExcel(params),
   }
 }

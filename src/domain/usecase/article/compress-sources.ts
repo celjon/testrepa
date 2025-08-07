@@ -21,7 +21,11 @@ export type CompressSource = (params: {
   capsSpendCompressSource: number
 }>
 
-export const buildCompressSource = ({ adapter, service, getChildModel }: Params): CompressSource => {
+export const buildCompressSource = ({
+  adapter,
+  service,
+  getChildModel,
+}: Params): CompressSource => {
   return async ({ textSource, subject, language, plan, userId, model_id }) => {
     const { title, text } = textSource
     const prompt = dedent`
@@ -63,26 +67,26 @@ export const buildCompressSource = ({ adapter, service, getChildModel }: Params)
     `
     const { model } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
     const content = JSON.stringify({
       text,
       subject,
-      plan
+      plan,
     })
     const response = await adapter.openrouterGateway.sync({
       endUserId: userId,
       messages: [
         {
           role: 'user',
-          content
-        }
+          content,
+        },
       ],
       settings: {
         model: model.prefix + model.id,
-        system_prompt: prompt
+        system_prompt: prompt,
       },
-      response_format: compressSourceResponseFormat
+      response_format: compressSourceResponseFormat,
     })
     const messageContent = response.message.content?.trim()
 
@@ -99,13 +103,13 @@ export const buildCompressSource = ({ adapter, service, getChildModel }: Params)
 
     if (!response.usage) {
       throw new InvalidDataError({
-        code: 'UNABLE_TO_COMPRESSING_SOURCES'
+        code: 'UNABLE_TO_COMPRESSING_SOURCES',
       })
     }
 
-    const caps = await service.model.getCaps({
+    const caps = await service.model.getCaps.text({
       model: model,
-      usage: response.usage
+      usage: response.usage,
     })
 
     return { title, text: filteredText, capsSpendCompressSource: caps }

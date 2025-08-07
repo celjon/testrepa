@@ -1,12 +1,13 @@
 import { catchError, concatMap, Observable } from 'rxjs'
 import { MessageStatus, Platform } from '@prisma/client'
+import { config } from '@/config'
 import { BaseError, InternalError, NotFoundError } from '@/domain/errors'
 import { UseCaseParams } from '@/domain/usecase/types'
 import { IChat } from '@/domain/entity/chat'
 import { IModel } from '@/domain/entity/model'
 import { ISubscription } from '@/domain/entity/subscription'
 import { IEmployee } from '@/domain/entity/employee'
-import { TextObservable } from '@/domain/service/message/text/sendByProvider'
+import { TextObservable } from '@/domain/service/message/text/send-by-provider'
 import { IUser } from '@/domain/entity/user'
 
 export type HandleResponseStreamWithChat = (params: {
@@ -20,6 +21,7 @@ export type HandleResponseStreamWithChat = (params: {
   textStream$: TextObservable
   additionalCaps: number
   isAdmin?: boolean
+  developerKeyId?: string
 }) => Promise<{
   responseStream$: Observable<{
     status: 'pending' | 'done'
@@ -31,19 +33,33 @@ export type HandleResponseStreamWithChat = (params: {
   closeStream: () => void
 }>
 
-export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseParams): HandleResponseStreamWithChat => {
-  return async ({ user, keyEncryptionKey, chat, model, subscription, employee, textStream$, additionalCaps, isAdmin }) => {
+export const buildHandleResponseStreamWithChat = ({
+  service,
+  adapter,
+}: UseCaseParams): HandleResponseStreamWithChat => {
+  return async ({
+    user,
+    keyEncryptionKey,
+    chat,
+    model,
+    subscription,
+    employee,
+    textStream$,
+    additionalCaps,
+    isAdmin,
+    developerKeyId,
+  }) => {
     if (!chat.settings || !chat.settings.text) {
       throw new NotFoundError({
-        code: 'CHAT_SETTINGS_NOT_FOUND'
+        code: 'CHAT_SETTINGS_NOT_FOUND',
       })
     }
 
     const textJob = await service.job.create({
       name: 'MODEL_GENERATION',
-      chat
+      chat,
     })
-
+    await service.enterprise.checkMonthLimit({ userId: user.id })
     // create pending assistant message
     let assistantMessage = await service.message.storage.create({
       user,
@@ -56,7 +72,7 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
           user_id: user.id,
           model_id: model.id,
           job_id: textJob.id,
-          content: null
+          content: null,
         },
         include: {
           model: {
@@ -64,14 +80,14 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
-          job: true
-        }
-      }
+          job: true,
+        },
+      },
     })
 
     service.chat.eventStream.emit({
@@ -79,15 +95,15 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: assistantMessage
-        }
-      }
+          message: assistantMessage,
+        },
+      },
     })
 
     await textJob.start({
       stop: () => {
         textStream$.stream.controller.abort()
-      }
+      },
     })
 
     let content = ''
@@ -97,7 +113,7 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
     const handleError = async (error: unknown) => {
       if (!(error instanceof BaseError)) {
         error = new InternalError({
-          code: 'INTERNAL_ERROR'
+          code: 'INTERNAL_ERROR',
         })
       }
       const errorJob = await textJob.setError(error)
@@ -110,21 +126,21 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
             message: {
               id: assistantMessage.id,
               job_id: errorJob.id,
-              job: errorJob
-            }
-          }
-        }
+              job: errorJob,
+            },
+          },
+        },
       })
     }
 
     const onGenerationEnd = async (isError = false) => {
       const total_tokens = prompt_tokens + completion_tokens
-      let caps = await service.model.getCaps({
+      let caps = await service.model.getCaps.text({
         model: model,
         usage: {
           prompt_tokens,
-          completion_tokens
-        }
+          completion_tokens,
+        },
       })
 
       if (!isError) {
@@ -140,16 +156,18 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
             userId: user.id,
             enterpriseId: employee?.enterprise_id,
             platform: Platform.EASY_WRITER,
-            model_id: model.id
-          }
+            model_id: model.id,
+            provider_id: config.model_providers.openrouter.id,
+            developerKeyId,
+          },
         })
       }
 
       await adapter.chatRepository.update({
         where: { id: chat.id },
         data: {
-          total_caps: { increment: caps }
-        }
+          total_caps: { increment: caps },
+        },
       })
 
       assistantMessage = isAdmin
@@ -163,9 +181,9 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
                 status: MessageStatus.DONE,
                 tokens: total_tokens,
                 transaction_id: writeOff ? writeOff.transaction.id : '',
-                content
-              }
-            }
+                content,
+              },
+            },
           })) ?? assistantMessage)
 
       service.chat.eventStream.emit({
@@ -174,19 +192,19 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
           name: 'UPDATE',
           data: {
             chat: {
-              total_caps: chat.total_caps
-            }
-          }
-        }
+              total_caps: chat.total_caps,
+            },
+          },
+        },
       })
       service.chat.eventStream.emit({
         chat,
         event: {
           name: 'MESSAGE_UPDATE',
           data: {
-            message: assistantMessage
-          }
-        }
+            message: assistantMessage,
+          },
+        },
       })
       if (!isAdmin && writeOff) {
         service.chat.eventStream.emit({
@@ -194,28 +212,30 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
           event: {
             name: 'TRANSACTION_CREATE',
             data: {
-              transaction: writeOff.transaction
-            }
-          }
+              transaction: writeOff.transaction,
+            },
+          },
         })
       }
       if (!isAdmin && subscription) {
         service.chat.eventStream.emit({
           chat,
           event: {
-            name: service.user.hasEnterpriseActualSubscription(user) ? 'ENTERPRISE_SUBSCRIPTION_UPDATE' : 'SUBSCRIPTION_UPDATE',
+            name: service.user.hasEnterpriseActualSubscription(user)
+              ? 'ENTERPRISE_SUBSCRIPTION_UPDATE'
+              : 'SUBSCRIPTION_UPDATE',
             data: {
               subscription: {
                 id: subscription.id,
-                balance: subscription.balance
-              }
-            }
-          }
+                balance: subscription.balance,
+              },
+            },
+          },
         })
       }
       return {
         spentCaps: caps,
-        currentCaps: writeOff ? writeOff.subscription.balance : 0n
+        currentCaps: writeOff ? writeOff.subscription.balance : 0n,
       }
     }
 
@@ -234,10 +254,10 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
                 data: {
                   message: {
                     id: assistantMessage.id,
-                    content
-                  }
-                }
-              }
+                    content,
+                  },
+                },
+              },
             })
 
             return {
@@ -245,7 +265,7 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
               content,
               contentDelta: value,
               spentCaps: null,
-              caps: null
+              caps: null,
             }
           }
 
@@ -259,7 +279,7 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
                 content,
                 contentDelta: value,
                 spentCaps: null,
-                caps: null
+                caps: null,
               }
             }
             generationCompleted = true
@@ -272,7 +292,7 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
               content,
               contentDelta: '',
               spentCaps: spentCaps,
-              caps: currentCaps
+              caps: currentCaps,
             }
           }
 
@@ -281,13 +301,13 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
             content,
             contentDelta: '',
             spentCaps: null,
-            caps: null
+            caps: null,
           }
         }),
         catchError((error) => {
           handleError(error)
           throw error
-        })
+        }),
       )
       return {
         responseStream$,
@@ -300,7 +320,7 @@ export const buildHandleResponseStreamWithChat = ({ service, adapter }: UseCaseP
           generationCompleted = true
 
           await onGenerationEnd(true)
-        }
+        },
       }
     } catch (error) {
       handleError(error)

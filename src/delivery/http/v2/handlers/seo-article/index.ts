@@ -2,10 +2,19 @@ import Express from 'express'
 import { DeliveryParams } from '@/delivery/types'
 import { createRouteHandler } from '../../routeHandler'
 import { IHandler } from '../types'
-import { buildFindCategoryOrArticleBySlug, FindCategoryOeArticleBySlug } from './find-category-or-article-by-slug'
+import {
+  buildFindCategoryOrArticleBySlug,
+  FindCategoryOeArticleBySlug,
+} from './find-category-or-article-by-slug'
 import { buildListSEOArticles, ListSEOArticles } from '../seo-article/list'
-import { buildListSEOArticlesByCategorySlug, ListSEOArticlesByCategorySlug } from './list-by-category-slug'
-import { buildListSEOArticlesByCategoryAndTopicSlug, ListSEOArticlesByCategoryAndTopicSlug } from './list-by-category-and-topic-slug'
+import {
+  buildListSEOArticlesByCategorySlug,
+  ListSEOArticlesByCategorySlug,
+} from './list-by-category-slug'
+import {
+  buildListSEOArticlesByCategoryAndTopicSlug,
+  ListSEOArticlesByCategoryAndTopicSlug,
+} from './list-by-category-and-topic-slug'
 import { buildFindBySlug, FindBySlug } from '../seo-article/find-by-slug'
 import { Middlewares } from '@/delivery/http/v2/middlewares'
 import { buildSEOArticleRules } from './rules'
@@ -21,8 +30,12 @@ type SEOArticleMethods = {
 }
 
 const buildRegisterRoutes = (methods: SEOArticleMethods, middlewares: Middlewares) => {
-  const { findBySlugRules, listSEOArticlesBySlugRules, listSEOArticlesRules, listSEOArticlesByCategoryAndTopicSlugRules } =
-    buildSEOArticleRules(middlewares)
+  const {
+    findBySlugRules,
+    listSEOArticlesBySlugRules,
+    listSEOArticlesRules,
+    listSEOArticlesByCategoryAndTopicSlugRules,
+  } = buildSEOArticleRules(middlewares)
   return (root: Express.Router) => {
     const namespace = Express.Router()
 
@@ -96,7 +109,11 @@ const buildRegisterRoutes = (methods: SEOArticleMethods, middlewares: Middleware
      *                 pages:
      *                   type: integer
      */
-    namespace.get('/list-by-category/:slug', listSEOArticlesBySlugRules, createRouteHandler(methods.listSEOArticlesByCategory))
+    namespace.get(
+      '/list-by-category/:slug',
+      listSEOArticlesBySlugRules,
+      createRouteHandler(methods.listSEOArticlesByCategory),
+    )
     /**
      * @openapi
      * /seo-article/list-by-category-and-topic/{categorySlug}/{topicSlug}:
@@ -140,7 +157,7 @@ const buildRegisterRoutes = (methods: SEOArticleMethods, middlewares: Middleware
     namespace.get(
       '/list-by-category-and-topic/:categorySlug/:topicSlug',
       listSEOArticlesByCategoryAndTopicSlugRules,
-      createRouteHandler(methods.listSEOArticlesByCategoryAndTopic)
+      createRouteHandler(methods.listSEOArticlesByCategoryAndTopic),
     )
 
     /**
@@ -187,7 +204,10 @@ const buildRegisterRoutes = (methods: SEOArticleMethods, middlewares: Middleware
      *                 - $ref: '#/components/entities/SEOArticleCategory'
      *                 - $ref: '#/components/entities/Article'
      */
-    namespace.get('/find-category-or-article-by-slug/:slug', createRouteHandler(methods.findCategoryOrArticleBySlug))
+    namespace.get(
+      '/find-category-or-article-by-slug/:slug',
+      createRouteHandler(methods.findCategoryOrArticleBySlug),
+    )
 
     root.use('/seo-article', namespace)
   }
@@ -207,9 +227,9 @@ export const buildSEOArticleHandler = (params: Params): IHandler => {
         findBySlug,
         listSEOArticles,
         listSEOArticlesByCategory,
-        listSEOArticlesByCategoryAndTopic
+        listSEOArticlesByCategoryAndTopic,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

@@ -5,6 +5,6 @@ export const buildAIToolsRules = ({ authRequired, validateSchema }: Middlewares)
   const completionRules = [authRequired(), body('model').isString(), validateSchema]
 
   return {
-    completionRules
+    completionRules,
   }
 }

@@ -8,6 +8,6 @@ export const buildFileRules = ({ authRequired, validateSchema }: Middlewares) =>
   const decryptRules = [authRequired({}), check('fileId').exists().isString(), validateSchema]
 
   return {
-    decryptRules
+    decryptRules,
   }
 }

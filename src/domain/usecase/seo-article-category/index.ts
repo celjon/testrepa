@@ -15,7 +15,9 @@ export type SEOArticleCategoryUseCase = {
   findBySlug: FindBySlug
 }
 
-export const buildSEOArticleCategoryUseCase = (params: UseCaseParams): SEOArticleCategoryUseCase => {
+export const buildSEOArticleCategoryUseCase = (
+  params: UseCaseParams,
+): SEOArticleCategoryUseCase => {
   const getSEOArticleCategory = buildGet(params)
   const listSEOArticleCategory = buildList(params)
   const createSEOArticleCategory = buildCreate(params)
@@ -28,6 +30,6 @@ export const buildSEOArticleCategoryUseCase = (params: UseCaseParams): SEOArticl
     createSEOArticleCategory,
     updateSEOArticleCategory,
     deleteSEOArticleCategory,
-    findBySlug
+    findBySlug,
   }
 }

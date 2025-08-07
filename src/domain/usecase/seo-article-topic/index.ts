@@ -20,6 +20,6 @@ export const buildSEOArticleTopicUseCase = (params: UseCaseParams): SEOArticleTo
     getSEOArticleTopic,
     createSEOArticleTopic,
     updateSEOArticleTopic,
-    deleteSEOArticleTopic
+    deleteSEOArticleTopic,
   }
 }

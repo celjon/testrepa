@@ -9,6 +9,6 @@ export const buildMidjourneyUseCase = (params: UseCaseParams): MidjourneyUseCase
   const getDiscordAccounts = buildGetDiscordAccounts(params)
 
   return {
-    getDiscordAccounts
+    getDiscordAccounts,
   }
 }

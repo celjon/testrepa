@@ -22,6 +22,6 @@ export const buildStrikeRepository = (params: Params): StrikeRepository => {
     count,
     create,
     list,
-    update
+    update,
   }
 }

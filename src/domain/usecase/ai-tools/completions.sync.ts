@@ -1,5 +1,6 @@
 import { ChatCompletionMessageParam } from 'openai/resources'
 import { Platform } from '@prisma/client'
+import { config } from '@/config'
 import { logger } from '@/lib/logger'
 import { ForbiddenError, InternalError, NotFoundError } from '@/domain/errors'
 import { IMessage } from '@/domain/entity/message'
@@ -13,41 +14,40 @@ export type CompletionsSync = (p: {
     enable_web_search?: boolean
     [key: string]: unknown
   }
+  developerKeyId?: string
 }) => Promise<unknown>
 
 export const buildCompletionsSync = ({ adapter, service }: UseCaseParams): CompletionsSync => {
-  return async ({ userId, params: { enable_web_search, ...params } }) => {
+  return async ({ userId, params: { enable_web_search, ...params }, developerKeyId }) => {
     if (params.model === 'auto') {
       throw new ForbiddenError({
-        code: 'INVALID_MODEL'
+        code: 'INVALID_MODEL',
       })
     }
 
     const model = await adapter.modelRepository.get({
       where: {
-        id: params.model
-      }
+        id: params.model,
+      },
     })
 
     if (!model) {
       throw new NotFoundError({
-        code: 'MODEL_NOT_FOUND'
+        code: 'MODEL_NOT_FOUND',
       })
     }
 
     const subscription = await service.user.getActualSubscriptionById(userId)
 
-    if (!subscription || (subscription && subscription.balance <= 0) || !subscription.plan) {
-      throw new ForbiddenError({
-        code: 'NOT_ENOUGH_TOKENS'
-      })
-    }
-
-    const { hasAccess, reasonCode } = await service.plan.hasAccessToAPI({ plan: subscription.plan })
+    await service.subscription.checkBalance({ subscription, estimate: 0 })
+    await service.enterprise.checkMonthLimit({ userId })
+    const { hasAccess, reasonCode } = await service.plan.hasAccessToAPI({
+      plan: subscription!.plan!,
+    })
 
     if (!hasAccess) {
       throw new ForbiddenError({
-        code: reasonCode ?? 'MODEL_NOT_ALLOWED_FOR_PLAN'
+        code: reasonCode ?? 'MODEL_NOT_ALLOWED_FOR_PLAN',
       })
     }
 
@@ -56,16 +56,18 @@ export const buildCompletionsSync = ({ adapter, service }: UseCaseParams): Compl
       const lastMessage = params.messages[params.messages.length - 1]
       const prompt = lastMessage.full_content ?? lastMessage.content ?? ''
 
-      const { caps, promptAddition, systemPromptAddition } = await service.aiTools.performWebSearch({
-        userId: userId,
-        model,
-        prompt,
-        messages: params.messages.slice(0, -1).map((m) => ({
-          role: m.role,
-          content: m.full_content ?? m.content ?? ''
-        })),
-        locale: 'ru'
-      })
+      const { caps, promptAddition, systemPromptAddition } = await service.aiTools.performWebSearch(
+        {
+          userId: userId,
+          model,
+          prompt,
+          messages: params.messages.slice(0, -1).map((m) => ({
+            role: m.role,
+            content: m.full_content ?? m.content ?? '',
+          })),
+          locale: config.frontend.default_locale,
+        },
+      )
       webSearchCaps += caps
       if (promptAddition) {
         if (lastMessage.full_content) {
@@ -87,37 +89,40 @@ export const buildCompletionsSync = ({ adapter, service }: UseCaseParams): Compl
     const result = await adapter.openrouterGateway.raw.completions.create.sync({
       ...params,
       model: model.prefix + model.id,
-      endUserId: userId
+      endUserId: userId,
+      middleOut: true,
     })
 
     if (!result.usage) {
       logger.error({
         location: 'aiTools.completions.sync',
         message: 'Unable to correctly calculate usage',
-        model_id: model.id
+        model_id: model.id,
       })
       throw new InternalError({
         code: 'UNABLE_TO_CALCULATE_USAGE',
-        message: 'Unable to correctly calculate usage'
+        message: 'Unable to correctly calculate usage',
       })
     }
 
-    const caps = await service.model.getCaps({
+    const caps = await service.model.getCaps.text({
       model,
-      usage: result.usage
+      usage: result.usage,
     })
 
     await service.subscription.writeOffWithLimitNotification({
-      subscription,
+      subscription: subscription!,
       amount: caps + webSearchCaps,
       meta: {
         userId: userId,
         platform: Platform.API_COMPLETIONS,
         model_id: model.id,
+        provider_id: config.model_providers.openrouter.id,
         expense_details: {
-          web_search: webSearchCaps
-        }
-      }
+          web_search: webSearchCaps,
+        },
+        developerKeyId,
+      },
     })
 
     return result.response

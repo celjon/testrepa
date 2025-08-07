@@ -1,5 +1,5 @@
 import { Platform } from '@prisma/client'
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 import { IJobInstance } from '@/domain/entity/job'
 import { IMessage } from '@/domain/entity/message'
 import { IModel } from '@/domain/entity/model'

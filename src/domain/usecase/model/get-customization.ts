@@ -1,4 +1,4 @@
-import { IModelCustom } from '@/domain/entity/modelCustom'
+import { IModelCustom } from '@/domain/entity/model-custom'
 import { UseCaseParams } from '@/domain/usecase/types'
 
 export type GetCustomization = () => Promise<Array<IModelCustom> | never>
@@ -8,13 +8,13 @@ export const buildGetCustomization =
   async () => {
     const modelCustomization = await adapter.modelCustomRepository.list({
       orderBy: {
-        order: 'asc'
+        order: 'asc',
       },
       include: {
         icon: true,
         provider: true,
-        child_provider: true
-      }
+        child_provider: true,
+      },
     })
 
     return modelCustomization

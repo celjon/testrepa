@@ -25,13 +25,13 @@ export const buildSend = ({ openaiBalancer }: Params): Send => {
 
       const audio = await openaiProvider.client.audio.speech.create({
         input,
-        ...settings
+        ...settings,
       })
 
       const buffer = Buffer.from(await audio.arrayBuffer())
 
       return {
-        buffer
+        buffer,
       }
     } catch (error) {
       if (isAxiosError(error)) {
@@ -41,14 +41,14 @@ export const buildSend = ({ openaiBalancer }: Params): Send => {
         logger.error({
           location: 'speechGateway.send',
           message: getErrorString(error),
-          apiKey: typeof apiKey === 'string' ? apiKey.slice(0, 42) : apiKey
+          apiKey: typeof apiKey === 'string' ? apiKey.slice(0, 42) : apiKey,
         })
 
         if (error.response) {
           throw new BaseError({
             httpStatus: error.response.status,
             message: `OpenAi error: ${error.response.data.error?.code}`,
-            code: error.response.data.error?.code || 'OPENAI_ERROR'
+            code: error.response.data.error?.code || 'OPENAI_ERROR',
           })
         }
       }

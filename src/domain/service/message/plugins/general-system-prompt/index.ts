@@ -24,7 +24,7 @@ export const buildGeneralSystemPromptPlugin = (): GeneralSystemPromptPlugin => {
     return {
       caps: 0,
       promptAddition: '',
-      systemPromptAddition: `Current date: ${new Date()}\n\nAbout model:\nMade by: ${model.prefix.replace(/.*\/$/, '')}\nYour model name: ${model.id}\nYour capabilities: ${capabilities}\netc.\n\n`
+      systemPromptAddition: `Current date: ${new Date()}\n\nAbout model:\nMade by: ${model.prefix.replace(/.*\/$/, '')}\nYour model name: ${model.id}\nYour capabilities: ${capabilities}\netc.\n\n`,
     }
   }
 }

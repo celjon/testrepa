@@ -10,7 +10,7 @@ export const buildModelDisable = ({ model }: Params): ModelDisable => {
     const data = await model.disable({
       userId: req.user?.id,
       modelId: req.body.modelId,
-      platform: req.body.platform
+      platform: req.body.platform,
     })
 
     res.status(200).json(data)

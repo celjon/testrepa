@@ -1,6 +1,6 @@
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
-import { IReferralTemplate } from '@/domain/entity/referralTemplate'
+import { IReferralTemplate } from '@/domain/entity/referral-template'
 
 type Params = Pick<AdapterParams, 'db'>
 

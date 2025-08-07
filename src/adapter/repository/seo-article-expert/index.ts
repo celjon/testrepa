@@ -27,6 +27,6 @@ export const buildSEOArticleExpertRepository = (params: Params): SEOArticleExper
     get,
     update,
     updateMany,
-    delete: deleteAction
+    delete: deleteAction,
   }
 }

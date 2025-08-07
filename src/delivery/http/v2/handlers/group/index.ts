@@ -7,7 +7,7 @@ import { createRouteHandler } from '../../routeHandler'
 import { buildGroupRules } from './rules'
 import { buildUpdate, Update } from './update'
 import { buildList, List } from './list'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
+import { buildDeleteMany, DeleteMany } from './delete-many'
 import { Middlewares } from '../../middlewares'
 import { buildMove, Move } from './move'
 
@@ -23,8 +23,14 @@ export type GroupMethods = {
 }
 
 const buildRegisterRoutes = (methods: GroupMethods, middlewares: Middlewares) => {
-  const { createGroupRules, deleteGroupRules, deleteManyGroupRules, listGroupsRules, updateGroupRules, moveGroupsRules } =
-    buildGroupRules(middlewares)
+  const {
+    createGroupRules,
+    deleteGroupRules,
+    deleteManyGroupRules,
+    listGroupsRules,
+    updateGroupRules,
+    moveGroupsRules,
+  } = buildGroupRules(middlewares)
   return (root: Express.Router) => {
     const namespace = Express.Router()
 
@@ -160,9 +166,9 @@ export const buildGroupHandler = (params: Params): IHandler => {
         deleteMany,
         update,
         list,
-        move
+        move,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

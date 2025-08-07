@@ -4,7 +4,7 @@ import { ChatService } from '../chat'
 import { buildGet, Get } from './get'
 import { buildStopAll, StopAll } from './stopAll'
 import { Adapter } from '@/domain/types'
-import { buildCreateInstance, CreateInstance } from './createInstance'
+import { buildCreateInstance, CreateInstance } from './create-instance'
 import { JobMap } from '@/domain/entity/job'
 import { buildInit, Init } from './init'
 
@@ -26,25 +26,25 @@ export const buildJobService = (params: Params): JobService => {
 
   const createInstance = buildCreateInstance({
     ...params,
-    jobMap
+    jobMap,
   })
   const create = buildCreate({
     ...params,
-    createInstance
+    createInstance,
   })
   const get = buildGet({
     ...params,
     createInstance,
-    jobMap
+    jobMap,
   })
   const list = buildList(params)
   const stopAll = buildStopAll({
     ...params,
-    createInstance
+    createInstance,
   })
   const init = buildInit({
     ...params,
-    get
+    get,
   })
 
   return {
@@ -53,6 +53,6 @@ export const buildJobService = (params: Params): JobService => {
     createInstance,
     get,
     list,
-    stopAll
+    stopAll,
   }
 }

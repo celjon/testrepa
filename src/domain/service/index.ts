@@ -1,10 +1,13 @@
 import { Adapter } from '../types'
-import { AuthService, buildAuthService } from './auth'
+import { buildAuthService, AuthService } from './auth'
 import { buildChatService, ChatService } from './chat'
-import { buildDeveloperKeyService, DeveloperKeyService } from './developerKey'
+import { buildDeveloperKeyService, DeveloperKeyService } from './developer-key'
 import { buildEmployeeService, EmployeeService } from './employee'
 import { buildEnterpriseService, EnterpriseService } from './enterprise'
-import { buildEnterpriseUsageModerationService, EnterpriseUsageModerationService } from './enterpriseUsageModeration'
+import {
+  buildEnterpriseUsageModerationService,
+  EnterpriseUsageModerationService,
+} from './enterprise-usage-moderation'
 import { buildFileService, FileService } from './file'
 import { buildGeoService, GeoService } from './geo'
 import { buildGroupService, GroupService } from './group'
@@ -15,15 +18,17 @@ import { buildModelService, ModelService } from './model'
 import { buildModerationService, ModerationService } from './moderation'
 import { buildPaymentService, PaymentService } from './payment'
 import { buildPlanService, PlanService } from './plan'
-import { buildReferralTemplateService, ReferralTemplateService } from './referralTemplate'
+import { buildReferralTemplateService, ReferralTemplateService } from './referral-template'
 import { buildSpeech2TextService, Speech2TextService } from './speech2text'
 import { buildSubscriptionService, SubscriptionService } from './subscription'
 import { buildTransactionService, TransactionService } from './transaction'
 import { buildUserService, UserService } from './user'
 import { buildDataAnalysisService, DataAnalysisService } from './data-analysis'
-import { ArticleService, buildArticleService } from './article'
+import { buildArticleService, ArticleService } from './article'
 import { buildSEOArticleCategoryService, SEOArticleCategoryService } from './seo-article-category'
-import { AIToolsService, buildAIToolsService } from './ai-tools'
+import { buildAIToolsService, AIToolsService } from './ai-tools'
+import { buildIntentService, IntentService } from './intent'
+import { buildEmployeeGroupService, EmployeeGroupService } from './employee-group'
 
 export type Service = {
   auth: AuthService
@@ -39,6 +44,7 @@ export type Service = {
   developerKey: DeveloperKeyService
   enterprise: EnterpriseService
   employee: EmployeeService
+  employeeGroup: EmployeeGroupService
   referralTemplate: ReferralTemplateService
   job: JobService
   subscription: SubscriptionService
@@ -51,6 +57,7 @@ export type Service = {
   article: ArticleService
   seoArticleCategory: SEOArticleCategoryService
   aiTools: AIToolsService
+  intent: IntentService
 }
 
 export const buildService = (params: Adapter): Service => {
@@ -59,23 +66,23 @@ export const buildService = (params: Adapter): Service => {
   const model = buildModelService(params)
   const chat = buildChatService({
     ...params,
-    modelService: model
+    modelService: model,
   })
   const user = buildUserService({
     ...params,
-    chatService: chat
+    chatService: chat,
   })
   const group = buildGroupService(params)
   const job = buildJobService({
     ...params,
-    chatService: chat
+    chatService: chat,
   })
   const subscription = buildSubscriptionService(params)
   const moderation = buildModerationService({
     ...params,
     userService: user,
     subscriptionService: subscription,
-    chatService: chat
+    chatService: chat,
   })
   const midjourney = buildMidjourneyService(params)
   const speech2Text = buildSpeech2TextService(params)
@@ -91,7 +98,7 @@ export const buildService = (params: Adapter): Service => {
     modelService: model,
     fileService: file,
     speech2TextService: speech2Text,
-    aiToolsService: aiTools
+    aiToolsService: aiTools,
   })
   const plan = buildPlanService(params)
   const transaction = buildTransactionService(params)
@@ -99,11 +106,13 @@ export const buildService = (params: Adapter): Service => {
   const developerKey = buildDeveloperKeyService(params)
   const enterprise = buildEnterpriseService(params)
   const employee = buildEmployeeService(params)
+  const employeeGroup = buildEmployeeGroupService(params)
   const referralTemplate = buildReferralTemplateService(params)
   const geo = buildGeoService(params)
   const dataAnalysis = buildDataAnalysisService(params)
   const article = buildArticleService(params)
   const seoArticleCategory = buildSEOArticleCategoryService(params)
+  const intent = buildIntentService(params)
 
   return {
     enterpriseUsageModeration: buildEnterpriseUsageModerationService(params),
@@ -119,6 +128,7 @@ export const buildService = (params: Adapter): Service => {
     developerKey,
     enterprise,
     employee,
+    employeeGroup,
     referralTemplate,
     job,
     subscription,
@@ -130,6 +140,7 @@ export const buildService = (params: Adapter): Service => {
     speech2Text,
     article,
     seoArticleCategory,
-    aiTools
+    aiTools,
+    intent,
   }
 }

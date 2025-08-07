@@ -22,7 +22,7 @@ export const buildSEOArticleRules = ({ validateSchema }: Middlewares) => {
     query('page').optional().isNumeric(),
     query('quantity').optional().isNumeric(),
     query('search').optional().isString(),
-    validateSchema
+    validateSchema,
   ]
   /**
    * @openapi
@@ -42,7 +42,7 @@ export const buildSEOArticleRules = ({ validateSchema }: Middlewares) => {
     param('slug').isString(),
     query('page').optional().isNumeric(),
     query('quantity').optional().isNumeric(),
-    validateSchema
+    validateSchema,
   ]
   /**
    * @openapi
@@ -65,13 +65,13 @@ export const buildSEOArticleRules = ({ validateSchema }: Middlewares) => {
     param('topicSlug').isString(),
     query('page').optional().isNumeric(),
     query('quantity').optional().isNumeric(),
-    validateSchema
+    validateSchema,
   ]
 
   return {
     findBySlugRules,
     listSEOArticlesBySlugRules,
     listSEOArticlesByCategoryAndTopicSlugRules,
-    listSEOArticlesRules
+    listSEOArticlesRules,
   }
 }

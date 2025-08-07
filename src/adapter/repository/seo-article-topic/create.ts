@@ -11,7 +11,7 @@ export const buildCreate = ({ db }: Params): Create => {
     const topic = await db.client.sEOArticleTopic.create(data)
     const validatedTopic: ISEOArticleTopic = {
       ...topic,
-      name: topic.name as LocalizedName
+      name: topic.name as LocalizedName,
     }
     return validatedTopic
   }

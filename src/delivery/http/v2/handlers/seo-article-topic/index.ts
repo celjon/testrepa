@@ -6,8 +6,14 @@ import { buildSEOArticleTopicRules } from './rules'
 import { Middlewares } from '../../middlewares'
 import { buildGetSEOArticleTopic, GetSEOArticleTopic } from './get'
 import { buildUpdateSEOArticleTopic, UpdateSEOArticleTopic } from './update'
-import { buildCreateSEOArticleTopic, CreateSEOArticleTopic } from '@/delivery/http/v2/handlers/seo-article-topic/create'
-import { buildDeleteSEOArticleTopic, DeleteSEOArticleTopic } from '@/delivery/http/v2/handlers/seo-article-topic/delete'
+import {
+  buildCreateSEOArticleTopic,
+  CreateSEOArticleTopic,
+} from '@/delivery/http/v2/handlers/seo-article-topic/create'
+import {
+  buildDeleteSEOArticleTopic,
+  DeleteSEOArticleTopic,
+} from '@/delivery/http/v2/handlers/seo-article-topic/delete'
 
 type Params = Pick<DeliveryParams, 'seoArticleTopic' | 'middlewares'>
 
@@ -19,8 +25,12 @@ type SEOArticleTopicMethods = {
 }
 
 const buildRegisterRoutes = (methods: SEOArticleTopicMethods, middlewares: Middlewares) => {
-  const { getSEOArticleTopicRules, createSEOArticleTopicRules, updateSEOArticleTopicRules, deleteSEOArticleTopicRules } =
-    buildSEOArticleTopicRules(middlewares)
+  const {
+    getSEOArticleTopicRules,
+    createSEOArticleTopicRules,
+    updateSEOArticleTopicRules,
+    deleteSEOArticleTopicRules,
+  } = buildSEOArticleTopicRules(middlewares)
   return (root: Express.Router) => {
     const namespace = Express.Router()
 
@@ -45,7 +55,11 @@ const buildRegisterRoutes = (methods: SEOArticleTopicMethods, middlewares: Middl
      *             schema:
      *               $ref: '#/components/entities/SEOArticleTopic'
      */
-    namespace.get('/:seoArticleTopicId', getSEOArticleTopicRules, createRouteHandler(methods.getSEOArticleTopic))
+    namespace.get(
+      '/:seoArticleTopicId',
+      getSEOArticleTopicRules,
+      createRouteHandler(methods.getSEOArticleTopic),
+    )
 
     /**
      * @openapi
@@ -72,7 +86,11 @@ const buildRegisterRoutes = (methods: SEOArticleTopicMethods, middlewares: Middl
      *             schema:
      *               $ref: '#/components/entities/SEOArticleTopic'
      */
-    namespace.post('/create', createSEOArticleTopicRules, createRouteHandler(methods.createSEOArticleTopic))
+    namespace.post(
+      '/create',
+      createSEOArticleTopicRules,
+      createRouteHandler(methods.createSEOArticleTopic),
+    )
 
     /**
      * @openapi
@@ -103,7 +121,11 @@ const buildRegisterRoutes = (methods: SEOArticleTopicMethods, middlewares: Middl
      *             schema:
      *               $ref: '#/components/entities/SEOArticleTopic'
      */
-    namespace.patch('/:seoArticleTopicId', updateSEOArticleTopicRules, createRouteHandler(methods.updateSEOArticleTopic))
+    namespace.patch(
+      '/:seoArticleTopicId',
+      updateSEOArticleTopicRules,
+      createRouteHandler(methods.updateSEOArticleTopic),
+    )
 
     /**
      * @openapi
@@ -127,7 +149,11 @@ const buildRegisterRoutes = (methods: SEOArticleTopicMethods, middlewares: Middl
      *             schema:
      *               $ref: '#/components/entities/SEOArticleTopic'
      */
-    namespace.delete('/:seoArticleTopicId', deleteSEOArticleTopicRules, createRouteHandler(methods.deleteSEOArticleTopic))
+    namespace.delete(
+      '/:seoArticleTopicId',
+      deleteSEOArticleTopicRules,
+      createRouteHandler(methods.deleteSEOArticleTopic),
+    )
 
     root.use('/seo-article-topic', namespace)
   }
@@ -145,9 +171,9 @@ export const buildSEOArticleTopicHandler = (params: Params): IHandler => {
         getSEOArticleTopic,
         createSEOArticleTopic,
         updateSEOArticleTopic,
-        deleteSEOArticleTopic
+        deleteSEOArticleTopic,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

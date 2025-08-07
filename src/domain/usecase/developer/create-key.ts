@@ -1,4 +1,4 @@
-import { IDeveloperKey } from '@/domain/entity/developerKey'
+import { IDeveloperKey } from '@/domain/entity/developer-key'
 import { PlanType } from '@prisma/client'
 import { UseCaseParams } from '../types'
 import { ForbiddenError } from '@/domain/errors'
@@ -15,7 +15,7 @@ export const buildCreateKey = ({ service }: UseCaseParams): CreateKey => {
 
     const developerKey = await service.developerKey.create({
       userId,
-      label
+      label,
     })
 
     return developerKey

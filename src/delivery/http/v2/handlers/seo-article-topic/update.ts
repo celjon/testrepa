@@ -12,7 +12,7 @@ export const buildUpdateSEOArticleTopic = ({ seoArticleTopic }: Params): UpdateS
       id: req.params.seoArticleTopicId,
       name: req.body.name,
       article_id: req.body.article_id,
-      category_id: req.body.category_id
+      category_id: req.body.category_id,
     })
 
     res.status(200).json(result)

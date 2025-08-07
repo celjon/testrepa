@@ -6,7 +6,10 @@ import { Authorize, buildAuthorize } from './authorize'
 import { buildRegister, Register } from './register'
 import { buildSendResetLink, SendResetLink } from './send-reset-link'
 import { buildResetPassword, ResetPassword } from './reset-password'
-import { buildGenerateTelegramConnectionToken, GenerateTelegramConnectionToken } from './generate-telegram-connection-token'
+import {
+  buildGenerateTelegramConnectionToken,
+  GenerateTelegramConnectionToken,
+} from './generate-telegram-connection-token'
 import { buildConnectTelegram, ConnectTelegram } from './connect-telegram'
 import { buildFingerprint, Fingerprint } from './fingerprint'
 import { buildVerifyEmail, VerifyEmail } from './verify-email'
@@ -15,15 +18,20 @@ import { buildGetOAuthConsentURL, GetOAuthConsentURL } from './get-oauth-consent
 import { buildChangeEmail, ChangeEmail } from './change-email'
 import { buildEnableEncryption, EnableEncryption } from './enable-encryption'
 import { buildUnlinkTelegram, UnlinkTelegram } from './unlink-telegram'
-import { buildGenerateTelegramUnlinkToken, GenerateTelegramUnlinkToken } from './generate-telegram-unlink-token'
+import {
+  buildGenerateTelegramUnlinkToken,
+  GenerateTelegramUnlinkToken,
+} from './generate-telegram-unlink-token'
 import { buildToggleReceiveEmails, ToggleReceiveEmails } from './toggle-receive-emails'
 import { buildChangePassword, ChangePassword } from './change-password'
 import { buildUpdateYandexMetric, UpdateYandexMetric } from './update-yandex-metric'
 import {
   buildGenerateTelegramConnectionTokenPython,
-  GenerateTelegramConnectionTokenPython
+  GenerateTelegramConnectionTokenPython,
 } from './generate-telegram-connection-token-python'
 import { buildConnectTelegramPython, ConnectTelegramPython } from './connect-telegram-python'
+import { buildLogoutAll, LogoutAll } from './logout-all'
+import { buildLogout, Logout } from './logout'
 
 export type AuthUseCase = {
   getOAuthConsentURL: GetOAuthConsentURL
@@ -48,6 +56,8 @@ export type AuthUseCase = {
   toggleReceiveEmails: ToggleReceiveEmails
   changePassword: ChangePassword
   updateYandexMetric: UpdateYandexMetric
+  logout: Logout
+  logoutAll: LogoutAll
 }
 
 export const buildAuthUseCase = (params: UseCaseParams): AuthUseCase => {
@@ -70,6 +80,8 @@ export const buildAuthUseCase = (params: UseCaseParams): AuthUseCase => {
   const toggleReceiveEmails = buildToggleReceiveEmails(params)
   const changePassword = buildChangePassword(params)
   const updateYandexMetric = buildUpdateYandexMetric(params)
+  const logout = buildLogout(params)
+  const logoutAll = buildLogoutAll(params)
 
   return {
     getOAuthConsentURL,
@@ -93,6 +105,8 @@ export const buildAuthUseCase = (params: UseCaseParams): AuthUseCase => {
     unlinkTelegram,
     toggleReceiveEmails,
     changePassword,
-    updateYandexMetric
+    updateYandexMetric,
+    logout,
+    logoutAll,
   }
 }

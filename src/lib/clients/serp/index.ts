@@ -1,6 +1,11 @@
 import axios from 'axios'
-import { GoogleScholarSearchResults, RawGoogleScholarSearchResults, RawSearchResults, SerpApiClient } from './types'
-import { SearchParams, SearchResults } from '@/adapter/gateway/webSearch'
+import {
+  GoogleScholarSearchResults,
+  RawGoogleScholarSearchResults,
+  RawSearchResults,
+  SerpApiClient,
+} from './types'
+import { SearchParams, SearchResults } from 'adapter/gateway/web-search'
 
 type Params = {
   apiUrl: string
@@ -12,8 +17,8 @@ export const newClient = ({ apiUrl, apiKey }: Params): { client: SerpApiClient }
   const api = axios.create({
     baseURL: apiUrl,
     params: {
-      api_key: apiKey
-    }
+      api_key: apiKey,
+    },
   })
 
   return {
@@ -28,8 +33,8 @@ export const newClient = ({ apiUrl, apiKey }: Params): { client: SerpApiClient }
             num: params.numResults,
             hl: params.language,
             gl: params.country,
-            kl: params.country
-          }
+            kl: params.country,
+          },
         })
 
         if (result.search_metadata.status !== 'Success') {
@@ -40,10 +45,12 @@ export const newClient = ({ apiUrl, apiKey }: Params): { client: SerpApiClient }
           organic_results: result.organic_results,
           shopping_results: result.shopping_results,
           recipes_results: result.recipes_results,
-          local_results: result.local_results
+          local_results: result.local_results,
         }
       },
-      getGoogleScholarSearchResults: async (params: SearchParams): Promise<GoogleScholarSearchResults> => {
+      getGoogleScholarSearchResults: async (
+        params: SearchParams,
+      ): Promise<GoogleScholarSearchResults> => {
         try {
           const { data: result } = await api.get<RawGoogleScholarSearchResults>('/search', {
             params: {
@@ -54,8 +61,8 @@ export const newClient = ({ apiUrl, apiKey }: Params): { client: SerpApiClient }
               num: params.numResults,
               hl: params.language,
               gl: params.country,
-              kl: params.country
-            }
+              kl: params.country,
+            },
           })
 
           if (result.search_metadata.status !== 'Success') {
@@ -66,8 +73,8 @@ export const newClient = ({ apiUrl, apiKey }: Params): { client: SerpApiClient }
         } catch (error) {
           return []
         }
-      }
-    }
+      },
+    },
   }
 }
 

@@ -1,8 +1,8 @@
 import { Client } from 'minio'
 import { DeliveryParams } from '../types'
 import { buildModelJob } from './jobs/model'
-import { buildSubscriptionJob } from './jobs/subscription'
 import { IJob } from './types'
+import { buildEmployeeJob } from '@/delivery/cron/jobs/employee'
 
 const buildStart = (jobs: Array<IJob>) => {
   return () => {
@@ -22,9 +22,9 @@ type Params = DeliveryParams & {
 }
 
 export const buildCron = (params: Params): ICron => {
-  const jobs = [buildModelJob(params), buildSubscriptionJob(params)]
+  const jobs = [buildModelJob(params), buildEmployeeJob(params)]
 
   return {
-    start: buildStart(jobs)
+    start: buildStart(jobs),
   }
 }

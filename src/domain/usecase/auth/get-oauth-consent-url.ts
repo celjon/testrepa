@@ -11,12 +11,12 @@ export const buildGetOAuthConsentURL = ({ adapter }: UseCaseParams): GetOAuthCon
   return async ({ provider, redirect_uri }) => {
     const { consentURL, code_verifier } = await adapter.authRepository.getOAuthConsentURL({
       provider,
-      redirect_uri
+      redirect_uri,
     })
 
     return {
       consentURL,
-      code_verifier
+      code_verifier,
     }
   }
 }

@@ -8,6 +8,6 @@ export type AIToolsService = {
 
 export const buildAIToolsService = (params: Params): AIToolsService => {
   return {
-    performWebSearch: buildPerformWebSearch(params)
+    performWebSearch: buildPerformWebSearch(params),
   }
 }

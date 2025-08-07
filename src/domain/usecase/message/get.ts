@@ -2,19 +2,23 @@ import { UseCaseParams } from '@/domain/usecase/types'
 import { IMessage } from '@/domain/entity/message'
 import { NotFoundError } from '@/domain/errors'
 
-export type Get = (data: { userId: string; keyEncryptionKey: string | null; id: string }) => Promise<IMessage>
+export type Get = (data: {
+  userId: string
+  keyEncryptionKey: string | null
+  id: string
+}) => Promise<IMessage>
 
 export const buildGet = ({ service, adapter }: UseCaseParams): Get => {
   return async ({ userId, keyEncryptionKey, id }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -24,10 +28,10 @@ export const buildGet = ({ service, adapter }: UseCaseParams): Get => {
       data: {
         where: {
           id,
-          user_id: userId
+          user_id: userId,
         },
         orderBy: {
-          created_at: 'desc'
+          created_at: 'desc',
         },
         include: {
           user: true,
@@ -36,10 +40,10 @@ export const buildGet = ({ service, adapter }: UseCaseParams): Get => {
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
           set: true,
           transaction: true,
@@ -47,34 +51,34 @@ export const buildGet = ({ service, adapter }: UseCaseParams): Get => {
             include: {
               original: true,
               preview: true,
-              buttons: true
-            }
+              buttons: true,
+            },
           },
           buttons: {
             where: {
-              disabled: false
-            }
+              disabled: false,
+            },
           },
           all_buttons: {
-            distinct: ['action']
+            distinct: ['action'],
           },
           attachments: {
             include: {
-              file: true
-            }
+              file: true,
+            },
           },
           voice: {
             include: {
-              file: true
-            }
+              file: true,
+            },
           },
           video: {
             include: {
-              file: true
-            }
-          }
-        }
-      }
+              file: true,
+            },
+          },
+        },
+      },
     })
 
     if (!message) {

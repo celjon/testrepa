@@ -1,6 +1,7 @@
 import { AuthRequest } from '../types'
 import { Response } from 'express'
 import { DeliveryParams } from '@/delivery/types'
+import { getIPFromRequest } from '@/lib'
 
 type Params = Pick<DeliveryParams, 'user'>
 export type Update = (req: AuthRequest, res: Response) => Promise<Response>
@@ -12,7 +13,9 @@ export const buildUpdate = ({ user }: Params): Update => {
       name: req.body.name,
       avatar: req.file,
       email: req.body.email,
-      verificationCode: req.body.verificationCode
+      verificationCode: req.body.verificationCode,
+      ip: getIPFromRequest(req),
+      user_agent: req.headers['user-agent'] ?? null,
     })
 
     return res.status(200).json(updateUser)

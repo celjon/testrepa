@@ -1,8 +1,10 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildCompileEmailTemplate } from './compile-email-template'
-import { getTranlation, Translation } from './translation'
+import { CompileTemplate } from './compile-email-template'
+import { getTranslation, Translation } from './translation'
 
-type Params = Pick<AdapterParams, 'mail'>
+type Params = Pick<AdapterParams, 'mail'> & {
+  compileTemplate: CompileTemplate
+}
 
 export type VerificationMailParams = {
   verificationCode: string
@@ -16,27 +18,29 @@ export type SendVerificationMail = (
   params: {
     to: string
     locale?: string
-  } & VerificationMailParams
+  } & VerificationMailParams,
 ) => Promise<void>
 
-export const buildSendVerificationMail = ({ mail: mailClient }: Params): SendVerificationMail => {
-  const compileTemplate = buildCompileEmailTemplate()
+export const buildSendVerificationMail = ({
+  mail: mailClient,
+  compileTemplate,
+}: Params): SendVerificationMail => {
   const template = compileTemplate<TemplateParams>('verification.hbs')
 
   return async (params) => {
     const html = await template(
       {
         verificationCode: params.verificationCode,
-        t: getTranlation('verificationMail', params.locale)
+        t: getTranslation('verificationMail', params.locale),
       },
-      params.locale
+      params.locale,
     )
 
     await mailClient.client.sendMail({
       from: 'no-reply@bothub.chat',
       to: params.to,
-      subject: getTranlation('verificationMailSubject', params.locale),
-      html
+      subject: getTranslation('verificationMailSubject', params.locale),
+      html,
     })
   }
 }

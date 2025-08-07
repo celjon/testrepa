@@ -14,7 +14,7 @@ export async function getPKCE(): Promise<
   return {
     code_verifier: codeVerifier,
     code_challenge: codeChallenge,
-    code_challenge_method: 'S256'
+    code_challenge_method: 'S256',
   }
 }
 

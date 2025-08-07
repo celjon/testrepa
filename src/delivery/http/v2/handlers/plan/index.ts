@@ -61,7 +61,15 @@ const buildRegisterRoutes = (methods: PlanMethods, middlewares: Middlewares) => 
      *     tags: [Plan]
      *     produces:
      *       - application/json
-     *
+     *     parameters:
+     *      - name: includePlanModels
+     *        in: query
+     *        required: false
+     *        type: boolean
+     *      - name: currency
+     *        in: query
+     *        required: false
+     *        type: string
      *     responses:
      *        200:
      *           content:
@@ -86,9 +94,9 @@ export const buildPlanHandler = (params: Params): IHandler => {
     registerRoutes: buildRegisterRoutes(
       {
         buy,
-        list
+        list,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

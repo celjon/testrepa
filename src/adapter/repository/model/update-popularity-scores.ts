@@ -2,7 +2,9 @@ import { AdapterParams } from '@/adapter/types'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type UpdatePopularityScores = (params: { cutOffDate: Date }) => Promise<{ modelsUpdated: number }>
+export type UpdatePopularityScores = (params: {
+  cutOffDate: Date
+}) => Promise<{ modelsUpdated: number }>
 
 export const buildUpdatePopularityScores = ({ db }: Params): UpdatePopularityScores => {
   return async ({ cutOffDate }) => {

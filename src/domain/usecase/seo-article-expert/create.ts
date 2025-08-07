@@ -14,7 +14,7 @@ export type Create = (params: {
     university: string
     level: string
     form: string
-    graduationYear: number
+    graduationYear: string
     faculty: string
     specialty: string
   }
@@ -24,12 +24,22 @@ export type Create = (params: {
 export const buildCreate = ({ adapter }: UseCaseParams): Create => {
   return async ({ name, email, telegram, bio, city, country, education, qualification }) => {
     const seoArticleExpert = await adapter.seoArticleExpertRepository.create({
-      data: { name, slug: slugification(name), email, telegram, bio, city, country, education, qualification }
+      data: {
+        name,
+        slug: slugification(name),
+        email,
+        telegram,
+        bio,
+        city,
+        country,
+        education,
+        qualification,
+      },
     })
 
     if (!seoArticleExpert) {
       throw new NotFoundError({
-        code: 'EXPERT_NOT_FOUND'
+        code: 'EXPERT_NOT_FOUND',
       })
     }
 

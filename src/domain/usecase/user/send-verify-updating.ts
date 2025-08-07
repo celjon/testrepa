@@ -9,29 +9,32 @@ export type SendVerifyUpdating = (data: {
   }
 }) => Promise<void>
 
-export const buildSendVerifyUpdating = ({ service, adapter }: UseCaseParams): SendVerifyUpdating => {
+export const buildSendVerifyUpdating = ({
+  service,
+  adapter,
+}: UseCaseParams): SendVerifyUpdating => {
   return async ({ userId, email, metadata }) => {
     const user = await adapter.userRepository.get({
       omit: {
         kekSalt: true,
         encryptedDEK: true,
-        password: true
+        password: true,
       },
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
     await Promise.all([
       service.auth.sendVerificationUpdateCode({
         userId: user.id,
         email: email,
-        locale: metadata?.locale
-      })
+        locale: metadata?.locale,
+      }),
     ])
   }
 }

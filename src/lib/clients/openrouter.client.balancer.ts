@@ -18,8 +18,8 @@ export const buildBalancer = ({ apiUrl, keys }: Params) => {
       weight: key[1],
       client: newClient({
         key: key[0],
-        apiUrl
-      })
+        apiUrl,
+      }),
     }
   })
   const maxWeight = keysWithClients.sort((a, b) => b.weight - a.weight)[0].weight
@@ -41,6 +41,6 @@ export const buildBalancer = ({ apiUrl, keys }: Params) => {
   }
 
   return {
-    next
+    next,
   }
 }

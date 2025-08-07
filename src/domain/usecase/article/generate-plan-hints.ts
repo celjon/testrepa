@@ -19,6 +19,7 @@ export type GeneratePlanHints = (params: {
   plan: string
   creativity: number
   model_id: string
+  developerKeyId?: string
 }) => Promise<{
   responseStream$: Observable<{
     status: 'pending' | 'done'
@@ -29,8 +30,20 @@ export type GeneratePlanHints = (params: {
   closeStream: () => void
 }>
 
-export const buildGeneratePlanHints = ({ getChildModel, handleResponseStream }: Params): GeneratePlanHints => {
-  return async ({ userId, locale, generationMode, subject, plan: articlePlan, creativity, model_id }) => {
+export const buildGeneratePlanHints = ({
+  getChildModel,
+  handleResponseStream,
+}: Params): GeneratePlanHints => {
+  return async ({
+    userId,
+    locale,
+    generationMode,
+    subject,
+    plan: articlePlan,
+    creativity,
+    model_id,
+    developerKeyId,
+  }) => {
     const prompt = dedent`
       You are an AI assistant specialized in generating additional points and ideas for article plans. Your task is to suggest new sections and subsections that would enrich the existing plan while maintaining its structure and style.
 
@@ -69,7 +82,7 @@ export const buildGeneratePlanHints = ({ getChildModel, handleResponseStream }: 
 
     const { model, subscription, employee } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
 
     const { responseStream$, closeStream } = await handleResponseStream({
@@ -80,8 +93,9 @@ export const buildGeneratePlanHints = ({ getChildModel, handleResponseStream }: 
       employee,
       settings: {
         temperature: creativity,
-        system_prompt: prompt
-      }
+        system_prompt: prompt,
+      },
+      developerKeyId,
     })
 
     let content = ''
@@ -89,20 +103,22 @@ export const buildGeneratePlanHints = ({ getChildModel, handleResponseStream }: 
       map((data) => {
         content += data.contentDelta
 
-        const hints = content.split('\n').filter((hint) => hint.trim().length > 0 && !articlePlan.includes(hint))
+        const hints = content
+          .split('\n')
+          .filter((hint) => hint.trim().length > 0 && !articlePlan.includes(hint))
 
         return {
           status: data.status,
           hints: data.status === 'done' ? hints : hints.slice(0, hints.length - 2),
           spentCaps: data.spentCaps,
-          caps: data.caps
+          caps: data.caps,
         }
-      })
+      }),
     )
 
     return {
       responseStream$: stream$,
-      closeStream
+      closeStream,
     }
   }
 }

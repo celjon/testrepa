@@ -1,13 +1,14 @@
+import { Platform } from '@prisma/client'
+import { config } from '@/config'
 import { clamp } from '@/lib'
 import { IArticleLanguage } from '@/domain/entity/article'
-import { UseCaseParams } from '../types'
-import { GetChildModel } from './get-child-model'
-import { logMemoryUsage } from '@/lib/logger'
 import { CheckSourceMatch } from '@/domain/usecase/article/check-source-match'
 import { GenerateSearchQueries } from '@/domain/usecase/article/generate-search-queries'
 import { CompressSource } from '@/domain/usecase/article/compress-sources'
 import { ExtractBibliography } from '@/domain/usecase/article/extract-bibliography'
-import { Platform } from '@prisma/client'
+import { UseCaseParams } from '../types'
+import { GetChildModel } from './get-child-model'
+import { logMemoryUsage } from '@/lib/logger'
 
 type Params = UseCaseParams & {
   getChildModel: GetChildModel
@@ -24,6 +25,7 @@ export type AddSourcesWithPdf = (params: {
   language: IArticleLanguage
   symbolsCount: number
   isAdmin?: boolean
+  developerKeyId?: string
 }) => Promise<{ sources: string; spentCaps: number }>
 
 type SourceBeforeDownload = { title: string; snippet: string; summary: string; resources: string[] }
@@ -36,12 +38,12 @@ export const buildAddSourcesWithPDF = ({
   checkSourceMatch,
   generateSearchQueries,
   compressSource,
-  extractBibliography
+  extractBibliography,
 }: Params): AddSourcesWithPdf => {
-  return async ({ userId, subject, plan, language, symbolsCount, isAdmin }) => {
+  return async ({ userId, subject, plan, language, symbolsCount, isAdmin, developerKeyId }) => {
     const { model, subscription, employee } = await getChildModel({
       model_id: modelForSources,
-      userId
+      userId,
     })
     const model_id = modelForSources
     const pdfFilesCount = symbolsCount ? clamp(Math.round(symbolsCount / 2000), 3, 20) : 3
@@ -55,11 +57,18 @@ export const buildAddSourcesWithPDF = ({
       while (sources.length < pdfFilesCount) {
         const result = await adapter.googleScholarGateway.getGoogleScholarResultsWithPDF(
           { query, language: language, skip: skipped },
-          pdfFilesCount
+          pdfFilesCount,
         )
         skipped += result.skipped
         for (const src of result.results) {
-          const { match, capsSpend } = await checkSourceMatch({ title: src.title, snippet: src.snippet, subject, plan, userId, model_id })
+          const { match, capsSpend } = await checkSourceMatch({
+            title: src.title,
+            snippet: src.snippet,
+            subject,
+            plan,
+            userId,
+            model_id,
+          })
           if (capsSpend) totalCapsSpend += capsSpend
           if (match) sources.push(src)
           if (sources.length >= pdfFilesCount) break
@@ -71,7 +80,12 @@ export const buildAddSourcesWithPDF = ({
       return sources
     }
     const compressSources = async (
-      sources: { title: string; text: string; link: string; meta: { info: string; metadata: string; summary: string } }[]
+      sources: {
+        title: string
+        text: string
+        link: string
+        meta: { info: string; metadata: string; summary: string }
+      }[],
     ) => {
       return await Promise.all(
         sources.map(async (markdownSource) => {
@@ -81,17 +95,22 @@ export const buildAddSourcesWithPDF = ({
             plan,
             language,
             userId,
-            model_id
+            model_id,
           })
           if (capsSpendCompressSource) totalCapsSpend += capsSpendCompressSource
-          const { bibliographic, capsSpend } = await extractBibliography({ textSource: markdownSource, language, userId, model_id })
+          const { bibliographic, capsSpend } = await extractBibliography({
+            textSource: markdownSource,
+            language,
+            userId,
+            model_id,
+          })
           if (capsSpend) totalCapsSpend += capsSpend
           if (text.length > 50 && bibliographic.author) {
             return { title, text, bibliographic, summary: markdownSource.meta.summary }
           } else {
             return undefined
           }
-        })
+        }),
       )
     }
     const tryAddSource = (source: SourceBeforeDownload) => {
@@ -111,7 +130,12 @@ export const buildAddSourcesWithPDF = ({
 
     if (filteredSources.length < pdfFilesCount) {
       validSources.length = 0
-      const { queries, spentCaps } = await generateSearchQueries({ subject, userId, language, model_id })
+      const { queries, spentCaps } = await generateSearchQueries({
+        subject,
+        userId,
+        language,
+        model_id,
+      })
       if (spentCaps) totalCapsSpend += spentCaps
       for (const q of queries) {
         if (validSources.length >= pdfFilesCount) break
@@ -136,8 +160,10 @@ export const buildAddSourcesWithPDF = ({
           userId: userId,
           enterpriseId: employee?.enterprise_id,
           platform: Platform.EASY_WRITER,
-          model_id: model.id
-        }
+          model_id: model.id,
+          provider_id: config.model_providers.openrouter.id,
+          developerKeyId,
+        },
       })
     }
     logMemoryUsage(`End addingSourcesWithPDF ${performance.now() - now}ms for subject: ${subject}`)
@@ -152,7 +178,7 @@ export const buildAddSourcesWithPDF = ({
           return `${source.title}\n${source.text}\n${bibliographic}\n[[${index + 1}]](${source.bibliographic.url})`
         })
         .join('\n'),
-      spentCaps: totalCapsSpend
+      spentCaps: totalCapsSpend,
     }
   }
 }

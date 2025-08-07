@@ -4,7 +4,9 @@ import { ISEOArticleExpertJobHistory } from '@/domain/entity/seo-article-expert-
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Update = (data: Prisma.SEOArticleExpertJobHistoryUpdateArgs) => Promise<ISEOArticleExpertJobHistory | never>
+export type Update = (
+  data: Prisma.SEOArticleExpertJobHistoryUpdateArgs,
+) => Promise<ISEOArticleExpertJobHistory | never>
 export const buildUpdate = ({ db }: Params): Update => {
   return async (data) => {
     const chat = await db.client.sEOArticleExpertJobHistory.update(data)

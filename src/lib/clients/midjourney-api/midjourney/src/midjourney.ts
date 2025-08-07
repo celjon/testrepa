@@ -1,4 +1,10 @@
-import { DefaultMJConfig, LoadingHandler, MJConfig, MJConfigParam, MJMessageDone } from './interfaces'
+import {
+  DefaultMJConfig,
+  LoadingHandler,
+  MJConfig,
+  MJConfigParam,
+  MJMessageDone,
+} from './interfaces'
 import { MidjourneyApi } from './midjourney.api'
 import { MidjourneyMessage } from './discord.message'
 import { base64ToBlob, custom2Type, nextNonce, random, toRemixCustom } from './utils'
@@ -18,7 +24,7 @@ export class Midjourney extends MidjourneyMessage {
     super(defaults)
     this.config = {
       ...DefaultMJConfig,
-      ...defaults
+      ...defaults,
     }
     this.MJApi = new MidjourneyApi(this.config)
   }
@@ -95,7 +101,7 @@ export class Midjourney extends MidjourneyMessage {
     const httpstatus = await this.MJApi.CustomApi({
       msgId: settings.id,
       customId: reset.custom,
-      flags: settings.flags
+      flags: settings.flags,
     })
     if (httpstatus !== 204) {
       throw new Error(`Reset failed with status ${httpstatus}`)
@@ -180,7 +186,7 @@ export class Midjourney extends MidjourneyMessage {
     hash,
     content,
     flags,
-    loading
+    loading,
   }: {
     index: 1 | 2 | 3 | 4
     msgId: string
@@ -194,7 +200,7 @@ export class Midjourney extends MidjourneyMessage {
       msgId,
       content,
       flags,
-      loading
+      loading,
     })
   }
 
@@ -204,7 +210,7 @@ export class Midjourney extends MidjourneyMessage {
     hash,
     content,
     flags,
-    loading
+    loading,
   }: {
     index: 1 | 2 | 3 | 4
     msgId: string
@@ -218,7 +224,7 @@ export class Midjourney extends MidjourneyMessage {
       msgId,
       content,
       flags,
-      loading
+      loading,
     })
   }
 
@@ -227,7 +233,7 @@ export class Midjourney extends MidjourneyMessage {
     customId,
     content,
     flags,
-    loading
+    loading,
   }: {
     msgId: string
     customId: string
@@ -243,7 +249,7 @@ export class Midjourney extends MidjourneyMessage {
       msgId,
       customId,
       flags,
-      nonce
+      nonce,
     })
     if (httpStatus !== 204) {
       throw new Error(`CustomApi failed with status ${httpStatus}`)
@@ -265,7 +271,7 @@ export class Midjourney extends MidjourneyMessage {
                 msgId: id,
                 customId,
                 prompt: content,
-                nonce: newNonce
+                nonce: newNonce,
               })
               if (httpStatus !== 204) {
                 throw new Error(`CustomZoomImagineApi failed with status ${httpStatus}`)
@@ -281,7 +287,7 @@ export class Midjourney extends MidjourneyMessage {
                 msgId: id,
                 customId,
                 prompt: content,
-                nonce: newNonce
+                nonce: newNonce,
               })
               if (remixHttpStatus !== 204) {
                 throw new Error(`RemixApi failed with status ${remixHttpStatus}`)
@@ -291,7 +297,7 @@ export class Midjourney extends MidjourneyMessage {
             default:
               return ''
           }
-        }
+        },
       })
     }
     if (content === undefined || content === '') {
@@ -306,7 +312,7 @@ export class Midjourney extends MidjourneyMessage {
     hash,
     content,
     flags,
-    loading
+    loading,
   }: {
     level: 'high' | 'low' | '2x' | '1.5x'
     msgId: string
@@ -335,7 +341,7 @@ export class Midjourney extends MidjourneyMessage {
       customId,
       content,
       flags,
-      loading
+      loading,
     })
   }
 
@@ -344,7 +350,7 @@ export class Midjourney extends MidjourneyMessage {
     hash,
     content,
     flags,
-    loading
+    loading,
   }: {
     msgId: string
     hash: string
@@ -357,7 +363,7 @@ export class Midjourney extends MidjourneyMessage {
       msgId,
       content,
       flags,
-      loading
+      loading,
     })
   }
 

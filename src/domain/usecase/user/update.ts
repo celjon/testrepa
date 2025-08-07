@@ -11,45 +11,54 @@ export type Update = (params: {
   avatar?: RawFile
   email: string
   verificationCode?: string
-}) => Promise<IUser | never>
-export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
-  return async ({ userId, name, avatar, email, verificationCode }) => {
+  ip: string
+  user_agent: string | null
+}) => Promise<IUser | { user: IUser; accessToken: string; refreshToken: string } | never>
+export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
+  return async ({ userId, name, avatar, email, verificationCode, ip, user_agent }) => {
+    let emailUpdated = false
+    let tokens = { accessToken: '', refreshToken: '' }
     const user = await adapter.userRepository.get({
       omit: {
         kekSalt: true,
         encryptedDEK: true,
-        password: true
+        password: true,
       },
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
     let avatarUrl = user.avatar
     let avatarId = user.avatar_id
 
-    if (avatar && (avatar.originalname.match(/.png$/i) || avatar.originalname.match(/.jpg$/i) || avatar.originalname.match(/.jpeg$/i))) {
+    if (
+      avatar &&
+      (avatar.originalname.match(/.png$/i) ||
+        avatar.originalname.match(/.jpg$/i) ||
+        avatar.originalname.match(/.jpeg$/i))
+    ) {
       const resizedImage = await adapter.imageGateway.resize({
         buffer: avatar.buffer,
         height: 256,
-        width: 256
+        width: 256,
       })
 
       const writeResult = await adapter.storageGateway.write({
         buffer: resizedImage.buffer,
-        ext: extname(avatar.originalname)
+        ext: extname(avatar.originalname),
       })
       const avatarFile = await adapter.fileRepository.create({
         data: {
           type: FileType.IMAGE,
-          path: writeResult.path
-        }
+          path: writeResult.path,
+        },
       })
 
       avatarUrl = writeResult.url
@@ -59,25 +68,25 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
       const code = await adapter.verificationCodeRepository.get({
         where: {
           code: verificationCode,
-          user_id: userId
+          user_id: userId,
         },
         include: {
-          user: true
-        }
+          user: true,
+        },
       })
       if (!code) {
         throw new NotFoundError({
-          code: 'VERIFICATION_CODE_NOT_FOUND'
+          code: 'VERIFICATION_CODE_NOT_FOUND',
         })
       }
 
       if (new Date() > code.expires_at) {
         await adapter.verificationCodeRepository.delete({
-          where: { id: code.id }
+          where: { id: code.id },
         })
 
         throw new InvalidDataError({
-          code: 'VERIFICATION_CODE_EXPIRED'
+          code: 'VERIFICATION_CODE_EXPIRED',
         })
       }
 
@@ -88,36 +97,45 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
       await adapter.userRepository.update({
         where: { id: user.id },
         data: {
-          email
-        }
+          email,
+          emailVerified: true,
+        },
       })
       await adapter.verificationCodeRepository.delete({
-        where: { id: code.id }
+        where: { id: code.id },
       })
+      tokens = await service.auth.signAuthTokens({
+        user,
+        keyEncryptionKey: null,
+      })
+      await adapter.refreshTokenRepository.create({
+        data: { user_id: user.id, token: tokens.refreshToken, ip, user_agent },
+      })
+      emailUpdated = true
     }
 
     const updateUser = await adapter.userRepository.update({
       where: {
-        id: userId
+        id: userId,
       },
       data: {
         name: name ?? user.name,
         avatar: avatarUrl,
-        avatar_id: avatarId
+        avatar_id: avatarId,
       },
       omit: {
         kekSalt: true,
         encryptedDEK: true,
-        password: true
+        password: true,
       },
     })
 
     if (!updateUser) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
-    return updateUser
+    return emailUpdated ? { user: updateUser, ...tokens } : updateUser
   }
 }

@@ -15,7 +15,7 @@ export const buildBalancer = (gptKeys: GptKeys) => {
     return {
       key: key[0],
       weight: key[1],
-      client: newClient(key[0])
+      client: newClient(key[0]),
     }
   })
 
@@ -38,6 +38,6 @@ export const buildBalancer = (gptKeys: GptKeys) => {
   }
 
   return {
-    next
+    next,
   }
 }

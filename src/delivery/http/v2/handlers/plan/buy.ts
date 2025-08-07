@@ -14,7 +14,7 @@ export const buildBuy = ({ plan }: Params): Buy => {
       presentEmail: req.body.presentEmail,
       presentUserId: req.body.presentUserId,
       yandexMetricClientId: req.body.yandexMetricClientId,
-      yandexMetricYclid: req.body.yandexMetricYclid
+      yandexMetricYclid: req.body.yandexMetricYclid,
     })
     return res.status(200).json(paymentData)
   }

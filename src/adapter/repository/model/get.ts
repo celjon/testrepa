@@ -12,8 +12,8 @@ export const buildGet = ({ db }: Params): Get => {
       ...data,
       where: {
         deleted_at: null,
-        ...data.where
-      }
+        ...data.where,
+      },
     })) as IModel
   }
 }

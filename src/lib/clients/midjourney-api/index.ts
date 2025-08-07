@@ -35,18 +35,18 @@ export const newMidjourneyApi = (config: Params): MidjourneyApi => {
         customId,
         content,
         flags,
-        loading: callback
+        loading: callback,
       })
 
       midjourney.Close()
 
       return result
     },
-    info: async () => {}
+    info: async () => {},
   }
 
   return {
-    client
+    client,
   }
 }
 

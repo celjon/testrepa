@@ -9,7 +9,12 @@ type Params = {
 
 type EmitType = 'stream' | 'process'
 
-export type Emit = (params: { chat?: IChat; chatId?: string; event: IChatEvent; type?: EmitType }) => IChatEventStream | null
+export type Emit = (params: {
+  chat?: IChat
+  chatId?: string
+  event: IChatEvent
+  type?: EmitType
+}) => IChatEventStream | null
 
 export const buildEmit =
   ({ eventStreamMap, clusterGateway }: Params): Emit =>

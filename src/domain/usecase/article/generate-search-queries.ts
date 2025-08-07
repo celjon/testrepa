@@ -16,7 +16,11 @@ export type GenerateSearchQueries = (params: {
   model_id: string
 }) => Promise<{ queries: string[]; spentCaps: number }>
 
-export const buildGenerateSearchQueries = ({ adapter, service, getChildModel }: Params): GenerateSearchQueries => {
+export const buildGenerateSearchQueries = ({
+  adapter,
+  service,
+  getChildModel,
+}: Params): GenerateSearchQueries => {
   return async ({ subject, userId, language, model_id }) => {
     const prompt = dedent`
       You are an AI assistant specialized in academic research.
@@ -46,14 +50,14 @@ export const buildGenerateSearchQueries = ({ adapter, service, getChildModel }: 
       messages: [
         {
           role: 'user',
-          content: JSON.stringify({ subject })
-        }
+          content: JSON.stringify({ subject }),
+        },
       ],
       settings: {
         model: model.prefix + model.id,
-        system_prompt: prompt
+        system_prompt: prompt,
       },
-      response_format: searchQueriesResponseFormat
+      response_format: searchQueriesResponseFormat,
     })
 
     const content = response.message.content?.trim() || ''
@@ -65,7 +69,7 @@ export const buildGenerateSearchQueries = ({ adapter, service, getChildModel }: 
     } catch (error) {
       logger.error('UNABLE_TO_GENERATE_SEARCH_QUERIES', { error, content })
       throw new InvalidDataError({
-        code: 'UNABLE_TO_GENERATE_SEARCH_QUERIES'
+        code: 'UNABLE_TO_GENERATE_SEARCH_QUERIES',
       })
     }
 
@@ -73,7 +77,7 @@ export const buildGenerateSearchQueries = ({ adapter, service, getChildModel }: 
       throw new InvalidDataError({ code: 'UNABLE_TO_GENERATE_SEARCH_QUERIES' })
     }
 
-    const caps = await service.model.getCaps({ model, usage: response.usage })
+    const caps = await service.model.getCaps.text({ model, usage: response.usage })
 
     return { ...result, spentCaps: caps }
   }

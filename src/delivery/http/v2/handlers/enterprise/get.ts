@@ -9,7 +9,7 @@ export const buildGet = ({ enterprise }: Params): GetEnterprise => {
   return async (req, res) => {
     const data = await enterprise.get({
       id: req.query.id as string,
-      userId: req.user?.id
+      userId: req.user?.id,
     })
 
     return res.status(200).json(data)

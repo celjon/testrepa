@@ -15,6 +15,6 @@ export type DalleGateway = {
 export const buildDalleGateway = (params: Params): DalleGateway => {
   return {
     send: buildSend(params),
-    edit: buildEdit(params)
+    edit: buildEdit(params),
   }
 }

@@ -8,15 +8,15 @@ export const buildUnfavorite =
   async ({ id, userId }) => {
     const preset = await adapter.presetRepository.update({
       where: {
-        id
+        id,
       },
       data: {
         users: {
           disconnect: {
-            id: userId
-          }
-        }
-      }
+            id: userId,
+          },
+        },
+      },
     })
 
     preset.favorite = false

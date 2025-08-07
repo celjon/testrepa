@@ -1,5 +1,5 @@
 export enum InClusterMessageAction {
-  STOP = 'stop'
+  STOP = 'stop',
 }
 
 export type InClusterMessage = {

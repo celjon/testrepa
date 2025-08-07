@@ -18,7 +18,11 @@ const buildRegisterRoutes = (methods: HealthCheckMethods, middlewares: Middlewar
 
     namespace.get('/db', healthCheckRules, createRouteHandler(methods.checkDB))
     namespace.get('/event-loop-lag', healthCheckRules, createRouteHandler(methods.getEventLoopLag))
-    namespace.get('/event-loop-utilization', healthCheckRules, createRouteHandler(methods.getEventLoopUtilization))
+    namespace.get(
+      '/event-loop-utilization',
+      healthCheckRules,
+      createRouteHandler(methods.getEventLoopUtilization),
+    )
     namespace.get('/memory-usage', healthCheckRules, createRouteHandler(methods.getMemoryUsage))
 
     root.use('/health-check', namespace)
@@ -29,9 +33,9 @@ export const buildHealthCheckHandler = (params: Params): IHandler => {
   return {
     registerRoutes: buildRegisterRoutes(
       {
-        ...buildHealthCheckHandlers(params)
+        ...buildHealthCheckHandlers(params),
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

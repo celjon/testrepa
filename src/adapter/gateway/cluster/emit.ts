@@ -19,6 +19,6 @@ export const buildEmit =
       worker,
       message: {
         eventName,
-        eventParams
-      }
+        eventParams,
+      },
     })

@@ -4,18 +4,33 @@ import { CurrencyEnum } from '@/adapter/gateway/currency-rate/currency.enum'
 
 type Params = Pick<AdapterParams, 'yandexMetric' | 'currencyToRubRate'>
 
-export const buildSendOfflineConversion = ({ yandexMetric, currencyToRubRate }: Params): SendOfflineConversion => {
-  return async ({ yandexMetricClientId, userId, yandexMetricYclid, purchaseId, goal, price, currency }) => {
+export const buildSendOfflineConversion = ({
+  yandexMetric,
+  currencyToRubRate,
+}: Params): SendOfflineConversion => {
+  return async ({
+    yandexMetricClientId,
+    userId,
+    yandexMetricYclid,
+    purchaseId,
+    goal,
+    price,
+    currency,
+  }) => {
     const dateTime = Math.floor(Date.now() / 1000 - 15)
     if (price && currency && currency === 'USD') {
-      const rate = await currencyToRubRate.client.getCurrencyToRubRate({ currency: CurrencyEnum.USD })
+      const rate = await currencyToRubRate.client.getCurrencyToRubRate({
+        currency: CurrencyEnum.USD,
+      })
       if (rate) {
         price = price * rate
         currency = 'RUB'
       }
     }
     if (price && currency && currency === 'EUR') {
-      const rate = await currencyToRubRate.client.getCurrencyToRubRate({ currency: CurrencyEnum.EUR })
+      const rate = await currencyToRubRate.client.getCurrencyToRubRate({
+        currency: CurrencyEnum.EUR,
+      })
       if (rate) {
         price = price * rate
         currency = 'RUB'

@@ -7,6 +7,6 @@ export const buildPlanRules = ({ authRequired, validateSchema }: Middlewares) =>
 
   return {
     buyPlanRules,
-    cancelPlanRules
+    cancelPlanRules,
   }
 }

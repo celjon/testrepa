@@ -11,7 +11,7 @@ export const buildUpdatePlan = ({ plan }: Params): UpdatePlan => {
       planId: req.params.id,
       userId: req.user?.id,
       price: req.body.price,
-      tokens: req.body.tokens
+      tokens: req.body.tokens,
     })
 
     res.status(200).end()

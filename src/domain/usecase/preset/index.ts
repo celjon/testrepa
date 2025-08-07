@@ -53,6 +53,6 @@ export const buildPresetUseCase = (params: UseCaseParams): PresetUseCase => {
     favorite,
     unfavorite,
     getFilters,
-    createChat
+    createChat,
   }
 }

@@ -1,10 +1,11 @@
 import { Field, ID, ObjectType } from 'type-graphql'
 import { Model, PlanType, Platform } from '@prisma/client'
 import { IPlan, PlanGraphQLObject } from './plan'
-import { IModelFunction, ModelFunctionGraphQLObject } from './modelFunction'
+import { IModelFunction, ModelFunctionGraphQLObject } from './model-function'
 import { EmployeeGraphQLObject, IEmployee } from './employee'
-import { IModelProvider } from './modelProvider'
+import { IModelProvider } from './model-provider'
 import { FileGraphQLObject, IFile } from './file'
+import { EmployeeGroupGraphQLObject, IEmployeeGroup } from '@/domain/entity/employee-group'
 
 /**
  * @openapi
@@ -45,8 +46,10 @@ export interface IModel extends Omit<Model, 'features'> {
   features?: ModelFeature[]
   functions?: IModelFunction[]
   is_default?: boolean
+  pricing: Pricing | null
   plans?: Array<IPlan>
   employees?: Array<IEmployee>
+  employeeGroups?: Array<IEmployeeGroup>
   children?: IModel[]
   provider?: IModelProvider | null
   child_provider?: IModelProvider | null
@@ -59,6 +62,7 @@ export type ModelFeature =
   | 'DOCUMENT_TO_TEXT'
   | 'TEXT_TO_IMAGE'
   | 'TEXT_TO_IMAGE_LLM'
+  | 'IMAGE_TO_IMAGE'
   | 'IMAGE_TO_TEXT'
   | 'TEXT_TO_AUDIO'
   | 'AUDIO_TO_TEXT'
@@ -66,6 +70,19 @@ export type ModelFeature =
   | 'EMBEDDING'
   | 'TEXT_TO_VIDEO'
   | 'IMAGE_TO_VIDEO'
+
+export type Pricing = {
+  input?: number
+  output?: number
+  input_image?: number
+  per_image?: number
+  fast_mode?: number
+  relax_mode?: number
+  turbo_mode?: number
+  discount?: number
+  hd: { string: number }
+  standard: { string: number; '1792x1024': number }
+}
 
 @ObjectType('Model')
 export class ModelGraphQLObject implements IModel {
@@ -113,6 +130,9 @@ export class ModelGraphQLObject implements IModel {
 
   @Field(() => [EmployeeGraphQLObject], { nullable: true })
   employees?: EmployeeGraphQLObject[]
+
+  @Field(() => [EmployeeGroupGraphQLObject], { nullable: true })
+  employeeGroups?: EmployeeGroupGraphQLObject[]
 
   @Field(() => [ModelGraphQLObject], { nullable: true })
   children?: IModel[]
@@ -184,26 +204,33 @@ export const getPlatformDisabledKey = (platform: ModelPlatform) => {
   }
 }
 
-export const isTextModel = (model: IModel) => !!model.features && model.features.some((modelFeature) => modelFeature === 'TEXT_TO_TEXT')
+export const isTextModel = (model: IModel) =>
+  !!model.features && model.features.some((modelFeature) => modelFeature === 'TEXT_TO_TEXT')
 
-export const isImageModel = (model: IModel) => !!model.features && model.features.some((modelFeature) => modelFeature === 'TEXT_TO_IMAGE')
-
+export const isImageModel = (model: IModel) =>
+  !!model.features && model.features.some((modelFeature) => modelFeature === 'TEXT_TO_IMAGE')
+export const isGPTImageModel = (model: IModel) => !!model.id.match(/^gpt-image/)
 export const isImageLLMModel = (model: IModel) =>
   !!model.features &&
   model.features.some((modelFeature) => modelFeature === 'TEXT_TO_IMAGE') &&
   model.features.some((modelFeature) => modelFeature === 'TEXT_TO_IMAGE_LLM')
 
-export const isAudioModel = (model: IModel) => !!model.features && model.features.some((modelFeature) => modelFeature === 'AUDIO_TO_TEXT')
+export const isSpeechToTextModel = (model: IModel) =>
+  !!model.features && model.features.some((modelFeature) => modelFeature === 'AUDIO_TO_TEXT')
 
-export const isSpeechModel = (model: IModel) => !!model.features && model.features.some((modelFeature) => modelFeature === 'TEXT_TO_AUDIO')
+export const isTextToSpeechModel = (model: IModel) =>
+  !!model.features && model.features.some((modelFeature) => modelFeature === 'TEXT_TO_AUDIO')
 
-export const isClaude = (model: IModel | string) => !!(typeof model === 'string' ? model : model.id).match(/^claude/)
+export const isClaude = (model: IModel | string) =>
+  !!(typeof model === 'string' ? model : model.id).match(/^claude/)
 
 export const isMidjourney = (model: { id: string }) => !!model.id.match(/^midjourney/)
 
-export const isStableDiffusion = (model: { id: string }) => !!model.id.match(/^stable-diffusion/) || isStableDiffusion3(model)
+export const isStableDiffusion = (model: { id: string }) =>
+  !!model.id.match(/^stable-diffusion/) || isStableDiffusion3(model)
 
-export const isVeo = (model: {  id: string  }) => !!model.id.match(/^veo/)
+export const isVeo = (model: { id: string }) => !!model.id.match(/^veo/)
+export const isVeo3 = (model: { id: string }) => !!model.id.match(/^veo-3/)
 
 export const isStableDiffusion3 = (model: { id: string }) => !!model.id.match(/^stable-diffusion-3/)
 
@@ -223,13 +250,23 @@ export const isFluxSchnell = (model: { id: string }) => !!model.id.match(/^flux-
 
 export const isFlux11Pro = (model: { id: string }) => !!model.id.match(/^flux-1.1-pro$/)
 
-export const isReplicateImageModel = (model: { id: string; provider_id: string | null; features?: string[] }) =>
-  isFlux(model) || isStableDiffusion(model)
+export const isReplicateImageModel = (model: {
+  id: string
+  provider_id: string | null
+  features?: string[]
+}) => isFlux(model) || isStableDiffusion(model)
 
 export const isVideoModel = (model: IModel) =>
-  model.features && model.features.some((modelFeature) => modelFeature === 'IMAGE_TO_VIDEO' || modelFeature === 'TEXT_TO_VIDEO')
+  model.features &&
+  model.features.some(
+    (modelFeature) => modelFeature === 'IMAGE_TO_VIDEO' || modelFeature === 'TEXT_TO_VIDEO',
+  )
 
-export const isReplicateVideoModel = (model: { id: string; provider_id: string | null; features?: string[] }) => isVeo(model)
+export const isReplicateVideoModel = (model: {
+  id: string
+  provider_id: string | null
+  features?: string[]
+}) => isVeo(model)
 
 export const isO1 = (model: { id: string }) => !!model.id.match(/^o1(.*)/)
 
@@ -237,8 +274,10 @@ export const isO3 = (model: { id: string }) => !!model.id.match(/^o3(.*)/)
 
 export const isCodex = (model: { id: string }) => !!model.id.match(/^codex(.*)/)
 
-export const isOpenAISearch = (model: { id: string }) => model.id.startsWith('gpt') && model.id.includes('search-preview')
+export const isOpenAISearch = (model: { id: string }) =>
+  model.id.startsWith('gpt') && model.id.includes('search-preview')
 
 export const isDeepseekR1 = (model: { id: string }) => !!model.id.match(/^deepseek-r1(.*)/)
 
-export const isEmbeddings = (model: IModel | string) => !!(typeof model === 'string' ? model : model.id).match(/^text-embedding(.*)/)
+export const isEmbeddings = (model: IModel | string) =>
+  !!(typeof model === 'string' ? model : model.id).match(/^text-embedding(.*)/)

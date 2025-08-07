@@ -1,5 +1,12 @@
 import { UseCaseParams } from '@/domain/usecase/types'
-import { Currency, EnterpriseRole, EnterpriseType, TransactionProvider, TransactionStatus, TransactionType } from '@prisma/client'
+import {
+  Currency,
+  EnterpriseRole,
+  EnterpriseType,
+  TransactionProvider,
+  TransactionStatus,
+  TransactionType,
+} from '@prisma/client'
 import { logger } from '@/lib/logger'
 import { isAxiosError } from 'axios'
 import { config } from '@/config'
@@ -18,10 +25,18 @@ export type Buy = (data: {
   yandexMetricYclid: string | null
 }) => Promise<{ url: string } | never>
 export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
-  return async ({ userId, planId, provider, presentEmail, presentUserId, yandexMetricClientId, yandexMetricYclid }) => {
+  return async ({
+    userId,
+    planId,
+    provider,
+    presentEmail,
+    presentUserId,
+    yandexMetricClientId,
+    yandexMetricYclid,
+  }) => {
     const initiator = await adapter.userRepository.get({
       where: { id: userId },
-      include: { employees: true }
+      include: { employees: true },
     })
     const present = !!presentEmail || !!presentUserId
     let user = present
@@ -30,15 +45,15 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
             ? {
                 email: {
                   equals: presentEmail,
-                  mode: 'insensitive'
-                }
+                  mode: 'insensitive',
+                },
               }
             : {
-                id: presentUserId
+                id: presentUserId,
               },
           include: {
-            employees: true
-          }
+            employees: true,
+          },
         })
       : initiator
 
@@ -49,11 +64,11 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
           emailVerified: false,
           inactive: true,
           yandexMetricClientId,
-          yandexMetricYclid
+          yandexMetricYclid,
         })
       } else {
         throw new NotFoundError({
-          code: 'USER_NOT_FOUND'
+          code: 'USER_NOT_FOUND',
         })
       }
     }
@@ -63,37 +78,37 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
 
       if (!ownerEmployee) {
         throw new ForbiddenError({
-          code: 'USER_IS_ORGANIZATION_MEMBER'
+          code: 'USER_IS_ORGANIZATION_MEMBER',
         })
       }
 
       const enterprise = await adapter.enterpriseRepository.get({
         where: {
-          id: ownerEmployee.enterprise_id
-        }
+          id: ownerEmployee.enterprise_id,
+        },
       })
       if (enterprise?.type === EnterpriseType.CONTRACTED) {
         throw new ForbiddenError({
-          code: 'USER_IS_ORGANIZATION_MEMBER'
+          code: 'USER_IS_ORGANIZATION_MEMBER',
         })
       }
     }
 
     const plan = await adapter.planRepository.get({
       where: {
-        id: planId
-      }
+        id: planId,
+      },
     })
 
     if (!plan) {
       throw new NotFoundError({
-        code: 'PLAN_NOT_FOUND'
+        code: 'PLAN_NOT_FOUND',
       })
     }
 
     if (!plan.price) {
       throw new ForbiddenError({
-        code: 'PLAN_IS_FREE'
+        code: 'PLAN_IS_FREE',
       })
     }
 
@@ -107,14 +122,15 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
           currentProvider = 'TINKOFF'
         } else {
           throw new ForbiddenError({
-            code: 'PROVIDER_IS_NOT_SUPPORTED'
+            code: 'PROVIDER_IS_NOT_SUPPORTED',
           })
         }
       } else {
         currentProvider = provider
       }
     } else {
-      currentProvider = plan.currency === Currency.RUB ? TransactionProvider.YOOMONEY : TransactionProvider.CRYPTO
+      currentProvider =
+        plan.currency === Currency.RUB ? TransactionProvider.YOOMONEY : TransactionProvider.CRYPTO
     }
 
     const data: IPaymentRequest = {
@@ -122,34 +138,36 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
       currency: plan.currency,
       description: plan.type + ' plan purchase',
       customer: {
-        email: user && user.email ? user.email : config.default_customer_email
+        email: user && user.email ? user.email : config.default_customer_email,
       },
       item: {
-        name: `Bothub ${plan.type}`
+        name: `Bothub ${plan.type}`,
       },
-      returnUrl: config.frontend.address
+      returnUrl: config.frontend.address,
     }
     let payment
 
     if (currentProvider === TransactionProvider.YOOMONEY) {
       try {
-        payment = await service.payment.yoomoney.createPayment(data as WithRequired<IPaymentRequest, 'item'>)
+        payment = await service.payment.yoomoney.createPayment(
+          data as WithRequired<IPaymentRequest, 'item'>,
+        )
       } catch (error) {
         logger.log({
           level: 'error',
-          message: `buy ${JSON.stringify(error)}`
+          message: `buy ${JSON.stringify(error)}`,
         })
 
         if (error instanceof CreatePaymentError) {
           throw new BaseError({
             message: error.message,
-            httpStatus: 503
+            httpStatus: 503,
           })
         }
 
         throw new BaseError({
           message: JSON.stringify(error),
-          httpStatus: 503
+          httpStatus: 503,
         })
       }
     } else if (currentProvider === TransactionProvider.TINKOFF) {
@@ -158,19 +176,19 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
       } catch (error) {
         logger.log({
           level: 'error',
-          message: `buy ${JSON.stringify(error)}`
+          message: `buy ${JSON.stringify(error)}`,
         })
 
         if (error instanceof CreatePaymentError) {
           throw new BaseError({
             message: error.message,
-            httpStatus: 503
+            httpStatus: 503,
           })
         }
 
         throw new BaseError({
           message: JSON.stringify(error),
-          httpStatus: 503
+          httpStatus: 503,
         })
       }
     } else if (currentProvider === TransactionProvider.CRYPTO) {
@@ -180,20 +198,20 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
         if (isAxiosError(error)) {
           logger.log({
             level: 'error',
-            message: `buy ${JSON.stringify(error.response?.data)}`
+            message: `buy ${JSON.stringify(error.response?.data)}`,
           })
           throw new BaseError({
             message: error.message,
-            httpStatus: 503
+            httpStatus: 503,
           })
         } else {
           logger.log({
             level: 'error',
-            message: `buy ${JSON.stringify(error)}`
+            message: `buy ${JSON.stringify(error)}`,
           })
           throw new BaseError({
             httpStatus: 503,
-            code: 'SERVICE_UNAVAILABLE'
+            code: 'SERVICE_UNAVAILABLE',
           })
         }
       }
@@ -203,22 +221,22 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
       } catch (error: any) {
         logger.log({
           level: 'error',
-          message: `buy ${JSON.stringify(error)}`
+          message: `buy ${JSON.stringify(error)}`,
         })
         throw new BaseError({
           message: error.message,
-          httpStatus: 503
+          httpStatus: 503,
         })
       }
     } else {
       throw new InternalError({
-        message: 'Unknown payment provider'
+        message: 'Unknown payment provider',
       })
     }
 
     if (!payment) {
       throw new InternalError({
-        message: 'Unknown payment provider'
+        message: 'Unknown payment provider',
       })
     }
 
@@ -232,13 +250,13 @@ export const buildBuy = ({ adapter, service }: UseCaseParams): Buy => {
         type: TransactionType.SUBSCRIPTION,
         user_id: user!.id,
         from_user_id: present ? userId : null,
-        external_id: payment.id
-      }
+        external_id: payment.id,
+      },
     })
 
     return {
       id: transaction.id,
-      url: payment.url!
+      url: payment.url!,
     }
   }
 }

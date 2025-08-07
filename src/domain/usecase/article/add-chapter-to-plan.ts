@@ -19,6 +19,7 @@ export type AddChapterToPlan = (params: {
   creativity: number
   model_id: string
   chapter: string
+  developerKeyId?: string
 }) => Promise<{
   responseStream$: Observable<{
     status: 'pending' | 'done'
@@ -29,8 +30,21 @@ export type AddChapterToPlan = (params: {
   closeStream: () => void
 }>
 
-export const buildAddChapterToPlan = ({ handleResponseStream, getChildModel }: Params): AddChapterToPlan => {
-  return async ({ userId, model_id, subject, plan, chapter, creativity, locale, generationMode }) => {
+export const buildAddChapterToPlan = ({
+  handleResponseStream,
+  getChildModel,
+}: Params): AddChapterToPlan => {
+  return async ({
+    userId,
+    model_id,
+    subject,
+    plan,
+    chapter,
+    creativity,
+    locale,
+    generationMode,
+    developerKeyId,
+  }) => {
     const prompt = dedent`
       You are an AI assistant specialized in integrating new chapters into existing article plans. Your task is to analyze the current plan structure and seamlessly insert a new chapter in the most appropriate location, while adhering to the specified generation mode.
 
@@ -64,7 +78,7 @@ export const buildAddChapterToPlan = ({ handleResponseStream, getChildModel }: P
 
     const { model, subscription, employee } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
 
     return handleResponseStream({
@@ -75,8 +89,9 @@ export const buildAddChapterToPlan = ({ handleResponseStream, getChildModel }: P
       employee,
       settings: {
         temperature: creativity,
-        system_prompt: prompt
-      }
+        system_prompt: prompt,
+      },
+      developerKeyId,
     })
   }
 }

@@ -19,7 +19,8 @@ export type ShortcutMethods = {
 }
 
 const buildRegisterRoutes = (methods: ShortcutMethods, middlewares: Middlewares) => {
-  const { createRules, deleteShortcutRules, listShortcutRules, updateRules } = buildShortcutRules(middlewares)
+  const { createRules, deleteShortcutRules, listShortcutRules, updateRules } =
+    buildShortcutRules(middlewares)
 
   return (root: Express.Router) => {
     const namespace = Express.Router()
@@ -133,9 +134,9 @@ export const buildShortcutHandler = (params: Params): IHandler => {
         create,
         delete: deleteShortcut,
         list,
-        update
+        update,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

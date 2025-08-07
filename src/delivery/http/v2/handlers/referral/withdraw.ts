@@ -10,7 +10,7 @@ export const buildWithdraw = ({ referral }: Params): Withdraw => {
     const data = await referral.withdraw({
       userId: req.user?.id,
       id: req.params.id,
-      details: req.body.details
+      details: req.body.details,
     })
     return res.status(200).json(data)
   }

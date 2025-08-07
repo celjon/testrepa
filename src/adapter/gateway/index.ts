@@ -1,3 +1,4 @@
+import { AdapterParams } from '../types'
 import { buildDalleGateway, DalleGateway } from './dall-e'
 import { buildDocumentGateway, DocumentGateway } from './document'
 import { buildGptGateway, GptGateway } from './gpt'
@@ -14,22 +15,22 @@ import { buildSpeechGateway, SpeechGateway } from './speech'
 import { buildG4FGateway, G4FGateway } from './g4f'
 import { buildYoutubeDataGateway, YoutubeDataGateway } from './youtube-data-api'
 import { buildGeoGateway, GeoGateway } from './geo'
-import { buildWebSearchGateway, WebSearchGateway } from './webSearch'
+import { buildWebSearchGateway, WebSearchGateway } from './web-search'
 import { buildReplicateGateway, ReplicateGateway } from './replicate'
 import { buildTgNotificationBotGateway, TgNotificationBotGateway } from './tg-notification-bot'
 import { buildModerationGateway, ModerationGateway } from './moderation'
 import { buildCryptoGateway, CryptoGateway } from './crypto'
 import { buildYandexMetricGateway, YandexMetricGateway } from './yandex-metric'
-
-import { AdapterParams } from '../types'
 import { buildClusterGateway, ClusterGateway } from './cluster'
 import { buildHealthCheckGateway, HealthCheckGateway } from './health-check'
-import { AssemblyAiGateway, buildAssemblyAiGateway } from './assemblyAi'
-import { buildCurrencyToRubRateGateway, CurrencyToRubRateGateway } from '@/adapter/gateway/currency-rate'
-import { buildExcelGateway, ExcelGateway } from '@/adapter/gateway/excel'
-import { buildGoogleScholarGateway, GoogleScholarGateway } from '@/adapter/gateway/google-scholar'
+import { buildAssemblyAiGateway, AssemblyAiGateway } from './assemblyAi'
+import { buildCurrencyToRubRateGateway, CurrencyToRubRateGateway } from './currency-rate'
+import { buildExcelGateway, ExcelGateway } from './excel'
+import { buildGoogleScholarGateway, GoogleScholarGateway } from './google-scholar'
 import { buildDataAnalysisGateway, DataAnalysisGateway } from './data-analysis'
 import { buildRunwayGateway, RunwayGateway } from './runway'
+import { buildGoogleGenAIGateway, GoogleGenAIGateway } from './google-gen-ai'
+import { buildai302Gateway, ai302Gateway } from './302-ai'
 
 export type Gateway = {
   paymentGateway: PaymentGateway
@@ -62,6 +63,8 @@ export type Gateway = {
   googleScholarGateway: GoogleScholarGateway
   dataAnalysisGateway: DataAnalysisGateway
   runwayGateway: RunwayGateway
+  googleGenAIGateway: GoogleGenAIGateway
+  ai302Gateway: ai302Gateway
 }
 
 export const buildGateway = (params: AdapterParams): Gateway => {
@@ -72,7 +75,7 @@ export const buildGateway = (params: AdapterParams): Gateway => {
   const storageGateway = buildStorageGateway(params)
   const gptGateway = buildGptGateway({
     ...params,
-    storageGateway
+    storageGateway,
   })
   const dalleGateway = buildDalleGateway({ ...params, storageGateway })
   const speechGateway = buildSpeechGateway(params)
@@ -80,7 +83,7 @@ export const buildGateway = (params: AdapterParams): Gateway => {
   const imageGateway = buildImageGateway()
   const openrouterGateway = buildOpenrouterGateway({
     ...params,
-    storageGateway
+    storageGateway,
   })
   const documentGateway = buildDocumentGateway()
   const tgNotificationBotGateway = buildTgNotificationBotGateway(params)
@@ -92,13 +95,14 @@ export const buildGateway = (params: AdapterParams): Gateway => {
   const replicateGateway = buildReplicateGateway(params)
   const moderationGateway = buildModerationGateway({
     ...params,
-    storageGateway
+    storageGateway,
+    openrouterGateway,
   })
   const cryptoGateway = buildCryptoGateway()
   const clusterGateway = buildClusterGateway()
   const healthCheckGateway = buildHealthCheckGateway({
     ...params,
-    clusterGateway
+    clusterGateway,
   })
   const assemblyAiGateway = buildAssemblyAiGateway(params)
   const yandexMetricGateway = buildYandexMetricGateway(params)
@@ -107,6 +111,8 @@ export const buildGateway = (params: AdapterParams): Gateway => {
   const googleScholarGateway = buildGoogleScholarGateway(params)
   const dataAnalysisGateway = buildDataAnalysisGateway(params)
   const runwayGateway = buildRunwayGateway(params)
+  const googleGenAIGateway = buildGoogleGenAIGateway(params)
+  const ai302Gateway = buildai302Gateway(params)
 
   return {
     paymentGateway,
@@ -138,7 +144,9 @@ export const buildGateway = (params: AdapterParams): Gateway => {
     excelGateway,
     googleScholarGateway,
     dataAnalysisGateway,
-    runwayGateway
+    runwayGateway,
+    googleGenAIGateway,
+    ai302Gateway,
   }
 }
 
@@ -158,7 +166,7 @@ export { SpeechGateway } from './speech'
 export { G4FGateway } from './g4f'
 export { YoutubeDataGateway } from './youtube-data-api'
 export { GeoGateway } from './geo'
-export { WebSearchGateway } from './webSearch'
+export { WebSearchGateway } from './web-search'
 export { AssemblyAiGateway } from './assemblyAi'
 export { ReplicateGateway } from './replicate'
 export { TgNotificationBotGateway } from './tg-notification-bot'

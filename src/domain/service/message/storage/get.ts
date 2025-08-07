@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client'
 import { Adapter } from '@/domain/types'
 import { IMessage } from '@/domain/entity/message'
 import { IUser } from '@/domain/entity/user'
-import { DecryptMessage } from './decrypt/decryptMessage'
+import { DecryptMessage } from './decrypt/decrypt-message'
 
 type Params = Adapter & {
   decryptMessage: DecryptMessage
@@ -14,7 +14,7 @@ export type Get = (
     keyEncryptionKey: string | null
     data: Prisma.MessageFindFirstArgs
   },
-  tx?: unknown
+  tx?: unknown,
 ) => Promise<IMessage | null | never>
 
 export const buildGet = ({ messageRepository, decryptMessage, cryptoGateway }: Params): Get => {
@@ -27,7 +27,7 @@ export const buildGet = ({ messageRepository, decryptMessage, cryptoGateway }: P
 
     const dek = await cryptoGateway.decryptDEK({
       kek: keyEncryptionKey,
-      edek: user.encryptedDEK
+      edek: user.encryptedDEK,
     })
 
     return decryptMessage({ dek, message })

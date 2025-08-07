@@ -1,8 +1,12 @@
 import { UseCaseParams } from '@/domain/usecase/types'
-import { IPresetCategory } from '@/domain/entity/presetCategory'
+import { IPresetCategory } from '@/domain/entity/preset-category'
 import { InvalidDataError } from '@/domain/errors'
 
-export type CreateCategory = (params: { code: string; locale?: string; name: string }) => Promise<IPresetCategory | never>
+export type CreateCategory = (params: {
+  code: string
+  locale?: string
+  name: string
+}) => Promise<IPresetCategory | never>
 
 export const buildCreateCategory =
   ({ adapter }: UseCaseParams): CreateCategory =>
@@ -10,13 +14,13 @@ export const buildCreateCategory =
     let presetCategory = await adapter.presetCategoryRepository.get({
       where: {
         code,
-        locale
-      }
+        locale,
+      },
     })
 
     if (presetCategory) {
       throw new InvalidDataError({
-        code: 'PRESET_CATEGORY_FOUND'
+        code: 'PRESET_CATEGORY_FOUND',
       })
     }
 
@@ -24,8 +28,8 @@ export const buildCreateCategory =
       data: {
         code,
         locale,
-        name
-      }
+        name,
+      },
     })
 
     return presetCategory

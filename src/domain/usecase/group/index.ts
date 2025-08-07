@@ -29,6 +29,6 @@ export const buildGroupUseCase = (params: UseCaseParams): GroupUseCase => {
     deleteMany,
     list,
     update,
-    move
+    move,
   }
 }

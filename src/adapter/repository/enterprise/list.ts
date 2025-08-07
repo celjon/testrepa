@@ -4,7 +4,9 @@ import { IEnterprise } from '@/domain/entity/enterprise'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type ListEnterprises = (data?: Prisma.EnterpriseFindManyArgs) => Promise<Array<IEnterprise> | never>
+export type ListEnterprises = (
+  data?: Prisma.EnterpriseFindManyArgs,
+) => Promise<Array<IEnterprise> | never>
 
 export const buildListEnterprises = ({ db }: Params): ListEnterprises => {
   return async (data) => {

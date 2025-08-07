@@ -1,42 +1,51 @@
+import { config } from '@/config'
 import { AdapterParams } from '@/adapter/types'
-import { buildCompileEmailTemplate } from './compile-email-template'
-import { getTranlation, Translation } from './translation'
+import { CompileTemplate } from './compile-email-template'
+import { getTranslation, Translation } from './translation'
 
-type Params = Pick<AdapterParams, 'mail'>
+type Params = Pick<AdapterParams, 'mail'> & {
+  compileTemplate: CompileTemplate
+}
 
 type TemplateParams = {
   t: Translation['passwordRecoveryMail']
-} & PasswordRecoveryMailParams
+} & {
+  recoveryURL: string
+}
 
 export type PasswordRecoveryMailParams = {
-  recoveryURL: string
+  token: string
 }
 
 export type SendPasswordRecoveryMail = (
   params: {
     to: string
     locale?: string
-  } & PasswordRecoveryMailParams
+  } & PasswordRecoveryMailParams,
 ) => Promise<void>
 
-export const buildSendPasswordRecoveryMail = ({ mail: mailClient }: Params): SendPasswordRecoveryMail => {
-  const compileTemplate = buildCompileEmailTemplate()
+export const buildSendPasswordRecoveryMail = ({
+  mail: mailClient,
+  compileTemplate,
+}: Params): SendPasswordRecoveryMail => {
   const template = compileTemplate<TemplateParams>('password-recovery.hbs')
 
   return async (params) => {
+    const recoveryURL = `${config.frontend.address}${params.locale ? params.locale : config.frontend.default_locale}/reset-password?token=${params.token}`
+
     const html = await template(
       {
-        recoveryURL: params.recoveryURL,
-        t: getTranlation('passwordRecoveryMail', params.locale)
+        recoveryURL,
+        t: getTranslation('passwordRecoveryMail', params.locale),
       },
-      params.locale
+      params.locale,
     )
 
     await mailClient.client.sendMail({
       from: 'no-reply@bothub.chat',
       to: params.to,
-      subject: getTranlation('passwordRecoveryMailSubject', params.locale),
-      html
+      subject: getTranslation('passwordRecoveryMailSubject', params.locale),
+      html,
     })
   }
 }

@@ -1,10 +1,13 @@
 import { Adapter } from '@/adapter'
 import { buildSendResetLink, SendResetPasswordLink } from './send-reset-password-link'
 import { buildMergeAccountsInTgBot, MergeAccountsInTgBot } from './merge-accounts-in-tg-bot'
-import { buildCheckCredentials, CheckCredentials } from './checkCredentials'
+import { buildCheckCredentials, CheckCredentials } from './check-credentials'
 import { buildSignAuthTokens, signAuthTokens } from './sign-auth-tokens'
 import { buildSendVerificationCode, SendVerificationCode } from './send-verification-code'
-import { buildSendVerificationUpdateCode, SendVerificationUpdateCode } from '@/domain/service/auth/send-verification-update-code'
+import {
+  buildSendVerificationUpdateCode,
+  SendVerificationUpdateCode,
+} from '@/domain/service/auth/send-verification-update-code'
 
 export type AuthService = {
   sendResetLink: SendResetPasswordLink
@@ -28,6 +31,6 @@ export const buildAuthService = (params: Adapter): AuthService => {
     checkCredentials,
     signAuthTokens,
     sendVerificationCode,
-    sendVerificationUpdateCode
+    sendVerificationUpdateCode,
   }
 }

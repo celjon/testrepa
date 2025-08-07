@@ -1,6 +1,6 @@
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 
 type Params = Pick<AdapterParams, 'db'>
 

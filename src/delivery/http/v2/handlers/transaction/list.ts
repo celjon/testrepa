@@ -9,7 +9,8 @@ export const buildList = ({ transaction }: Params): List => {
   return async (req, res) => {
     const transactions = await transaction.list({
       userId: req.user?.id,
-      page: req.query.page as any as number
+      page: req.query.page as any as number,
+      withDeveloperKey: req.query.withDeveloperKey === 'true',
     })
 
     return res.status(200).json(transactions)

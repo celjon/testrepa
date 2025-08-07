@@ -3,5 +3,5 @@ export const languagePrompts: { [key: string]: string } = {
   en: 'English',
   es: 'Spanish',
   fr: 'French',
-  pt: 'Portuguese'
+  pt: 'Portuguese',
 }

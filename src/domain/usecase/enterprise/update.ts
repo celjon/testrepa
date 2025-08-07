@@ -1,6 +1,13 @@
 import { UseCaseParams } from '@/domain/usecase/types'
 import { IEnterprise } from '@/domain/entity/enterprise'
-import { EnterprisePaymentPlanStatus, EnterpriseRole, EnterpriseType, Platform, Prisma, Role } from '@prisma/client'
+import {
+  EnterprisePaymentPlanStatus,
+  EnterpriseRole,
+  EnterpriseType,
+  Platform,
+  Prisma,
+  Role,
+} from '@prisma/client'
 import { ForbiddenError, InvalidDataError, NotFoundError } from '@/domain/errors'
 
 export type Update = (data: {
@@ -10,13 +17,14 @@ export type Update = (data: {
   type: EnterpriseType
   common_pool: boolean
   soft_limit?: number
-  hard_limit?: number
+  credit_limit?: number
   system_limit?: number
   balance: number
   plan: string
   id: string
   userId?: string
   payment_plan: EnterprisePaymentPlanStatus
+  developerKeyId?: string
 }) => Promise<IEnterprise | never>
 
 export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
@@ -31,31 +39,32 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
     id,
     userId,
     soft_limit,
-    hard_limit,
+    credit_limit,
     system_limit,
-    payment_plan
+    payment_plan,
+    developerKeyId,
   }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
     const subscription = await adapter.subscriptionRepository.get({
       where: {
-        enterprise_id: id
-      }
+        enterprise_id: id,
+      },
     })
 
     if (!subscription) {
       throw new NotFoundError({
-        code: 'SUBSCRIPTION_NOT_FOUND'
+        code: 'SUBSCRIPTION_NOT_FOUND',
       })
     }
 
@@ -67,8 +76,8 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
         where: {
           enterprise_id: id,
           user_id: userId,
-          role: EnterpriseRole.OWNER
-        }
+          role: EnterpriseRole.OWNER,
+        },
       })
 
       isOwner = !!employee
@@ -76,16 +85,16 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
 
     if (!isOwner && !isAdmin) {
       throw new ForbiddenError({
-        code: 'YOU_ARE_NOT_ADMIN'
+        code: 'YOU_ARE_NOT_ADMIN',
       })
     }
 
     let updateData: Prisma.EnterpriseUpdateInput
 
-    const currentHardLimit = hard_limit || subscription?.hard_limit
+    const currentHardLimit = credit_limit || subscription?.credit_limit
 
     if (isOwner) {
-      if (hard_limit && subscription?.system_limit && hard_limit > subscription.system_limit) {
+      if (credit_limit && subscription?.system_limit && credit_limit > subscription.system_limit) {
         throw new InvalidDataError()
       }
 
@@ -98,14 +107,14 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
         subscription: {
           update: {
             soft_limit,
-            hard_limit
-          }
-        }
+            credit_limit,
+          },
+        },
       }
     } else {
       const currentSystemLimit = system_limit || subscription?.system_limit
 
-      if (hard_limit && currentSystemLimit && hard_limit > currentSystemLimit) {
+      if (credit_limit && currentSystemLimit && credit_limit > currentSystemLimit) {
         throw new InvalidDataError()
       }
 
@@ -123,16 +132,17 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
             enterpriseId: id,
             platform: Platform.ENTERPRISE,
             userId: user.id,
-            from_user_id: userId
-          }
+            from_user_id: userId,
+            developerKeyId,
+          },
         })
       } else if (subscription.balance < tokens) {
         await service.subscription.replenish({
           amount: Number(tokens - subscription.balance),
           subscription,
           meta: {
-            from_user_id: userId
-          }
+            from_user_id: userId,
+          },
         })
       }
       updateData = {
@@ -145,32 +155,32 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
           update: {
             soft_limit,
             system_limit,
-            hard_limit,
+            credit_limit,
             balance,
             payment_plan,
-            plan_id: plan
-          }
-        }
+            plan_id: plan,
+          },
+        },
       }
     }
 
     const enterprise = await adapter.enterpriseRepository.update({
       where: {
-        id
+        id,
       },
       data: updateData,
       include: {
         employees: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
         subscription: {
           include: {
-            plan: true
-          }
-        }
-      }
+            plan: true,
+          },
+        },
+      },
     })
 
     if (!enterprise) {
@@ -181,13 +191,13 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
       where: {
         user: {
           employees: {
-            some: { enterprise_id: id }
-          }
-        }
+            some: { enterprise_id: id },
+          },
+        },
       },
       data: {
-        plan_id: plan
-      }
+        plan_id: plan,
+      },
     })
     return enterprise
   }

@@ -35,7 +35,7 @@ export const buildWrite =
       'Cache-Control': 'public, max-age=31536000, immutable',
       ...(type && {
         'Content-Type': type,
-      })
+      }),
     })
 
     return { id, name, url, path, buffer }

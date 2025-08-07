@@ -10,7 +10,7 @@ export const buildGetMetricFromCluster = <MetricName extends keyof MetricSources
   pendingRequests,
   clusterGateway,
   metricName,
-  metricSource
+  metricSource,
 }: {
   pendingRequests: Map<string, (event: IHealthCheckEvent) => void>
   clusterGateway: ClusterGateway
@@ -31,7 +31,7 @@ export const buildGetMetricFromCluster = <MetricName extends keyof MetricSources
         if (responsesReceived < workerCount + 1) {
           logger.warn({
             location: 'getMetricFromCluster',
-            message: `${metricName} Only received ${responsesReceived}/${workerCount + 1} responses`
+            message: `${metricName} Only received ${responsesReceived}/${workerCount + 1} responses`,
           })
         }
         cleanup()
@@ -65,16 +65,16 @@ export const buildGetMetricFromCluster = <MetricName extends keyof MetricSources
           requestId,
           sourceWorkerId: cluster.worker?.id || 0,
           metric: {
-            name: metricName
-          }
+            name: metricName,
+          },
         })
       } catch (error) {
         cleanup()
         reject(error)
         logger.error({
           location: 'getMetricFromCluster',
-          metricName, 
-          message: getErrorString(error)
+          metricName,
+          message: getErrorString(error),
         })
       }
     })
@@ -83,7 +83,7 @@ export const buildGetMetricFromCluster = <MetricName extends keyof MetricSources
 function isMatchingMetricResponse<MetricName extends keyof MetricSources>(
   event: IHealthCheckEvent,
   metricName: MetricName,
-  requestId: string
+  requestId: string,
 ): event is IHealthCheckMetricsResponse<MetricName> {
   return (
     event.requestId === requestId &&

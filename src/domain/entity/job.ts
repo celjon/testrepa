@@ -11,7 +11,7 @@ export type StartJobFunction = (
   this: IJobInstance,
   params?: {
     stop?: StopJobCallback
-  }
+  },
 ) => Promise<IJob>
 
 export type StopJobType = 'job' | 'process'
@@ -20,7 +20,7 @@ export type StopJobFunction = (
   this: IJobInstance,
   params?: {
     type?: StopJobType
-  }
+  },
 ) => Promise<IJob>
 
 export type SetJobProgressFunction = (this: IJobInstance, progress: number | null) => Promise<IJob>

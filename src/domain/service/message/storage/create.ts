@@ -3,7 +3,7 @@ import { isString } from '@/lib'
 import { Adapter } from '@/domain/types'
 import { IMessage, ISearchResult } from '@/domain/entity/message'
 import { IUser } from '@/domain/entity/user'
-import { DecryptMessage } from './decrypt/decryptMessage'
+import { DecryptMessage } from './decrypt/decrypt-message'
 
 type Params = Adapter & {
   decryptMessage: DecryptMessage
@@ -15,24 +15,29 @@ export type Create = (
     keyEncryptionKey: string | null
     data: Prisma.MessageCreateArgs
   },
-  tx?: unknown
+  tx?: unknown,
 ) => Promise<IMessage | never>
 
-export const buildCreate = ({ messageRepository, chatRepository, decryptMessage, cryptoGateway }: Params): Create => {
+export const buildCreate = ({
+  messageRepository,
+  chatRepository,
+  decryptMessage,
+  cryptoGateway,
+}: Params): Create => {
   return async ({ user, keyEncryptionKey, data }, tx) => {
     if (!user.useEncryption || !user.encryptedDEK || !keyEncryptionKey) {
       await chatRepository.update({
         where: { id: data.data.chat_id },
         data: {
-          last_message_at: new Date()
-        }
+          last_message_at: new Date(),
+        },
       })
       return messageRepository.create(data, tx)
     }
 
     const dek = await cryptoGateway.decryptDEK({
       kek: keyEncryptionKey,
-      edek: user.encryptedDEK
+      edek: user.encryptedDEK,
     })
 
     const originalContent = data.data.content
@@ -43,21 +48,21 @@ export const buildCreate = ({ messageRepository, chatRepository, decryptMessage,
     if (isString(originalContent)) {
       data.data.content = await cryptoGateway.encrypt({
         dek,
-        data: originalContent
+        data: originalContent,
       })
       data.data.isEncrypted = true
     }
     if (isString(originalFullContent)) {
       data.data.full_content = await cryptoGateway.encrypt({
         dek,
-        data: originalFullContent
+        data: originalFullContent,
       })
       data.data.isEncrypted = true
     }
     if (isString(originalReasoningContent)) {
       data.data.reasoning_content = await cryptoGateway.encrypt({
         dek,
-        data: originalReasoningContent
+        data: originalReasoningContent,
       })
       data.data.isEncrypted = true
     }
@@ -68,18 +73,18 @@ export const buildCreate = ({ messageRepository, chatRepository, decryptMessage,
             ...searchResult,
             url: await cryptoGateway.encrypt({
               dek,
-              data: searchResult.url
+              data: searchResult.url,
             }),
             title: await cryptoGateway.encrypt({
               dek,
-              data: searchResult.title
+              data: searchResult.title,
             }),
             snippet: await cryptoGateway.encrypt({
               dek,
-              data: searchResult.snippet
-            })
+              data: searchResult.snippet,
+            }),
           }
-        })
+        }),
       )
       data.data.isEncrypted = true
     }
@@ -87,8 +92,8 @@ export const buildCreate = ({ messageRepository, chatRepository, decryptMessage,
     await chatRepository.update({
       where: { id: createdMessage.chat_id },
       data: {
-        last_message_at: new Date()
-      }
+        last_message_at: new Date(),
+      },
     })
 
     return decryptMessage({ dek, message: createdMessage })

@@ -1,8 +1,8 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildMergeAccountsInTgBot, MergeAccountsInTgBot } from './mergeAccountsInTgBot'
-import { buildVerifyOAuth, VerifyOAuth } from './verifyOAuth'
-import { buildGetOAuthConsentURL, GetOAuthConsentURL } from './getOAuthConsentURL'
-import { buildUnlinkAccountInTgBot, UnlinkAccountInTgBot } from './unlinkAccountInTgBot'
+import { buildMergeAccountsInTgBot, MergeAccountsInTgBot } from './merge-accounts-in-tg-bot'
+import { buildVerifyOAuth, VerifyOAuth } from './verify-oauth'
+import { buildGetOAuthConsentURL, GetOAuthConsentURL } from './get-oauth-consent-url'
+import { buildUnlinkAccountInTgBot, UnlinkAccountInTgBot } from './unlink-account-in-tg-bot'
 
 type Params = Pick<AdapterParams, 'db' | 'oauth' | 'mail' | 'tgBot'>
 
@@ -21,6 +21,6 @@ export const buildAuthRepository = (params: Params): AuthRepository => {
     getOAuthConsentURL,
     verifyOAuth,
     mergeAccountsInTgBot,
-    unlinkAccountInTgBot
+    unlinkAccountInTgBot,
   }
 }

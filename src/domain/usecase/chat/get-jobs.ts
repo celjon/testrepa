@@ -11,8 +11,8 @@ export const buildGetJobs =
       where: {
         id: chatId,
         user_id: userId,
-        deleted: false
-      }
+        deleted: false,
+      },
     })
 
     if (!chat) {
@@ -20,7 +20,7 @@ export const buildGetJobs =
     }
 
     const jobs: IJob[] = await service.job.list({
-      chat
+      chat,
     })
 
     return jobs

@@ -8,11 +8,11 @@ import { buildGetSEOArticleExpertJobHistory, GetSEOArticleExpertJobHistory } fro
 import { buildUpdateSEOArticleExpertJobHistory, UpdateSEOArticleExpertJobHistory } from './update'
 import {
   buildCreateSEOArticleExpertJobHistory,
-  CreateSEOArticleExpertJobHistory
+  CreateSEOArticleExpertJobHistory,
 } from '@/delivery/http/v2/handlers/seo-article-expert-job-history/create'
 import {
   buildDeleteSEOArticleExpertJobHistory,
-  DeleteSEOArticleExpertJobHistory
+  DeleteSEOArticleExpertJobHistory,
 } from '@/delivery/http/v2/handlers/seo-article-expert-job-history/delete'
 
 type Params = Pick<DeliveryParams, 'seoArticleExpertJobHistory' | 'middlewares'>
@@ -24,12 +24,15 @@ type SEOArticleExpertJobHistoryMethods = {
   deleteSEOArticleExpertJobHistory: DeleteSEOArticleExpertJobHistory
 }
 
-const buildRegisterRoutes = (methods: SEOArticleExpertJobHistoryMethods, middlewares: Middlewares) => {
+const buildRegisterRoutes = (
+  methods: SEOArticleExpertJobHistoryMethods,
+  middlewares: Middlewares,
+) => {
   const {
     getSEOArticleExpertJobHistoryRules,
     createSEOArticleExpertJobHistoryRules,
     updateSEOArticleExpertJobHistoryRules,
-    deleteSEOArticleExpertJobHistoryRules
+    deleteSEOArticleExpertJobHistoryRules,
   } = buildSEOArticleExpertJobHistoryRules(middlewares)
   return (root: Express.Router) => {
     const namespace = Express.Router()
@@ -58,7 +61,7 @@ const buildRegisterRoutes = (methods: SEOArticleExpertJobHistoryMethods, middlew
     namespace.get(
       '/:seoArticleExpertJobHistoryId',
       getSEOArticleExpertJobHistoryRules,
-      createRouteHandler(methods.getSEOArticleExpertJobHistory)
+      createRouteHandler(methods.getSEOArticleExpertJobHistory),
     )
 
     /**
@@ -86,7 +89,11 @@ const buildRegisterRoutes = (methods: SEOArticleExpertJobHistoryMethods, middlew
      *             schema:
      *               $ref: '#/components/entities/SEOArticleExpertJobHistory'
      */
-    namespace.post('/create', createSEOArticleExpertJobHistoryRules, createRouteHandler(methods.createSEOArticleExpertJobHistory))
+    namespace.post(
+      '/create',
+      createSEOArticleExpertJobHistoryRules,
+      createRouteHandler(methods.createSEOArticleExpertJobHistory),
+    )
 
     /**
      * @openapi
@@ -120,7 +127,7 @@ const buildRegisterRoutes = (methods: SEOArticleExpertJobHistoryMethods, middlew
     namespace.patch(
       '/:seoArticleExpertJobHistoryId',
       updateSEOArticleExpertJobHistoryRules,
-      createRouteHandler(methods.updateSEOArticleExpertJobHistory)
+      createRouteHandler(methods.updateSEOArticleExpertJobHistory),
     )
 
     /**
@@ -148,7 +155,7 @@ const buildRegisterRoutes = (methods: SEOArticleExpertJobHistoryMethods, middlew
     namespace.delete(
       '/:seoArticleExpertJobHistoryId',
       deleteSEOArticleExpertJobHistoryRules,
-      createRouteHandler(methods.deleteSEOArticleExpertJobHistory)
+      createRouteHandler(methods.deleteSEOArticleExpertJobHistory),
     )
 
     root.use('/seo-article-expert-job-history', namespace)
@@ -167,9 +174,9 @@ export const buildSEOArticleExpertJobHistoryHandler = (params: Params): IHandler
         getSEOArticleExpertJobHistory,
         createSEOArticleExpertJobHistory,
         updateSEOArticleExpertJobHistory,
-        deleteSEOArticleExpertJobHistory
+        deleteSEOArticleExpertJobHistory,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

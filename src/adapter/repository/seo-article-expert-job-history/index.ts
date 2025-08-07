@@ -15,7 +15,9 @@ export type SEOArticleExpertJobHistoryRepository = {
   delete: Delete
 }
 
-export const buildSEOArticleExpertJobHistoryRepository = (params: Params): SEOArticleExpertJobHistoryRepository => {
+export const buildSEOArticleExpertJobHistoryRepository = (
+  params: Params,
+): SEOArticleExpertJobHistoryRepository => {
   const create = buildCreate(params)
   const get = buildGet(params)
   const update = buildUpdate(params)
@@ -27,6 +29,6 @@ export const buildSEOArticleExpertJobHistoryRepository = (params: Params): SEOAr
     get,
     update,
     updateMany,
-    delete: deleteAction
+    delete: deleteAction,
   }
 }

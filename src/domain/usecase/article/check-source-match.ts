@@ -17,7 +17,11 @@ export type CheckSourceMatch = (params: {
   model_id: string
 }) => Promise<{ match: boolean; capsSpend: number }>
 
-export const buildCheckSourceMatch = ({ adapter, service, getChildModel }: Params): CheckSourceMatch => {
+export const buildCheckSourceMatch = ({
+  adapter,
+  service,
+  getChildModel,
+}: Params): CheckSourceMatch => {
   return async ({ title, snippet, subject, plan, userId, model_id }) => {
     const equality = 30
     const prompt = dedent`
@@ -54,18 +58,18 @@ export const buildCheckSourceMatch = ({ adapter, service, getChildModel }: Param
     `
     const { model } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
 
     const content = JSON.stringify({
       source: {
         title,
-        snippet
+        snippet,
       },
       article: {
         subject,
-        plan
-      }
+        plan,
+      },
     })
 
     const response = await adapter.openrouterGateway.sync({
@@ -73,14 +77,14 @@ export const buildCheckSourceMatch = ({ adapter, service, getChildModel }: Param
       messages: [
         {
           role: 'user',
-          content
-        }
+          content,
+        },
       ],
       settings: {
         model: model.prefix + model.id,
-        system_prompt: prompt
+        system_prompt: prompt,
       },
-      response_format: sourceMatchResponseFormat
+      response_format: sourceMatchResponseFormat,
     })
     const messageContent = response.message.content?.trim()
 
@@ -97,13 +101,13 @@ export const buildCheckSourceMatch = ({ adapter, service, getChildModel }: Param
     }
     if (!response.usage) {
       throw new InvalidDataError({
-        code: 'UNABLE_TO_CHECK_TITLE_SNIPPET_MATCH'
+        code: 'UNABLE_TO_CHECK_TITLE_SNIPPET_MATCH',
       })
     }
 
-    const caps = await service.model.getCaps({
+    const caps = await service.model.getCaps.text({
       model: model,
-      usage: response.usage
+      usage: response.usage,
     })
 
     return { match: score >= equality, capsSpend: caps }

@@ -12,8 +12,8 @@ export const buildClusterizeExcelMiddleware = ({ fileUpload }: Middlewares) => {
   const webFilesMiddleware = fileUpload({ saveFiles: false }).fields([
     {
       name: 'excel_file',
-      maxCount: 1
-    }
+      maxCount: 1,
+    },
   ])
 
   return (req: Request, res: Response, next: NextFunction) => {
@@ -26,7 +26,7 @@ export const buildClusterizeExcel = ({ dataAnalysis }: Params): ClusterizeExcel 
     if (!req.files || Array.isArray(req.files)) {
       throw new InvalidDataError({
         code: 'FILE_ERROR',
-        message: `No file is provided or too many files`
+        message: `No file is provided or too many files`,
       })
     }
 
@@ -34,7 +34,7 @@ export const buildClusterizeExcel = ({ dataAnalysis }: Params): ClusterizeExcel 
     if (!excelFile) {
       throw new InvalidDataError({
         code: 'FILE_ERROR',
-        message: `No file is provided`
+        message: `No file is provided`,
       })
     }
 

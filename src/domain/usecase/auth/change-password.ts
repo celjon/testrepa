@@ -2,36 +2,42 @@ import { InvalidDataError, UnauthorizedError } from '@/domain/errors'
 import { UseCaseParams } from '../types'
 import * as bcrypt from 'bcrypt'
 
-export type ChangePassword = (params: { userId: string; oldPassword: string; newPassword: string }) => Promise<{
+export type ChangePassword = (params: {
+  userId: string
+  oldPassword: string
+  newPassword: string
+  ip: string
+  user_agent: string | null
+}) => Promise<{
   accessToken: string
   refreshToken: string
 }>
 
 export const buildChangePassword = ({ adapter, service }: UseCaseParams): ChangePassword => {
-  return async ({ userId, oldPassword, newPassword }) => {
+  return async ({ userId, oldPassword, newPassword, ip, user_agent }) => {
     const user = await adapter.userRepository.get({
-      where: { id: userId }
+      where: { id: userId },
     })
 
     if (!user || !user.email) {
       throw new InvalidDataError({
-        code: 'PASSWORD_NOT_SET'
+        code: 'PASSWORD_NOT_SET',
       })
     }
 
     if (oldPassword === newPassword) {
       throw new InvalidDataError({
-        code: 'PASSWORD_CANT_BE_SAME'
+        code: 'PASSWORD_CANT_BE_SAME',
       })
     }
 
     const isOldPasswordValid = await service.auth.checkCredentials({
       email: user.email,
-      password: oldPassword
+      password: oldPassword,
     })
     if (!isOldPasswordValid) {
       throw new UnauthorizedError({
-        code: 'INVALID_OLD_PASSWORD'
+        code: 'INVALID_OLD_PASSWORD',
       })
     }
 
@@ -40,21 +46,21 @@ export const buildChangePassword = ({ adapter, service }: UseCaseParams): Change
     if (user.encryptedDEK && user.kekSalt) {
       const oldKEK = await adapter.cryptoGateway.deriveKEK({
         password: oldPassword,
-        kekSalt: user.kekSalt
+        kekSalt: user.kekSalt,
       })
       const dek = await adapter.cryptoGateway.decryptDEK({
         kek: oldKEK,
-        edek: user.encryptedDEK
+        edek: user.encryptedDEK,
       })
 
       const kekSalt = await adapter.cryptoGateway.generateKEKSalt()
       keyEncryptionKey = await adapter.cryptoGateway.deriveKEK({
         password: newPassword,
-        kekSalt
+        kekSalt,
       })
       const encryptedDEK = await adapter.cryptoGateway.encryptDEK({
         kek: keyEncryptionKey,
-        dek
+        dek,
       })
 
       await adapter.userRepository.update({
@@ -62,26 +68,34 @@ export const buildChangePassword = ({ adapter, service }: UseCaseParams): Change
         data: {
           password: hash,
           encryptedDEK,
-          kekSalt
-        }
+          kekSalt,
+        },
       })
     } else {
       await adapter.userRepository.update({
         where: { id: userId },
         data: {
-          password: hash
-        }
+          password: hash,
+        },
       })
     }
 
     const tokens = await service.auth.signAuthTokens({
       user,
-      keyEncryptionKey
+      keyEncryptionKey,
+    })
+
+    await adapter.refreshTokenRepository.deleteMany({
+      where: { user_id: userId },
+    })
+
+    await adapter.refreshTokenRepository.create({
+      data: { user_id: userId, token: tokens.refreshToken, ip, user_agent },
     })
 
     return {
       accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken
+      refreshToken: tokens.refreshToken,
     }
   }
 }

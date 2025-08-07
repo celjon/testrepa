@@ -14,7 +14,7 @@ export class VideoGraphQLObject implements IVideo {
   @Field(() => String)
   content!: string
 
-  @Field(() => Number, { defaultValue: 0, deprecationReason: 'use duration_seconds',  })
+  @Field(() => Number, { defaultValue: 0, deprecationReason: 'use duration_seconds' })
   duration!: number
 
   @Field(() => Number)

@@ -6,7 +6,9 @@ export class YoutubeTranscriptError extends Error {
 
 export class YoutubeTranscriptTooManyRequestError extends YoutubeTranscriptError {
   constructor() {
-    super('YouTube is receiving too many requests from this IP and now requires solving a captcha to continue')
+    super(
+      'YouTube is receiving too many requests from this IP and now requires solving a captcha to continue',
+    )
   }
 }
 

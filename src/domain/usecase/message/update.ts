@@ -4,19 +4,24 @@ import { ForbiddenError, NotFoundError } from '@/domain/errors'
 
 const maxAllowedSetLength = 5
 
-export type Update = (data: { userId: string; keyEncryptionKey: string | null; id: string; content: string }) => Promise<IMessage>
+export type Update = (data: {
+  userId: string
+  keyEncryptionKey: string | null
+  id: string
+  content: string
+}) => Promise<IMessage>
 
 export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
   return async ({ userId, keyEncryptionKey, id, content }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -29,23 +34,23 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
             where: {
               id: id,
               user_id: userId,
-              choiced: true
+              choiced: true,
             },
             include: {
               set: {
                 include: {
-                  last: true
-                }
-              }
-            }
-          }
+                  last: true,
+                },
+              },
+            },
+          },
         },
-        tx
+        tx,
       )
 
       if (!currentMessage) {
         throw new NotFoundError({
-          code: 'MESSAGE_NOT_FOUND'
+          code: 'MESSAGE_NOT_FOUND',
         })
       }
 
@@ -58,13 +63,13 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
             data: {
               chat_id: currentMessage.chat_id,
               last_id: currentMessage.id,
-              choiced: currentMessage.id
+              choiced: currentMessage.id,
             },
             include: {
-              last: true
-            }
+              last: true,
+            },
           },
-          tx
+          tx,
         )
       } else {
         set = currentMessage.set
@@ -74,8 +79,8 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
             code: 'MESSAGE_SET_LIMIT_REACHED',
             message: 'Message regeneration limit reached',
             data: {
-              maxAllowedSetLength
-            }
+              maxAllowedSetLength,
+            },
           })
         }
       }
@@ -96,11 +101,11 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
               where: { id: currentMessage.id, user_id: userId },
               data: {
                 previous_version_id: null,
-                next_version_id: null
-              }
-            }
+                next_version_id: null,
+              },
+            },
           },
-          tx
+          tx,
         )
       }
 
@@ -122,11 +127,11 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
               created_at: currentMessage.created_at,
               previous_version_id: currentMessage.previous_version_id,
               next_version_id: currentMessage.next_version_id,
-              model_id: currentMessage.model_id
-            }
-          }
+              model_id: currentMessage.model_id,
+            },
+          },
         },
-        tx
+        tx,
       )
 
       // update links on previous and next versions
@@ -138,11 +143,11 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
             data: {
               where: { id: currentMessage.previous_version_id, user_id: userId },
               data: {
-                next_version_id: oldMessage.id
-              }
-            }
+                next_version_id: oldMessage.id,
+              },
+            },
           },
-          tx
+          tx,
         )
       }
       if (currentMessage.next_version_id) {
@@ -153,11 +158,11 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
             data: {
               where: { id: currentMessage.next_version_id, user_id: userId },
               data: {
-                previous_version_id: oldMessage.id
-              }
-            }
+                previous_version_id: oldMessage.id,
+              },
+            },
           },
-          tx
+          tx,
         )
       }
 
@@ -167,10 +172,10 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
           data: {
             length: { increment: 1 },
             last_id: currentMessage.id,
-            choiced: currentMessage.id
-          }
+            choiced: currentMessage.id,
+          },
         },
-        tx
+        tx,
       )
 
       // update links on last message in linked list
@@ -184,11 +189,11 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
               user_id: userId,
             },
             data: {
-              next_version_id: currentMessage.id
-            }
-          }
+              next_version_id: currentMessage.id,
+            },
+          },
         },
-        tx
+        tx,
       )
 
       currentMessage = await service.message.storage.update(
@@ -205,8 +210,9 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
               full_content: content,
               version: set.length,
               set_id: set.id,
-              previous_version_id: currentMessage.id === lastMessage.id ? oldMessage.id : lastMessage.id,
-              next_version_id: null
+              previous_version_id:
+                currentMessage.id === lastMessage.id ? oldMessage.id : lastMessage.id,
+              next_version_id: null,
             },
             include: {
               model: {
@@ -214,10 +220,10 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
                   icon: true,
                   parent: {
                     include: {
-                      icon: true
-                    }
-                  }
-                }
+                      icon: true,
+                    },
+                  },
+                },
               },
               transaction: true,
               set: true,
@@ -225,37 +231,37 @@ export const buildUpdate = ({ adapter, service }: UseCaseParams): Update => {
                 include: {
                   original: true,
                   preview: true,
-                  buttons: true
-                }
+                  buttons: true,
+                },
               },
               buttons: {
                 where: {
-                  disabled: false
-                }
+                  disabled: false,
+                },
               },
               all_buttons: {
-                distinct: ['action']
+                distinct: ['action'],
               },
               attachments: {
                 include: {
-                  file: true
-                }
+                  file: true,
+                },
               },
               voice: {
                 include: {
-                  file: true
-                }
+                  file: true,
+                },
               },
               video: {
                 include: {
-                  file: true
-                }
+                  file: true,
+                },
               },
-              job: true
-            }
-          }
+              job: true,
+            },
+          },
         },
-        tx
+        tx,
       )
 
       if (!currentMessage) {

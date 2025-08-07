@@ -12,7 +12,7 @@ export const buildInfo = ({ midjourneyBalancer }: Params): Info => {
 
     if (!account)
       throw new NotFoundError({
-        code: 'MIDJOURNEY_ACCOUNT_NOT_FOUND'
+        code: 'MIDJOURNEY_ACCOUNT_NOT_FOUND',
       })
 
     return await account.info()

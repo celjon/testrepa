@@ -11,7 +11,9 @@ export type SEOArticleExpertJobHistoryUseCase = {
   deleteSEOArticleExpertJobHistory: Delete
 }
 
-export const buildSEOArticleExpertJobHistoryUseCase = (params: UseCaseParams): SEOArticleExpertJobHistoryUseCase => {
+export const buildSEOArticleExpertJobHistoryUseCase = (
+  params: UseCaseParams,
+): SEOArticleExpertJobHistoryUseCase => {
   const getSEOArticleExpertJobHistory = buildGet(params)
   const createSEOArticleExpertJobHistory = buildCreate(params)
   const updateSEOArticleExpertJobHistory = buildUpdate(params)
@@ -20,6 +22,6 @@ export const buildSEOArticleExpertJobHistoryUseCase = (params: UseCaseParams): S
     getSEOArticleExpertJobHistory,
     createSEOArticleExpertJobHistory,
     updateSEOArticleExpertJobHistory,
-    deleteSEOArticleExpertJobHistory
+    deleteSEOArticleExpertJobHistory,
   }
 }

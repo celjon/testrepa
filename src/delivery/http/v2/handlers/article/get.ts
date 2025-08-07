@@ -10,7 +10,7 @@ export const buildGetArticle = ({ article }: Params): GetArticle => {
   return async (req, res) => {
     const result = await article.get({
       userId: req.user.id,
-      articleId: req.params.articleId
+      articleId: req.params.articleId,
     })
 
     res.status(200).json(result)

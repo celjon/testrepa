@@ -18,8 +18,14 @@ import { buildGenerateSearchQueries, GenerateSearchQueries } from './generate-se
 import { buildCompressSource, CompressSource } from './compress-sources'
 import { BatchGenerateArticles, buildBatchGenerateArticles } from './batch-generate-articles'
 import { buildListSEOArticles, ListSEOArticles } from './list'
-import { buildListSEOArticlesByCategorySlug, ListSEOArticlesByCategorySlug } from './list-by-category-slug'
-import { buildListSEOArticlesByTopicSlug, ListSEOArticlesByTopicSlug } from './list-by-category-and-topic-slug'
+import {
+  buildListSEOArticlesByCategorySlug,
+  ListSEOArticlesByCategorySlug,
+} from './list-by-category-slug'
+import {
+  buildListSEOArticlesByTopicSlug,
+  ListSEOArticlesByTopicSlug,
+} from './list-by-category-and-topic-slug'
 import { buildDelete, Delete } from './delete'
 import { buildFindBySlug, FindBySlug } from './find-by-slug'
 import { buildDeleteMany, DeleteMany } from './delete-many'
@@ -58,40 +64,40 @@ export const buildArticleUseCase = (params: UseCaseParams): ArticleUseCase => {
   const generateSubject = buildGenerateSubject({
     ...params,
     handleResponseStream,
-    getChildModel
+    getChildModel,
   })
 
   const generatePlan = buildGeneratePlan({
     ...params,
     handleResponseStream,
-    getChildModel
+    getChildModel,
   })
   const generatePlanHints = buildGeneratePlanHints({
     ...params,
     getChildModel,
-    handleResponseStream
+    handleResponseStream,
   })
   const addChapterToPlan = buildAddChapterToPlan({
     ...params,
     handleResponseStream,
-    getChildModel
+    getChildModel,
   })
 
   const checkSourceMatch = buildCheckSourceMatch({
     ...params,
-    getChildModel
+    getChildModel,
   })
   const generateSearchQueries = buildGenerateSearchQueries({
     ...params,
-    getChildModel
+    getChildModel,
   })
   const compressSource = buildCompressSource({
     ...params,
-    getChildModel
+    getChildModel,
   })
   const extractBibliography = buildExtractBibliography({
     ...params,
-    getChildModel
+    getChildModel,
   })
   const addSourcesWithPDF = buildAddSourcesWithPDF({
     ...params,
@@ -99,7 +105,7 @@ export const buildArticleUseCase = (params: UseCaseParams): ArticleUseCase => {
     checkSourceMatch,
     generateSearchQueries,
     compressSource,
-    extractBibliography
+    extractBibliography,
   })
 
   const generateArticle = buildGenerateArticle({
@@ -107,14 +113,18 @@ export const buildArticleUseCase = (params: UseCaseParams): ArticleUseCase => {
     handleResponseStreamWithChat,
     getChildModel,
     getStructuredPlan,
-    addSourcesWithPDF
+    addSourcesWithPDF,
   })
-  const batchGenerateArticles = buildBatchGenerateArticles({ ...params, generateArticle, generatePlan })
+  const batchGenerateArticles = buildBatchGenerateArticles({
+    ...params,
+    generateArticle,
+    generatePlan,
+  })
 
   const generateChapter = buildGenerateChapter({
     ...params,
     handleResponseStreamWithChat,
-    getChildModel
+    getChildModel,
   })
 
   const get = buildGet(params)
@@ -148,6 +158,6 @@ export const buildArticleUseCase = (params: UseCaseParams): ArticleUseCase => {
     deleteMany,
     listSEOArticles,
     listSEOArticlesByCategorySlug,
-    listSEOArticlesByTopicSlug
+    listSEOArticlesByTopicSlug,
   }
 }

@@ -8,13 +8,13 @@ export const buildToExcel = ({ userRepository }: Adapter): ToExcel => {
       include: {
         subscription: {
           include: {
-            plan: true
-          }
-        }
+            plan: true,
+          },
+        },
       },
       orderBy: {
-        created_at: 'desc'
-      }
+        created_at: 'desc',
+      },
     })
 
     const buf = await userRepository.toExcel(users)

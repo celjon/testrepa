@@ -1,4 +1,4 @@
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 import { IMessage } from '@/domain/entity/message'
 import { IModel, isTextModel } from '@/domain/entity/model'
 import { tokenize } from '@/lib/tokenizer'
@@ -43,8 +43,8 @@ export const buildTokenize =
       input: 1,
       inputImage: 1,
       output: 1,
-      discount: 1
-    }
+      discount: 1,
+    },
   }) => {
     if (!isTextModel(model)) {
       return 0
@@ -55,7 +55,10 @@ export const buildTokenize =
     let tokens = 0
 
     if (settings && settings.text) {
-      tokens += tokenize(settings.text.full_system_prompt ?? settings.text.system_prompt ?? '', model.id) * input * discount
+      tokens +=
+        tokenize(settings.text.full_system_prompt ?? settings.text.system_prompt ?? '', model.id) *
+        input *
+        discount
     }
 
     if (messages && messages.length > 0) {
@@ -65,7 +68,9 @@ export const buildTokenize =
         if (message.images) {
           imagesTokens =
             message.images
-              .map(({ width, height }) => Math.ceil(Math.ceil(width / 512) * Math.ceil(height / 512) * 170 + 85))
+              .map(({ width, height }) =>
+                Math.ceil(Math.ceil(width / 512) * Math.ceil(height / 512) * 170 + 85),
+              )
               .reduce((imagesTokens, tokens) => imagesTokens + tokens, 0) *
             inputImage *
             discount
@@ -87,7 +92,10 @@ export const buildTokenize =
     }
 
     if (outputMessage) {
-      tokens += tokenize(outputMessage.full_content ?? outputMessage.content ?? '', model.id) * output * discount
+      tokens +=
+        tokenize(outputMessage.full_content ?? outputMessage.content ?? '', model.id) *
+        output *
+        discount
     }
 
     return tokens

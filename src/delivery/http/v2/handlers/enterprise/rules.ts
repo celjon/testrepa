@@ -8,7 +8,7 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     authRequired(),
     query('page').optional().isInt(),
     query('search').optional().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const getEnterpriseRules = [authRequired(), param('id').exists().isString(), validateSchema]
@@ -22,11 +22,10 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     check('type').optional().isString(),
     check('tokens').optional().isInt(),
     check('common_pool').exists().isBoolean(),
-    validateSchema
+    validateSchema,
   ]
 
   const updateEnterpriseRules = [
-    allowedIps(config.admin.allowed_ips),
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('plan_id').exists().isString(),
@@ -35,17 +34,16 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     check('type').exists().isString(),
     check('tokens').exists().isInt(),
     check('common_pool').exists().isBoolean(),
-    validateSchema
+    validateSchema,
   ]
 
   const updateEnterpriseLimitsRules = [
-    allowedIps(config.admin.allowed_ips),
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('id').exists().isString(),
-    check('hard_limit').optional({ nullable: true }).isInt(),
+    check('credit_limit').optional({ nullable: true }).isInt(),
     check('soft_limit').optional({ nullable: true }).isInt(),
-    validateSchema
+    validateSchema,
   ]
 
   const changeEmployeeBalanceRules = [
@@ -53,35 +51,43 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     authRequired({}),
     check('employeeId').exists().notEmpty().isString(),
     check('balanceDelta').exists().notEmpty().isInt(),
-    validateSchema
+    validateSchema,
+  ]
+
+  const changeEmployeeSpendLimitRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    check('employeeId').exists().notEmpty().isString(),
+    check('spend_limit_on_month').exists().notEmpty().isInt(),
+    validateSchema,
   ]
 
   const deleteEmployeeRules = [
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('employeeId').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const generateInviteTokenRules = [
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('enterpriseId').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const joinRules = [
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('inviteToken').exists().notEmpty().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const toggleCommonPoolRules = [
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('id').exists().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const getStatsRules = [
@@ -92,17 +98,25 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     query('search').optional().isString(),
     query('from').optional().isISO8601(),
     query('to').optional().isISO8601(),
-    validateSchema
+    validateSchema,
   ]
-  const getStatsForAllEnterprisesRules = [header('authorization').exists().notEmpty().isString(), authRequired({}), validateSchema]
-  const getInvoicingForCreditedEnterprisesRules = [header('authorization').exists().notEmpty().isString(), authRequired({}), validateSchema]
+  const getStatsForAllEnterprisesRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    validateSchema,
+  ]
+  const getInvoicingForCreditedEnterprisesRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    validateSchema,
+  ]
 
   const addUsageConstraintRules = [
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('enterpriseId').exists().isString(),
     check('constraint').exists().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const removeUsageConstraintRules = [
@@ -110,14 +124,14 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     authRequired({}),
     check('enterpriseId').exists().isString(),
     check('constraintId').exists().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const listUsageConstraintsRules = [
     header('authorization').exists().notEmpty().isString(),
     authRequired({}),
     check('enterpriseId').exists().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const addEmployeeModelRules = [
@@ -126,7 +140,30 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     check('enterpriseId').exists().isString(),
     check('employeeId').exists().isString(),
     check('modelId').exists().isString(),
-    validateSchema
+    validateSchema,
+  ]
+  const listEmployeeGroupRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    validateSchema,
+  ]
+  const updateEmployeeGroupsRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    check('groups').exists().isArray(),
+    validateSchema,
+  ]
+  const createEmployeeGroupsRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    check('groups').exists().isArray(),
+    validateSchema,
+  ]
+  const deleteEmployeeGroupsRules = [
+    header('authorization').exists().notEmpty().isString(),
+    authRequired({}),
+    check('employeeGroupIds').exists().isArray(),
+    validateSchema,
   ]
 
   const removeEmployeeModelRules = [
@@ -135,7 +172,7 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     check('enterpriseId').exists().isString(),
     check('employeeId').exists().isString(),
     check('modelId').exists().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   return {
@@ -145,6 +182,7 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     updateEnterpriseRules,
     updateEnterpriseLimitsRules,
     changeEmployeeBalanceRules,
+    changeEmployeeSpendLimitRules,
     deleteEmployeeRules,
     generateInviteTokenRules,
     joinRules,
@@ -155,7 +193,11 @@ export const buildEnterpriseRules = ({ allowedIps, authRequired, validateSchema 
     listUsageConstraintsRules,
     addEmployeeModelRules,
     removeEmployeeModelRules,
+    listEmployeeGroupRules,
+    updateEmployeeGroupsRules,
+    createEmployeeGroupsRules,
+    deleteEmployeeGroupsRules,
     getStatsForAllEnterprisesRules,
-    getInvoicingForCreditedEnterprisesRules
+    getInvoicingForCreditedEnterprisesRules,
   }
 }

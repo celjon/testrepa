@@ -1,4 +1,4 @@
-import { IModelAccountQueue } from '@/domain/entity/modelAccountQueue'
+import { IModelAccountQueue } from '@/domain/entity/model-account-queue'
 import { NotFoundError } from '@/domain/errors'
 import { UseCaseParams } from '@/domain/usecase/types'
 
@@ -9,26 +9,26 @@ export const buildNextAccount =
   async ({ queueId }) => {
     const accountQueue = await adapter.modelAccountQueueRepository.get({
       where: {
-        id: queueId
+        id: queueId,
       },
       include: {
         provider: true,
         accounts: {
           orderBy: {
-            created_at: 'asc'
-          }
-        }
-      }
+            created_at: 'asc',
+          },
+        },
+      },
     })
 
     if (!accountQueue) {
       throw new NotFoundError({
-        code: 'MODEL_ACCOUNT_QUEUE_NOT_FOUND'
+        code: 'MODEL_ACCOUNT_QUEUE_NOT_FOUND',
       })
     }
 
     const updatedAccountQueue = await service.model.accountBalancer.next({
-      accountQueue
+      accountQueue,
     })
 
     return updatedAccountQueue

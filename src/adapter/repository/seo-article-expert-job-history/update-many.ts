@@ -3,7 +3,10 @@ import { AdapterParams } from '@/adapter/types'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type UpdateMany = (data: Prisma.SEOArticleExpertJobHistoryUpdateManyArgs, tx?: unknown) => Promise<Prisma.BatchPayload | never>
+export type UpdateMany = (
+  data: Prisma.SEOArticleExpertJobHistoryUpdateManyArgs,
+  tx?: unknown,
+) => Promise<Prisma.BatchPayload | never>
 
 export const buildUpdateMany = ({ db }: Params, tx?: unknown): UpdateMany => {
   return async (data) => {

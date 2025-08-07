@@ -5,8 +5,12 @@ import { buildChatRepository, ChatRepository } from './chat'
 import { buildChatSettingsRepository, ChatSettingsRepository } from './chat-settings'
 import { buildDeveloperKeyRepository, DeveloperKeyRepository } from './developer-key'
 import { buildEmployeeRepository, EmployeeRepository } from './employee'
+import { buildEmployeeGroupRepository, EmployeeGroupRepository } from './employee-group'
 import { buildEnterpriseRepository, EnterpriseRepository } from './enterprise'
-import { buildEnterpriseUsageConstraintsRepository, EnterpriseUsageConstraintsRepository } from './enterprise-usage-constraints'
+import {
+  buildEnterpriseUsageConstraintsRepository,
+  EnterpriseUsageConstraintsRepository,
+} from './enterprise-usage-constraints'
 import { buildFileRepository, FileRepository } from './file'
 import { buildGroupRepository, GroupRepository } from './group'
 import { buildJobRepository, JobRepository } from './job'
@@ -23,34 +27,61 @@ import { buildPresetRepository, PresetRepository } from './preset'
 import { buildPresetCategoryRepository, PresetCategoryRepository } from './preset-category'
 import { buildReferralRepository, ReferralRepository } from './referral'
 import { buildReferralTemplateRepository, ReferralTemplateRepository } from './referral-template'
-import { buildReferralParticipantRepository, ReferralParticipantRepository } from './referral-participant'
+import {
+  buildReferralParticipantRepository,
+  ReferralParticipantRepository,
+} from './referral-participant'
 import { buildShortcutRepository, ShortcutRepository } from './shortcut'
 import { buildSubscriptionRepository, SubscriptionRepository } from './subscription'
 import { buildTransactionRepository, TransactionRepository } from './transaction'
 import { buildTransactor, Transactor } from './transactor'
 import { buildUserRepository, UserRepository } from './user'
 import { buildStrikeRepository, StrikeRepository } from './strike'
-import { buildMidjourneyDiscordAccountRepository, MidjourneyDiscordAccountRepository } from './midjourney-discord-account'
+import {
+  buildMidjourneyDiscordAccountRepository,
+  MidjourneyDiscordAccountRepository,
+} from './midjourney-discord-account'
 import { buildVoiceRepository, VoiceRepository } from './voice'
 import { buildModelProviderRepository, ModelProviderRepository } from './model-provider'
 import { buildModelCustomRepository, ModelCustomRepository } from './model-custom'
 import { buildVerificationCodeRepository, VerificationCodeRepository } from './verification-code'
 import { buildArticleRepository, ArticleRepository } from './article'
 import { buildModelAccountRepository, ModelAccountRepository } from './model-account'
-import { buildModelAccountQueueRepository, ModelAccountQueueRepository } from './model-account-queue'
-import { buildModelAccountModelRepository, ModelAccountModelRepository } from './model-account-model'
+import {
+  buildModelAccountQueueRepository,
+  ModelAccountQueueRepository,
+} from './model-account-queue'
+import {
+  buildModelAccountModelRepository,
+  ModelAccountModelRepository,
+} from './model-account-model'
 import { buildMessageSetRepository, MessageSetRepository } from './message-set'
-import { buildTemporaryFileRepository, TemporaryFileRepository } from './temporaryFile'
-import { buildMidjourneyLastUsedQueueRepository, MidjourneyLastUsedQueueRepository } from './midjourney-last-used-queue'
+import { buildTemporaryFileRepository, TemporaryFileRepository } from './temporary-file'
+import {
+  buildMidjourneyLastUsedQueueRepository,
+  MidjourneyLastUsedQueueRepository,
+} from './midjourney-last-used-queue'
 import { buildOldEmailRepository, OldEmailRepository } from './old-email'
 import { buildVideoRepository, VideoRepository } from './video'
 import { buildSEOArticleExpertRepository, SEOArticleExpertRepository } from './seo-article-expert'
-import { buildSEOArticleProofreadingRepository, SEOArticleProofreadingRepository } from './seo-article-proofreading'
+import {
+  buildSEOArticleProofreadingRepository,
+  SEOArticleProofreadingRepository,
+} from './seo-article-proofreading'
 import { buildSEOArticleTopicRepository, SEOArticleTopicRepository } from './seo-article-topic'
-import { buildSEOArticleCategoryRepository, SEOArticleCategoryRepository } from './seo-article-category'
-import { buildSEOArticleExpertJobHistoryRepository, SEOArticleExpertJobHistoryRepository } from './seo-article-expert-job-history'
+import {
+  buildSEOArticleCategoryRepository,
+  SEOArticleCategoryRepository,
+} from './seo-article-category'
+import {
+  buildSEOArticleExpertJobHistoryRepository,
+  SEOArticleExpertJobHistoryRepository,
+} from './seo-article-expert-job-history'
 import { buildModelUsageBucketRepository, ModelUsageBucketRepository } from './model-usage-bucket'
 import { buildPromptQueuesRepository, PromptQueuesRepository } from './prompt-queues'
+import { buildRefreshTokenRepository, RefreshTokenRepository } from './refresh-token'
+import { buildGiftCertificateRepository, GiftCertificateRepository } from './gift-certificate'
+import { buildExchangeRateRepository, ExchangeRateRepository } from './exchange-rate'
 
 export type Repository = {
   authRepository: AuthRepository
@@ -78,6 +109,7 @@ export type Repository = {
   shortcutRepository: ShortcutRepository
   enterpriseRepository: EnterpriseRepository
   employeeRepository: EmployeeRepository
+  employeeGroupRepository: EmployeeGroupRepository
   referralRepository: ReferralRepository
   referralTemplateRepository: ReferralTemplateRepository
   referralParticipantRepository: ReferralParticipantRepository
@@ -105,6 +137,9 @@ export type Repository = {
   oldEmailRepository: OldEmailRepository
   modelUsageBucketRepository: ModelUsageBucketRepository
   promptQueuesRepository: PromptQueuesRepository
+  refreshTokenRepository: RefreshTokenRepository
+  giftCertificateRepository: GiftCertificateRepository
+  exchangeRateRepository: ExchangeRateRepository
 }
 
 export const buildRepository = (params: AdapterParams): Repository => {
@@ -133,6 +168,7 @@ export const buildRepository = (params: AdapterParams): Repository => {
   const shortcutRepository = buildShortcutRepository(params)
   const enterpriseRepository = buildEnterpriseRepository(params)
   const employeeRepository = buildEmployeeRepository(params)
+  const employeeGroupRepository = buildEmployeeGroupRepository(params)
   const referralRepository = buildReferralRepository(params)
   const referralTemplateRepository = buildReferralTemplateRepository(params)
   const referralParticipantRepository = buildReferralParticipantRepository(params)
@@ -159,6 +195,9 @@ export const buildRepository = (params: AdapterParams): Repository => {
   const midjourneyLastUsedQueueRepository = buildMidjourneyLastUsedQueueRepository(params)
   const oldEmailRepository = buildOldEmailRepository(params)
   const promptQueuesRepository = buildPromptQueuesRepository(params)
+  const refreshTokenRepository = buildRefreshTokenRepository(params)
+  const giftCertificateRepository = buildGiftCertificateRepository(params)
+  const exchangeRateRepository = buildExchangeRateRepository(params)
 
   return {
     enterpriseUsageConstraintsRepository,
@@ -187,6 +226,7 @@ export const buildRepository = (params: AdapterParams): Repository => {
     shortcutRepository,
     enterpriseRepository,
     employeeRepository,
+    employeeGroupRepository,
     referralRepository,
     referralTemplateRepository,
     referralParticipantRepository,
@@ -212,7 +252,10 @@ export const buildRepository = (params: AdapterParams): Repository => {
     midjourneyLastUsedQueueRepository,
     oldEmailRepository,
     modelUsageBucketRepository: buildModelUsageBucketRepository(params),
-    promptQueuesRepository
+    promptQueuesRepository,
+    refreshTokenRepository,
+    giftCertificateRepository,
+    exchangeRateRepository,
   }
 }
 
@@ -262,3 +305,6 @@ export { ModelAccountQueueRepository } from './model-account-queue'
 export { ModelAccountModelRepository } from './model-account-model'
 export { MessageSetRepository } from './message-set'
 export { PromptQueuesRepository } from './prompt-queues'
+export { RefreshTokenRepository } from './refresh-token'
+export { GiftCertificateRepository } from './gift-certificate'
+export { ExchangeRateRepository } from './exchange-rate'

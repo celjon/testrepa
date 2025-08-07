@@ -1,8 +1,10 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildCompileEmailTemplate } from './compile-email-template'
-import { getTranlation, Translation } from './translation'
+import { CompileTemplate } from './compile-email-template'
+import { getTranslation, Translation } from './translation'
 
-type Params = Pick<AdapterParams, 'mail'>
+type Params = Pick<AdapterParams, 'mail'> & {
+  compileTemplate: CompileTemplate
+}
 
 export type ArticlesLinksMailParams = {
   articlesLinks: string
@@ -16,27 +18,29 @@ export type SendLinksToGeneratedArticlesMail = (
   params: {
     to: string
     locale?: string
-  } & ArticlesLinksMailParams
+  } & ArticlesLinksMailParams,
 ) => Promise<void>
 
-export const buildSendLinksToGeneratedArticlesMail = ({ mail: mailClient }: Params): SendLinksToGeneratedArticlesMail => {
-  const compileTemplate = buildCompileEmailTemplate()
+export const buildSendLinksToGeneratedArticlesMail = ({
+  mail: mailClient,
+  compileTemplate,
+}: Params): SendLinksToGeneratedArticlesMail => {
   const template = compileTemplate<TemplateParams>('links-to-generated-articles.hbs')
 
   return async (params) => {
     const html = await template(
       {
         articlesLinks: params.articlesLinks,
-        t: getTranlation('generatedArticlesLinksMail', params.locale)
+        t: getTranslation('generatedArticlesLinksMail', params.locale),
       },
-      params.locale
+      params.locale,
     )
 
     await mailClient.client.sendMail({
       from: 'no-reply@bothub.chat',
       to: params.to,
-      subject: getTranlation('generatedArticlesLinksMailSubject', params.locale),
-      html
+      subject: getTranslation('generatedArticlesLinksMailSubject', params.locale),
+      html,
     })
   }
 }

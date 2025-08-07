@@ -1,6 +1,6 @@
 import { buildList, List } from './list'
 import { buildExcel, Excel } from './excel'
-import { buildListWithdraw, ListWithdraw } from './listWithdraw'
+import { buildListWithdraw, ListWithdraw } from './list-withdraw'
 import { buildReject, Reject } from './reject'
 import { buildSubmit, Submit } from './submit'
 import { IHandler } from '../types'
@@ -9,6 +9,10 @@ import { Middlewares } from '../../middlewares'
 import Express from 'express'
 import { DeliveryParams } from '@/delivery/types'
 import { buildTransactionRules } from './rules'
+import {
+  buildExcelGroupedByDeveloperKey,
+  ExcelGroupedByDeveloperKey,
+} from './excel-grouped-by-developer-key-label'
 
 type Params = Pick<DeliveryParams, 'transaction' | 'middlewares'>
 
@@ -18,10 +22,12 @@ export type TransactionMethods = {
   listWithdraw: ListWithdraw
   reject: Reject
   submit: Submit
+  excelGroupedByDeveloperKey: ExcelGroupedByDeveloperKey
 }
 
 const buildRegisterRoutes = (methods: TransactionMethods, middlewares: Middlewares) => {
-  const { listTransactionsRules } = buildTransactionRules(middlewares)
+  const { listTransactionsRules, excelGroupedByDeveloperKeyRules } =
+    buildTransactionRules(middlewares)
   const { authRequired } = middlewares
 
   return (root: Express.Router) => {
@@ -40,6 +46,9 @@ const buildRegisterRoutes = (methods: TransactionMethods, middlewares: Middlewar
      *       - name: page
      *         in: query
      *         type: number
+     *       - name: withDeveloperKey
+     *         in: query
+     *         type: boolean
      *     responses:
      *        200:
      *           content:
@@ -54,6 +63,46 @@ const buildRegisterRoutes = (methods: TransactionMethods, middlewares: Middlewar
      *                          type: number
      */
     namespace.get('/list', listTransactionsRules, createRouteHandler(methods.list))
+    /**
+     * @openapi
+     * /transaction/excel-grouped-by-developer-key-label:
+     *   get:
+     *     tags: [Transaction]
+     *     security:
+     *       - bearerAuth: []
+     *     summary: Экспорт агрегированных трат пользователя по developerKeyId в формате Excel
+     *     parameters:
+     *       - name: from
+     *         in: query
+     *         description: Начальная дата (включительно) в формате YYYY-MM-DD или ISO 8601. Если не передана, по умолчанию берётся текущая дата.
+     *         required: false
+     *         schema:
+     *           type: string
+     *           format: date
+     *           example: "2025-06-01"
+     *       - name: to
+     *         in: query
+     *         description: Конечная дата (включительно) в формате YYYY-MM-DD или ISO 8601. Если не передана, по умолчанию берётся текущая дата.
+     *         required: false
+     *         schema:
+     *           type: string
+     *           format: date
+     *           example: "2025-06-10"
+     *     responses:
+     *       200:
+     *         description: Excel-файл с агрегированной статистикой трат пользователя по developerKeyId.
+     *         content:
+     *           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+     *             schema:
+     *               type: string
+     *               format: binary
+     */
+    namespace.get(
+      '/excel-grouped-by-developer-key-label',
+      excelGroupedByDeveloperKeyRules,
+      createRouteHandler(methods.excelGroupedByDeveloperKey),
+    )
+
     namespace.get('/excel', authRequired(), createRouteHandler(methods.excel))
     namespace.get('/list-withdraw', authRequired(), createRouteHandler(methods.listWithdraw))
     namespace.get('/:id/submit', authRequired(), createRouteHandler(methods.submit))
@@ -68,6 +117,7 @@ export const buildTransactionHandler = (params: Params): IHandler => {
   const listWithdraw = buildListWithdraw(params)
   const reject = buildReject(params)
   const submit = buildSubmit(params)
+  const excelGroupedByDeveloperKey = buildExcelGroupedByDeveloperKey(params)
 
   return {
     registerRoutes: buildRegisterRoutes(
@@ -76,9 +126,10 @@ export const buildTransactionHandler = (params: Params): IHandler => {
         excel,
         listWithdraw,
         reject,
-        submit
+        submit,
+        excelGroupedByDeveloperKey,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

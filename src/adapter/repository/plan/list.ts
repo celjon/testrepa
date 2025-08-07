@@ -17,18 +17,18 @@ export const buildList = ({ db }: Params): List => {
                   ...data.include.models,
                   where: {
                     ...data.include.models.where,
-                    deleted_at: null
-                  }
+                    deleted_at: null,
+                  },
                 }
               : data.include.models
                 ? { where: { deleted_at: null } }
-                : data.include.models
+                : data.include.models,
         }
       : undefined
 
     const plans = (await db.client.plan.findMany({
       ...data,
-      ...(include ? { include } : {})
+      ...(include ? { include } : {}),
     })) as Array<IPlan>
     return plans
   }

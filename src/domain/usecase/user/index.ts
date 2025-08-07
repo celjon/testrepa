@@ -33,6 +33,6 @@ export const buildUserUseCase = (params: UseCaseParams): UserUseCase => {
     update,
     sendVerifyUpdating,
     updateRegion,
-    getPaymentMethods
+    getPaymentMethods,
   }
 }

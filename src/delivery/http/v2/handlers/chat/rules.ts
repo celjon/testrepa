@@ -30,7 +30,7 @@ export const buildChatRules = ({ authRequired, validateSchema }: Middlewares) =>
     check('name').optional({ nullable: true }).isString(),
     check('platform').optional().isString().isIn([Platform.WEB, Platform.TELEGRAM, 'telegram']),
     check('order').optional().isNumeric(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -62,7 +62,7 @@ export const buildChatRules = ({ authRequired, validateSchema }: Middlewares) =>
     check('initial').optional().isBoolean(),
     check('groupId').optional().isString(),
     check('order').optional().isNumeric(),
-    validateSchema
+    validateSchema,
   ]
 
   const clearContextRules = [authRequired({}), validateSchema]
@@ -71,23 +71,23 @@ export const buildChatRules = ({ authRequired, validateSchema }: Middlewares) =>
     authRequired({}),
     query('groupId').optional().isString(),
     query('page').optional().isInt({
-      min: 1
+      min: 1,
     }),
     query('search').optional().isString(),
     query('sort').optional().isString(),
     query('sortDirection').optional().isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const listMessagesRules = [
     authRequired({}),
     query('page').optional().isInt({
-      min: 1
+      min: 1,
     }),
     query('quantity').optional().isInt({
-      min: 1
+      min: 1,
     }),
-    validateSchema
+    validateSchema,
   ]
 
   const deleteChatRules = [authRequired({}), validateSchema]
@@ -128,7 +128,7 @@ export const buildChatRules = ({ authRequired, validateSchema }: Middlewares) =>
     authRequired({}),
     check('idsToKeep').isArray(),
     check('groupIdsToKeep').optional().isArray(),
-    validateSchema
+    validateSchema,
   ]
 
   const getChatRules = [authRequired({}), validateSchema]
@@ -154,7 +154,7 @@ export const buildChatRules = ({ authRequired, validateSchema }: Middlewares) =>
     query('all').optional().isInt(),
     query('elements').optional().isInt(),
     query('platform').optional().isString().isIn([Platform.WEB, Platform.MAIN, Platform.TELEGRAM]),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -181,7 +181,7 @@ export const buildChatRules = ({ authRequired, validateSchema }: Middlewares) =>
     body('ids').isArray(),
     body('groupId').optional(),
     body('startChatId').isString().optional(),
-    validateSchema
+    validateSchema,
   ]
 
   return {
@@ -197,6 +197,6 @@ export const buildChatRules = ({ authRequired, validateSchema }: Middlewares) =>
     updateChatRules,
     getChatSettingsRules,
     updateChatSettingsRules,
-    moveChatsRules
+    moveChatsRules,
   }
 }

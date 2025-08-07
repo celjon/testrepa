@@ -2,7 +2,7 @@ import { AxiosInstance } from 'axios'
 
 export interface TranscriptConfig {
   lang?: string
-  axios?: AxiosInstance
+  axios: AxiosInstance
 }
 
 export interface TranscriptResponse {
@@ -13,5 +13,5 @@ export interface TranscriptResponse {
 }
 
 export interface TranscriptAPI {
-  fetchTranscript(videoId: string, config?: TranscriptConfig): Promise<TranscriptResponse[]>
+  fetchTranscript(videoId: string, config: TranscriptConfig): Promise<TranscriptResponse[]>
 }

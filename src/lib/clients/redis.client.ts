@@ -1,5 +1,5 @@
 import { createClient } from 'redis'
-
+import { logger } from '@/lib/logger'
 export type Client = ReturnType<Awaited<typeof createClient>>
 
 export interface RedisClients {
@@ -21,7 +21,7 @@ export const newClient = async (config: {
   const promptQueueKeys = await mainClient.keys('promptQueues:*')
   if (promptQueueKeys.length > 0) {
     await mainClient.del(promptQueueKeys)
-    console.log(`[redis] Old posts about the queues are deleted: ${promptQueueKeys.length} pcs`)
+    logger.info(`[redis] Old posts about the queues are deleted: ${promptQueueKeys.length} pcs`)
   }
 
   const pubSubClient = createClient({ url: connectionUrl })
@@ -45,7 +45,7 @@ export const newClient = async (config: {
   return {
     client: {
       main: mainClient,
-      cancelFns
-    }
+      cancelFns,
+    },
   }
 }

@@ -6,7 +6,9 @@ type Params = Pick<DeliveryParams, 'seoArticleExpertJobHistory'>
 
 export type UpdateSEOArticleExpertJobHistory = (req: AuthRequest, res: Response) => Promise<void>
 
-export const buildUpdateSEOArticleExpertJobHistory = ({ seoArticleExpertJobHistory }: Params): UpdateSEOArticleExpertJobHistory => {
+export const buildUpdateSEOArticleExpertJobHistory = ({
+  seoArticleExpertJobHistory,
+}: Params): UpdateSEOArticleExpertJobHistory => {
   return async (req, res) => {
     const result = await seoArticleExpertJobHistory.updateSEOArticleExpertJobHistory({
       id: req.params.seoArticleExpertJobHistoryId,
@@ -18,7 +20,7 @@ export const buildUpdateSEOArticleExpertJobHistory = ({ seoArticleExpertJobHisto
       duties: req.body.duties,
       achievements: req.body.achievements,
       description: req.body.description,
-      seo_expert_id: req.body.seo_expert_id
+      seo_expert_id: req.body.seo_expert_id,
     })
 
     res.status(200).json(result)

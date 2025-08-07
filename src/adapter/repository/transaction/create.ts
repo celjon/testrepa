@@ -4,7 +4,10 @@ import { AdapterParams, UnknownTx } from '@/adapter/types'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type CreateTransaction = (data: Prisma.TransactionCreateArgs, tx?: UnknownTx) => Promise<ITransaction | never>
+export type CreateTransaction = (
+  data: Prisma.TransactionCreateArgs,
+  tx?: UnknownTx,
+) => Promise<ITransaction | never>
 
 export const buildCreateTransaction = ({ db }: Params): CreateTransaction => {
   return async (data, tx) => {

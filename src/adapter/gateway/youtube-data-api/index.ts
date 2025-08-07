@@ -1,5 +1,5 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildGetTranscription } from './getTranscription'
+import { buildGetTranscription } from './get-transcription'
 
 type Params = Pick<AdapterParams, 'youtube'>
 
@@ -11,6 +11,6 @@ export const buildYoutubeDataGateway = (params: Params): YoutubeDataGateway => {
   const getTranscription = buildGetTranscription(params)
 
   return {
-    getTranscription
+    getTranscription,
   }
 }

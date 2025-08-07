@@ -1,8 +1,8 @@
 import { AdapterParams } from '@/adapter/types'
 import { buildImagine, Imagine } from './imagine'
 import { buildButton, Button } from './button'
-import { AddAccount, buildAddAccount } from './addAccount'
-import { buildRemoveAccount, RemoveAccount } from './removeAccount'
+import { AddAccount, buildAddAccount } from './add-account'
+import { buildRemoveAccount, RemoveAccount } from './remove-account'
 import { buildDescribe, Describe } from './describe'
 import { buildInit, Init } from './init'
 import { buildInfo, Info } from './info'
@@ -38,7 +38,7 @@ export const buildMidjourneyGateway = (params: Params): MidjourneyGateway => {
     info,
     account: {
       add: addAccount,
-      remove: removeAccount
-    }
+      remove: removeAccount,
+    },
   }
 }

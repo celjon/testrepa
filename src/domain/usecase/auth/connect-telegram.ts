@@ -4,25 +4,28 @@ import { UseCaseParams } from '@/domain/usecase/types'
 import { IUser } from '@/domain/entity/user'
 import { ForbiddenError, InvalidDataError, NotFoundError } from '@/domain/errors'
 
-export type ConnectTelegram = (data: { telegramConnectionToken: string; userId: string }) => Promise<IUser | never>
+export type ConnectTelegram = (data: {
+  telegramConnectionToken: string
+  userId: string
+}) => Promise<IUser | never>
 export const buildConnectTelegram = ({ service, adapter }: UseCaseParams): ConnectTelegram => {
   return async ({ telegramConnectionToken, userId }) => {
     const user = await adapter.userRepository.get({
       where: { id: userId },
       include: {
         subscription: { include: { plan: true } },
-        referral_participants: true
-      }
+        referral_participants: true,
+      },
     })
 
     if (!user || !user.subscription) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
     if (user.tg_id) {
       throw new ForbiddenError({
-        code: 'TELEGRAM_ALREADY_CONNECTED'
+        code: 'TELEGRAM_ALREADY_CONNECTED',
       })
     }
 
@@ -32,22 +35,22 @@ export const buildConnectTelegram = ({ service, adapter }: UseCaseParams): Conne
 
     if (!tokenPayload.id) {
       throw new InvalidDataError({
-        code: 'INVALID_TELEGRAM_CONNECTION_TOKEN'
+        code: 'INVALID_TELEGRAM_CONNECTION_TOKEN',
       })
     }
     const telegramUser = await adapter.userRepository.get({
       where: { id: tokenPayload.id },
-      include: { subscription: { include: { plan: true } } }
+      include: { subscription: { include: { plan: true } } },
     })
 
     if (!telegramUser || !telegramUser.subscription) {
       throw new NotFoundError({
-        code: 'TELEGRAM_USER_NOT_FOUND'
+        code: 'TELEGRAM_USER_NOT_FOUND',
       })
     }
     if (telegramUser.email) {
       throw new ForbiddenError({
-        code: 'TELEGRAM_ALREADY_CONNECTED'
+        code: 'TELEGRAM_ALREADY_CONNECTED',
       })
     }
 
@@ -59,9 +62,9 @@ export const buildConnectTelegram = ({ service, adapter }: UseCaseParams): Conne
           type: 'merge',
           oldId: telegramUser.id,
           newId: user.id,
-          email: user.email
+          email: user.email,
         })
-      }
+      },
     })
 
     if (updatedUser) {

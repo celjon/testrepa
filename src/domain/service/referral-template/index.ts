@@ -1,0 +1,12 @@
+import { Adapter } from '@/adapter'
+import { buildPaginate, Paginate } from './paginate'
+
+export type ReferralTemplateService = {
+  paginate: Paginate
+}
+export const buildReferralTemplateService = (params: Adapter): ReferralTemplateService => {
+  const paginate = buildPaginate(params)
+  return {
+    paginate,
+  }
+}

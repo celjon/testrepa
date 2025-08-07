@@ -5,7 +5,13 @@ export type CreateExcelStatsForEnterpriseParams = {
   to?: Date
   totalEnterpriseTokensCredited: bigint
   totalEnterpriseTokensSpent: bigint
-  enterpriseEmployees: { email: string | null; tg_id: string | null; usedTokens: bigint }[]
+  balance?: bigint
+  enterpriseEmployees: {
+    email: string | null
+    tg_id: string | null
+    usedTokens: bigint
+    balance?: bigint
+  }[]
 }
 export type CreateExcelStatsForAllEnterprisesParams = {
   params: {
@@ -14,6 +20,10 @@ export type CreateExcelStatsForAllEnterprisesParams = {
     creator: string
     agreement_conclusion_date: string | null
   }[]
+}
+export type CreateExcelUserSpendingStatsByDeveloperKeyParams = {
+  username: string
+  rows: { date: string; developerKey: string; amount: number }[]
 }
 export type CreateExcelInvoicingForCreditEnterprisesParams = {
   params: {
@@ -25,8 +35,15 @@ export type CreateExcelInvoicingForCreditEnterprisesParams = {
   }[]
 }
 
-export type CreateExcelStatsForEnterprise = (params: CreateExcelStatsForEnterpriseParams) => Promise<Buffer<ArrayBufferLike>>
-export type CreateExcelStatsForAllEnterprises = (params: CreateExcelStatsForAllEnterprisesParams) => Promise<Buffer<ArrayBufferLike>>
+export type CreateExcelStatsForEnterprise = (
+  params: CreateExcelStatsForEnterpriseParams,
+) => Promise<Buffer<ArrayBufferLike>>
+export type CreateExcelStatsForAllEnterprises = (
+  params: CreateExcelStatsForAllEnterprisesParams,
+) => Promise<Buffer<ArrayBufferLike>>
 export type CreateExcelInvoicingForCreditEnterprises = (
-  params: CreateExcelInvoicingForCreditEnterprisesParams
+  params: CreateExcelInvoicingForCreditEnterprisesParams,
+) => Promise<Buffer<ArrayBufferLike>>
+export type CreateExcelUserSpendingStatsByDeveloperKey = (
+  params: CreateExcelUserSpendingStatsByDeveloperKeyParams,
 ) => Promise<Buffer<ArrayBufferLike>>

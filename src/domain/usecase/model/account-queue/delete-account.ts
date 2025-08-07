@@ -10,19 +10,19 @@ export const buildDeleteAccount = ({ adapter }: UseCaseParams): DeleteAccount =>
     const modelAccount = await adapter.modelAccountRepository.get({
       where: { id },
       include: {
-        g4f_har_file: true
-      }
+        g4f_har_file: true,
+      },
     })
 
     if (!modelAccount) {
       throw new NotFoundError({
-        code: 'MODEL_ACCOUNT_NOT_FOUND'
+        code: 'MODEL_ACCOUNT_NOT_FOUND',
       })
     }
 
     if (modelAccount.mj_channel_id) {
       await adapter.midjourneyGateway.account.remove({
-        id: modelAccount.id
+        id: modelAccount.id,
       })
     }
 
@@ -31,7 +31,7 @@ export const buildDeleteAccount = ({ adapter }: UseCaseParams): DeleteAccount =>
         .deleteHarFile({
           name: modelAccount.g4f_har_file.name,
           apiUrl: modelAccount.g4f_api_url,
-          harManagerUrl: cfg.model_providers.g4f.har_manager_url
+          harManagerUrl: cfg.model_providers.g4f.har_manager_url,
         })
         .catch((err) => {
           logger.warn(`error deleting har file for account ${id}: ${err}`)
@@ -39,7 +39,7 @@ export const buildDeleteAccount = ({ adapter }: UseCaseParams): DeleteAccount =>
     }
 
     await adapter.modelAccountRepository.deleteMany({
-      where: { id }
+      where: { id },
     })
   }
 }

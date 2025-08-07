@@ -13,13 +13,13 @@ export const buildDeleteDeletedChats =
       for (let i = 0; i < 5; i++) {
         const result = await chatRepository.deleteMany({
           where: {
-            deleted: true
+            deleted: true,
           },
-          limit: 1000
+          limit: 1000,
         })
         logger.info({
           location: 'deleteDeletedChats',
-          message: `Deleted ${result.count} chats.`
+          message: `Deleted ${result.count} chats.`,
         })
 
         if (result.count === 0) {
@@ -33,7 +33,7 @@ export const buildDeleteDeletedChats =
     } catch (err) {
       logger.error({
         location: 'deleteDeletedChats',
-        message: `Error deleting deleted chats: ${err}`
+        message: `Error deleting deleted chats: ${err}`,
       })
     }
   }

@@ -12,13 +12,13 @@ export function determine_protocol(endpoint: string): {
       return {
         ws_protocol: 'wss',
         host: host,
-        http_protocol: protocol as 'http:' | 'https:'
+        http_protocol: protocol as 'http:' | 'https:',
       }
     } else {
       return {
         ws_protocol: protocol === 'https:' ? 'wss' : 'ws',
         http_protocol: protocol as 'http:' | 'https:',
-        host
+        host,
       }
     }
   }
@@ -27,7 +27,7 @@ export function determine_protocol(endpoint: string): {
   return {
     ws_protocol: 'wss',
     http_protocol: 'https:',
-    host: endpoint
+    host: endpoint,
   }
 }
 
@@ -36,7 +36,7 @@ export const RE_SPACE_DOMAIN = /.*hf\.space\/{0,1}$/
 
 export async function process_endpoint(
   app_reference: string,
-  token?: `hf_${string}`
+  token?: `hf_${string}`,
 ): Promise<{
   space_id: string | false
   host: string
@@ -52,14 +52,16 @@ export async function process_endpoint(
 
   if (RE_SPACE_NAME.test(_app_reference)) {
     try {
-      const res = await fetch(`https://huggingface.co/api/spaces/${_app_reference}/host`, { headers })
+      const res = await fetch(`https://huggingface.co/api/spaces/${_app_reference}/host`, {
+        headers,
+      })
 
       if (res.status !== 200) throw new Error('Space metadata could not be loaded.')
       const _host = (await res.json()).host
 
       return {
         space_id: app_reference,
-        ...determine_protocol(_host)
+        ...determine_protocol(_host),
       }
     } catch (e: any) {
       throw new Error('Space metadata could not be loaded.' + e.message)
@@ -73,13 +75,13 @@ export async function process_endpoint(
       space_id: host.replace('.hf.space', ''),
       ws_protocol,
       http_protocol,
-      host
+      host,
     }
   }
 
   return {
     space_id: false,
-    ...determine_protocol(_app_reference)
+    ...determine_protocol(_app_reference),
   }
 }
 
@@ -98,7 +100,7 @@ const RE_DISABLED_DISCUSSION = /^(?=[^]*\b[dD]iscussions{0,1}\b)(?=[^]*\b[dD]isa
 export async function discussions_enabled(space_id: string) {
   try {
     const r = await fetch(`https://huggingface.co/api/spaces/${space_id}/discussions`, {
-      method: 'HEAD'
+      method: 'HEAD',
     })
     const error = r.headers.get('x-error-message')
 
@@ -128,7 +130,11 @@ export async function get_space_hardware(space_id: string, token: `hf_${string}`
   }
 }
 
-export async function set_space_hardware(space_id: string, new_hardware: (typeof hardware_types)[number], token: `hf_${string}`) {
+export async function set_space_hardware(
+  space_id: string,
+  new_hardware: (typeof hardware_types)[number],
+  token: `hf_${string}`,
+) {
   const headers: { Authorization?: string } = {}
   if (token) {
     headers.Authorization = `Bearer ${token}`
@@ -137,12 +143,12 @@ export async function set_space_hardware(space_id: string, new_hardware: (typeof
   try {
     const res = await fetch(`https://huggingface.co/api/spaces/${space_id}/hardware`, {
       headers,
-      body: JSON.stringify(new_hardware)
+      body: JSON.stringify(new_hardware),
     })
 
     if (res.status !== 200)
       throw new Error(
-        'Space hardware could not be set. Please ensure the space hardware provided is valid and that a Hugging Face token is passed in.'
+        'Space hardware could not be set. Please ensure the space hardware provided is valid and that a Hugging Face token is passed in.',
       )
 
     const { hardware } = await res.json()
@@ -162,12 +168,12 @@ export async function set_space_timeout(space_id: string, timeout: number, token
   try {
     const res = await fetch(`https://huggingface.co/api/spaces/${space_id}/hardware`, {
       headers,
-      body: JSON.stringify({ seconds: timeout })
+      body: JSON.stringify({ seconds: timeout }),
     })
 
     if (res.status !== 200)
       throw new Error(
-        'Space hardware could not be set. Please ensure the space hardware provided is valid and that a Hugging Face token is passed in.'
+        'Space hardware could not be set. Please ensure the space hardware provided is valid and that a Hugging Face token is passed in.',
       )
 
     const { hardware } = await res.json()
@@ -178,4 +184,12 @@ export async function set_space_timeout(space_id: string, timeout: number, token
   }
 }
 
-export const hardware_types = ['cpu-basic', 'cpu-upgrade', 't4-small', 't4-medium', 'a10g-small', 'a10g-large', 'a100-large'] as const
+export const hardware_types = [
+  'cpu-basic',
+  'cpu-upgrade',
+  't4-small',
+  't4-medium',
+  'a10g-small',
+  'a10g-large',
+  'a100-large',
+] as const

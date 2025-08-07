@@ -1,4 +1,4 @@
-import { IDeveloperKey } from '@/domain/entity/developerKey'
+import { IDeveloperKey } from '@/domain/entity/developer-key'
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
 

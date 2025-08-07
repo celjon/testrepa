@@ -21,7 +21,7 @@ export const buildInit =
 
           clusterGateway.emit('chat-emit', workers, chatId, event)
         },
-        workers
+        workers,
       )
     }
     if (cluster.isWorker) {
@@ -29,7 +29,7 @@ export const buildInit =
         emit({
           type: 'stream',
           chatId,
-          event
+          event,
         })
       })
     }

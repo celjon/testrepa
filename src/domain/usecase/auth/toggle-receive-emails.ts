@@ -6,13 +6,16 @@ export type ToggleReceiveEmails = (data: { userId: string; receiveEmails: boolea
   subscription: ISubscription
 }>
 
-export const buildToggleReceiveEmails = ({ adapter, service }: UseCaseParams): ToggleReceiveEmails => {
+export const buildToggleReceiveEmails = ({
+  adapter,
+  service,
+}: UseCaseParams): ToggleReceiveEmails => {
   return async ({ userId, receiveEmails }) => {
     let user = await adapter.userRepository.get({
       where: { id: userId },
       include: {
-        subscription: true
-      }
+        subscription: true,
+      },
     })
 
     if (!user || !user.subscription) {
@@ -26,7 +29,7 @@ export const buildToggleReceiveEmails = ({ adapter, service }: UseCaseParams): T
     if (receiveEmails && !user.hadSubscriptedForEmails) {
       await service.subscription.replenish({
         subscription: user.subscription,
-        amount: 10_000
+        amount: 10_000,
       })
     }
 
@@ -34,11 +37,11 @@ export const buildToggleReceiveEmails = ({ adapter, service }: UseCaseParams): T
       where: { id: userId },
       data: {
         receiveEmails,
-        hadSubscriptedForEmails: receiveEmails || user.hadSubscriptedForEmails
+        hadSubscriptedForEmails: receiveEmails || user.hadSubscriptedForEmails,
       },
       include: {
-        subscription: true
-      }
+        subscription: true,
+      },
     })
     if (!user || !user.subscription) {
       throw new InternalError()

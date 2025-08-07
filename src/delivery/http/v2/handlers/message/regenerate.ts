@@ -17,7 +17,7 @@ export const buildRegenerate =
       messageId: req.body.id,
       platform: convertSentPlatform(req.query?.platform ?? req.body?.platform),
       userMessageId: req.body?.userMessageId,
-      locale: getLocale(req.headers['accept-language'])
+      locale: getLocale(req.headers['accept-language']),
     })
 
     return res.status(201).send(job)

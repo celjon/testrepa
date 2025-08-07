@@ -34,8 +34,8 @@ type EmployeesStatsEvent =
           status: 'SUCCEDED'
           user: {
             id: string
-            email: string
-            tg_id: string
+            email: string | null
+            tg_id: string | null
           }
         }[]
       }
@@ -56,30 +56,75 @@ type EmployeesStatsEvent =
     }
 
 export const buildGetEmployeesStatsObservable = ({
+  subscriptionRepository,
   enterpriseRepository,
-  subscriptionRepository
+  employeeRepository,
+  userRepository,
 }: Adapter): GetEmployeesStatsObservable => {
-  return async ({ from, to, search, sort, enterpriseId, streamStopped, includeTransactions }): Promise<Observable<EmployeesStatsEvent>> => {
+  return async ({
+    from,
+    to,
+    search,
+    sort,
+    enterpriseId,
+    streamStopped,
+    includeTransactions,
+  }): Promise<Observable<EmployeesStatsEvent>> => {
     return new Observable<EmployeesStatsEvent>((subscriber) => {
       const computeStats = async () => {
         try {
           const enterpriseSubscription = await subscriptionRepository.get({
-            where: { enterprise_id: enterpriseId }
+            where: { enterprise_id: enterpriseId },
           })
           if (!enterpriseSubscription) {
             subscriber.error(
               new NotFoundError({
-                code: 'ENTERPRISE_SUBSCRIPTION_NOT_FOUND'
-              })
+                code: 'ENTERPRISE_SUBSCRIPTION_NOT_FOUND',
+              }),
             )
             return
           }
 
-          const stats = await enterpriseRepository.getEnterpriseStats({
+          //MIGRATION_ON_CLICKHOUSE
+          /* const stats = await enterpriseRepository.getEnterpriseStats({
+             enterpriseId,
+             from,
+             to,
+             search
+           })*/
+          const employeesFromPrisma = await employeeRepository.list({
+            where: { enterprise_id: enterpriseId },
+            include: { user: true },
+          })
+          const employeesMap = new Map(
+            employeesFromPrisma.map((e) => [
+              e.user_id,
+              { email: e.user?.email ?? null, tg_id: e.user?.tg_id ?? null },
+            ]),
+          )
+          const searchUsers = (
+            await userRepository.list({
+              where: search
+                ? {
+                    OR: [
+                      { email: { contains: search, mode: 'insensitive' } },
+                      { tg_id: { contains: search, mode: 'insensitive' } },
+                    ],
+                  }
+                : undefined,
+            })
+          ).map((user) => user.id)
+
+          const stats = await enterpriseRepository.chGetEnterpriseStats({
             enterpriseId,
             from,
             to,
-            search
+            searchUsers,
+          })
+
+          stats.employees = stats.employees.map((emp) => {
+            const extra = employeesMap.get(emp.id) ?? {}
+            return { ...emp, ...extra }
           })
 
           const employees = sortEmployeesData(stats.employees, sort)
@@ -94,7 +139,7 @@ export const buildGetEmployeesStatsObservable = ({
 
           subscriber.next({
             event: 'CURRENT_BALANCE',
-            data: { currentBalance }
+            data: { currentBalance },
           })
 
           subscriber.next({
@@ -102,18 +147,37 @@ export const buildGetEmployeesStatsObservable = ({
             data: {
               employees: employees,
               totalEnterpriseTokensUsed: totalCapsUsed,
-              totalEnterpriseTokensCredited: totalCapsCredited
-            }
+              totalEnterpriseTokensCredited: totalCapsCredited,
+            },
           })
 
           if (includeTransactions) {
             let transactionsSent = 0
             while (true) {
-              const transactions = await enterpriseRepository.getAggregateEnterpriseEmployeesTransactions({
+              //MIGRATION_ON_CLICKHOUSE
+              /*
+                            const transactions = await enterpriseRepository.getAggregateEnterpriseEmployeesTransactions({
+                              enterpriseId,
+                              from,
+                              to,
+                              search
+                            })
+              */
+              let transactions = await enterpriseRepository.chGetEnterpriseEmployeesTransactions({
                 enterpriseId,
                 from,
                 to,
-                search
+                search,
+              })
+              transactions = transactions.map((t) => {
+                const extra = employeesMap.get(t.user.id) ?? {}
+                return {
+                  ...t,
+                  user: {
+                    ...t.user,
+                    ...extra,
+                  },
+                }
               })
 
               if (transactionsSent < MAX_TRANSACTIONS_TO_SEND && transactions.length > 0) {
@@ -142,7 +206,7 @@ export const buildGetEmployeesStatsObservable = ({
             message: getErrorString(e),
             enterpriseId,
             from,
-            to
+            to,
           })
           subscriber.error(e)
         }
@@ -156,7 +220,7 @@ export const buildGetEmployeesStatsObservable = ({
 enum GetEmployeesStatsSort {
   ALPHABET,
   DESCENDING,
-  ASCENDING
+  ASCENDING,
 }
 
 const sortEmployeesData = (
@@ -167,7 +231,7 @@ const sortEmployeesData = (
     usedTokens: bigint
     requestsCount: number
   }[],
-  algo: GetEmployeesStatsSort
+  algo: GetEmployeesStatsSort,
 ) => {
   switch (algo) {
     case GetEmployeesStatsSort.ASCENDING:

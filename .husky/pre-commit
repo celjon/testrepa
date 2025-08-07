@@ -1,1 +1,1 @@
-bun tsc --noEmit && bun lint && bun test
+bun format:check && bun tsc --noEmit && bun lint && bun test

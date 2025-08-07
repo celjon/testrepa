@@ -18,31 +18,31 @@ export const buildList = ({ service }: UseCaseParams): List => {
             {
               name: {
                 contains: search,
-                mode: 'insensitive'
-              }
+                mode: 'insensitive',
+              },
             },
             {
               email: {
                 contains: search,
-                mode: 'insensitive'
-              }
+                mode: 'insensitive',
+              },
             },
             {
               tg_id: {
-                contains: search
-              }
-            }
-          ]
+                contains: search,
+              },
+            },
+          ],
         },
         include: {
           subscription: {
             include: {
-              plan: true
-            }
-          }
-        }
+              plan: true,
+            },
+          },
+        },
       },
-      page
+      page,
     })
 
     return users

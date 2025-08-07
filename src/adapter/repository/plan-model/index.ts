@@ -1,8 +1,8 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildCreateMany, CreateMany } from './createMany'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
+import { buildCreateMany, CreateMany } from './create-many'
+import { buildDeleteMany, DeleteMany } from './delete-many'
 import { buildGet, Get } from './get'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 import { buildList, List } from './list'
 import { buildUpsert, Upsert } from './upsert'
 import { buildCreate, Create } from './create'
@@ -34,6 +34,6 @@ export const buildPlanModelRepository = (params: Params): PlanModelRepository =>
     get,
     updateMany,
     list,
-    upsert
+    upsert,
   }
 }

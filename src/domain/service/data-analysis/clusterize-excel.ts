@@ -12,23 +12,33 @@ export type ClusterizeExcel = (params: {
   targetColumns: string[]
 }) => Promise<ClusterizationResult>
 
-export const buildClusterizeExcel = ({ dataAnalysisGateway, openrouterGateway }: Adapter): ClusterizeExcel => {
+export const buildClusterizeExcel = ({
+  dataAnalysisGateway,
+  openrouterGateway,
+}: Adapter): ClusterizeExcel => {
   return async ({ excelFile, sheetName, targetColumns }) => {
-    const result = await dataAnalysisGateway.clusterizeExcel({ excelFile, sheetName, targetColumns })
+    const result = await dataAnalysisGateway.clusterizeExcel({
+      excelFile,
+      sheetName,
+      targetColumns,
+    })
 
     const enhancedResult: ClusterizationResult = {
       topics: [],
       stats: {
         total_rows: result.stats.total_rows,
         silhouette_score: result.stats.silhouette_score,
-        identified_topics: result.stats.identified_topics
+        identified_topics: result.stats.identified_topics,
       },
-      noise: null
+      noise: null,
     }
 
     const topics = await Promise.all(
       result.topics.map(async (topic) => {
-        const { topicName, keywords } = await generateTopicNameAndKeywords(topic.examples, openrouterGateway)
+        const { topicName, keywords } = await generateTopicNameAndKeywords(
+          topic.examples,
+          openrouterGateway,
+        )
 
         return {
           topic_id: topic.topic_id,
@@ -36,9 +46,9 @@ export const buildClusterizeExcel = ({ dataAnalysisGateway, openrouterGateway }:
           keywords: keywords,
           percentage: topic.percentage,
           rows_count: topic.rows_count,
-          examples: topic.examples
+          examples: topic.examples,
         }
-      })
+      }),
     )
 
     enhancedResult.topics = topics
@@ -48,7 +58,7 @@ export const buildClusterizeExcel = ({ dataAnalysisGateway, openrouterGateway }:
           topic_id: -1,
           percentage: result.noise.percentage,
           rows_count: result.noise.rows_count,
-          examples: result.noise.examples
+          examples: result.noise.examples,
         }
       : null
 
@@ -58,7 +68,7 @@ export const buildClusterizeExcel = ({ dataAnalysisGateway, openrouterGateway }:
 
 const generateTopicNameAndKeywords = async (
   examples: string[],
-  openRouterGateway: OpenrouterGateway
+  openRouterGateway: OpenrouterGateway,
 ): Promise<{
   topicName: string
   keywords: string[]
@@ -82,15 +92,15 @@ const generateTopicNameAndKeywords = async (
       settings: {
         model: 'openai/gpt-4o',
         temperature: 0,
-        top_p: 1
+        top_p: 1,
       },
       messages: [
         {
           role: 'user',
-          content: prompt
-        }
+          content: prompt,
+        },
       ],
-      response_format: topicNameAndKeywordsResponseFormat
+      response_format: topicNameAndKeywordsResponseFormat,
     })
 
     const result = topicNameAndKeywordsSchema.parse(JSON.parse(message.content))
@@ -100,7 +110,7 @@ const generateTopicNameAndKeywords = async (
     logger.error('Error generating topic name:', error)
     return {
       topicName: 'UNKNOWN',
-      keywords: []
+      keywords: [],
     }
   }
 }

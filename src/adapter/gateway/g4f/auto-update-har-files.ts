@@ -23,7 +23,7 @@ export const buildAutoUpdateHARFiles = ({ g4f }: Params): AutoUpdateHARFiles => 
   return async ({ harManagerUrl, ...params }) => {
     const g4fClient = g4f.client.create({
       apiUrl: '',
-      harManagerUrl
+      harManagerUrl,
     })
 
     let response: AxiosResponse | null = null
@@ -57,7 +57,7 @@ export const buildAutoUpdateHARFiles = ({ g4f }: Params): AutoUpdateHARFiles => 
 
     return {
       stream,
-      close
+      close,
     }
   }
 }

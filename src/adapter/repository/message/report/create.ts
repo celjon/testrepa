@@ -4,7 +4,10 @@ import { AdapterParams } from '@/adapter/types'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type CreateReport = (data: Prisma.ReportCreateArgs<DefaultArgs>, tx?: unknown) => Promise<Report | never>
+export type CreateReport = (
+  data: Prisma.ReportCreateArgs<DefaultArgs>,
+  tx?: unknown,
+) => Promise<Report | never>
 
 export const buildCreateReport = ({ db }: Params): CreateReport => {
   return async (data, tx) => {

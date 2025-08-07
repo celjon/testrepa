@@ -9,13 +9,13 @@ export const buildBalancer = () => {
     },
     remove: async ({ id }) => {
       clients.delete(id)
-    }
+    },
   }
 
   const findById = (id: string) => clients.get(id)?.client
 
   return {
     account,
-    findById
+    findById,
   }
 }

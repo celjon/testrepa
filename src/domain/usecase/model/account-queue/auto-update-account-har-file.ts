@@ -1,9 +1,9 @@
 import { Observable, share } from 'rxjs'
-import { ModelAccountAuthType } from '@prisma/client'
+import { ModelAccountAuthType, ModelAccountStatus } from '@prisma/client'
 import { config } from '@/config'
 import { logger } from '@/lib/logger'
 import { getErrorString } from '@/lib'
-import { InvalidDataError, NotFoundError } from '@/domain/errors'
+import { ForbiddenError, InvalidDataError, NotFoundError } from '@/domain/errors'
 import { UseCaseParams } from '@/domain/usecase/types'
 
 export type AutoUpdateAccountHARFile = (params: { accountId: string }) => Promise<{
@@ -15,15 +15,21 @@ export const buildAutoUpdateAccountHARFile =
   ({ adapter, service }: UseCaseParams): AutoUpdateAccountHARFile =>
   async ({ accountId }) => {
     let account = await adapter.modelAccountRepository.get({
-      where: { id: accountId }
+      where: { id: accountId },
     })
 
     if (!account) {
       throw new NotFoundError({
-        code: 'MODEL_ACCOUNT_NOT_FOUND'
+        code: 'MODEL_ACCOUNT_NOT_FOUND',
       })
     }
     account = await service.model.accountBalancer.decryptAccount({ account })
+
+    if (account.disabled_at) {
+      throw new ForbiddenError({
+        code: 'MODEL_ACCOUNT_DISABLED',
+      })
+    }
 
     if (
       account.auth_type !== ModelAccountAuthType.HAR_FILE ||
@@ -33,7 +39,7 @@ export const buildAutoUpdateAccountHARFile =
       !account.name
     ) {
       throw new InvalidDataError({
-        code: 'MODEL_ACCOUNT_AUTO_UPDATE_HAR_NOT_SUPPORTED'
+        code: 'MODEL_ACCOUNT_AUTO_UPDATE_HAR_NOT_SUPPORTED',
       })
     }
 
@@ -46,9 +52,9 @@ export const buildAutoUpdateAccountHARFile =
           password: account.g4f_password,
           emailPassword: account.g4f_email_password ?? '',
           imapServer: account.g4f_imap_server ?? '',
-          apiUrl: account.g4f_api_url
-        }
-      ]
+          apiUrl: account.g4f_api_url,
+        },
+      ],
     })
 
     const newStream = response.stream.pipe(share())
@@ -57,19 +63,26 @@ export const buildAutoUpdateAccountHARFile =
       async function checkEvent() {
         try {
           const eventData = JSON.parse(event.replace('data: ', ''))
-          if (eventData.type === 'HAR_FILE_UPDATED' && eventData.email === account?.g4f_email) {
+          if (
+            account &&
+            eventData.type === 'HAR_FILE_UPDATED' &&
+            eventData.email === account.g4f_email
+          ) {
             await adapter.modelAccountRepository.update({
               where: { id: accountId },
               data: {
                 g4f_har_file_updated_at: new Date(),
-                disabled_at: null
-              }
+                status:
+                  account.status === ModelAccountStatus.INACTIVE
+                    ? ModelAccountStatus.ACTIVE
+                    : undefined,
+              },
             })
           }
         } catch (e) {
           logger.error({
             location: 'autoUpdateAccountHARFile',
-            message: getErrorString(e)
+            message: getErrorString(e),
           })
         }
       }

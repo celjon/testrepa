@@ -9,42 +9,52 @@ import { JobService } from '../job'
 import { buildMidjourneyButtonClick, MidjourneyButtonClick } from './midjourney/button-click'
 import { SubscriptionService } from '../subscription'
 import { UserService } from '../user'
-import { buildGeneratePrompt, GeneratePrompt } from './generatePrompt'
+import { buildGeneratePrompt, GeneratePrompt } from './generate-prompt'
 import { ModerationService } from '../moderation'
 import { MidjourneyService } from '../midjourney'
 import { ModelService } from '../model'
-import { buildSendTextByProvider, SendTextByProvider } from './text/sendByProvider'
-import { buildSendImageByProvider, SendImageByProvider } from './image/sendByProvider'
-import { buildSendReplicateImage, SendReplicateImage } from '@/domain/service/message/replicate-image/send'
-import { buildSendReplicateImageByProvider, SendReplicateImageByProvider } from '@/domain/service/message/replicate-image/send-by-provider'
+import { buildSendTextByProvider, SendTextByProvider } from './text/send-by-provider'
+import { buildSendImageByProvider, SendImageByProvider } from './image/send-by-provider'
+import {
+  buildSendReplicateImage,
+  SendReplicateImage,
+} from '@/domain/service/message/replicate-image/send'
+import {
+  buildSendReplicateImageByProvider,
+  SendReplicateImageByProvider,
+} from '@/domain/service/message/replicate-image/send-by-provider'
 import { buildSendSpeech, SendSpeech } from './speech/send'
-import { buildPerformWebSearch } from './plugins/web-search/performWebSearch'
-import { buildPerformURLAnalysis } from './performURLAnalysis'
+import { buildPerformWebSearch } from './plugins/web-search/perform-web-search'
+import { buildPerformURLAnalysis } from './perform-url-analysis'
 import { buildUploadFiles, UploadFiles } from './upload/files'
 import { buildUploadVoice, UploadVoice } from './upload/voice'
 import { buildRegenerateText, RegenerateText } from './text/regenerate'
-import { buildRegenerateReplicateImage, RegenerateReplicateImage } from '@/domain/service/message/replicate-image/regenerate'
+import {
+  buildRegenerateReplicateImage,
+  RegenerateReplicateImage,
+} from '@/domain/service/message/replicate-image/regenerate'
 import { buildRegenerateImage, RegenerateImage } from './image/regenerate'
-import { buildDefineButtonsAndImages } from './midjourney/defineButtons'
+import { buildDefineButtonsAndImages } from './midjourney/define-buttons'
 import { buildCallback } from './midjourney/callback'
 import { buildGet, Get } from './storage/get'
 import { buildList, List } from './storage/list'
 import { buildUpdate, Update } from './storage/update'
-import { buildUpdateMany, UpdateMany } from './storage/updateMany'
+import { buildUpdateMany, UpdateMany } from './storage/update-many'
 import { buildCreate, Create } from './storage/create'
-import { buildDecryptMessage } from './storage/decrypt/decryptMessage'
+import { buildDecryptMessage } from './storage/decrypt/decrypt-message'
 import { FileService } from '../file'
-import { buildTranslatePrompt, TransalatePrompt } from './translatePrompt'
+import { buildTranslatePrompt, TransalatePrompt } from './translate-prompt'
 import { buildUploadVideo, UploadVideo } from '@/domain/service/message/upload/video'
 import { buildGeneralSystemPromptPlugin } from './plugins/general-system-prompt'
-import { buildProcessMj, ProcessMj } from './midjourney/processMj'
-import { buildDefineError, DefineError } from './midjourney/defineError'
+import { buildProcessMj, ProcessMj } from './midjourney/process-mj'
+import { buildDefineError, DefineError } from './midjourney/define-error'
 import { buildConstantCostPlugin } from './plugins/constant-cost'
 import { buildSendSpeech2Text, SendSpeech2Text } from '@/domain/service/message/speech2text/send'
 import { Speech2TextService } from '../speech2text'
 import { AIToolsService } from '../ai-tools'
 import { buildSendVideo, SendVideo } from './video/send'
-import { buildSendVideoByProvider, SendVideoByProvider } from './video/sendByProvider'
+import { buildSendVideoByProvider, SendVideoByProvider } from './video/send-by-provider'
+import { buildEventStreamService, EventStreamService } from './event-stream'
 
 type Params = Adapter & {
   chatService: ChatService
@@ -109,6 +119,7 @@ export type MessageService = {
   paginate: Paginate
   generatePrompt: GeneratePrompt
   translatePrompt: TransalatePrompt
+  eventStream: EventStreamService
 }
 
 export const buildMessageService = (params: Params): MessageService => {
@@ -125,7 +136,7 @@ export const buildMessageService = (params: Params): MessageService => {
     get,
     list,
     update,
-    updateMany
+    updateMany,
   }
 
   const uploadFiles = buildUploadFiles(params)
@@ -135,13 +146,13 @@ export const buildMessageService = (params: Params): MessageService => {
   const constantCostPlugin = buildConstantCostPlugin(params)
   const performWebSearchPlugin = buildPerformWebSearch({
     ...params,
-    messageStorage: storage
+    messageStorage: storage,
   })
   const generalSystemPromptPlugin = buildGeneralSystemPromptPlugin()
   const performURLAnalysis = buildPerformURLAnalysis(params)
   const generatePrompt = buildGeneratePrompt({
     ...params,
-    performURLAnalysis
+    performURLAnalysis,
   })
 
   const sendTextByProvider = buildSendTextByProvider(params)
@@ -155,13 +166,13 @@ export const buildMessageService = (params: Params): MessageService => {
     constantCostPlugin,
     performWebSearchPlugin,
     generalSystemPromptPlugin,
-    messageStorage: storage
+    messageStorage: storage,
   })
   const regenerateText = buildRegenerateText({
     ...params,
     constantCostPlugin,
     sendTextByProvider,
-    messageStorage: storage
+    messageStorage: storage,
   })
 
   const sendImageByProvider = buildSendImageByProvider(params)
@@ -170,12 +181,12 @@ export const buildMessageService = (params: Params): MessageService => {
     sendImageByProvider,
     uploadFiles,
     uploadVoice,
-    messageStorage: storage
+    messageStorage: storage,
   })
   const regenerateImage = buildRegenerateImage({
     ...params,
     sendImageByProvider,
-    messageStorage: storage
+    messageStorage: storage,
   })
 
   const defineButtonsAndImages = buildDefineButtonsAndImages(params)
@@ -190,16 +201,16 @@ export const buildMessageService = (params: Params): MessageService => {
     uploadVoice,
     translatePrompt,
     messageStorage: storage,
-    processMj: processMj
+    processMj: processMj,
   })
   const clickMidjourneyButton = buildMidjourneyButtonClick({
     ...{
       ...params,
       defineButtonsAndImages,
       callback,
-      processMj: processMj
+      processMj: processMj,
     },
-    messageStorage: storage
+    messageStorage: storage,
   })
   const sendVideoByProvider = buildSendVideoByProvider(params)
   const sendVideo = buildSendVideo({
@@ -208,7 +219,7 @@ export const buildMessageService = (params: Params): MessageService => {
     uploadVoice,
     translatePrompt,
     sendVideoByProvider,
-    messageStorage: storage
+    messageStorage: storage,
   })
 
   const sendReplicateImageByProvider = buildSendReplicateImageByProvider(params)
@@ -218,73 +229,75 @@ export const buildMessageService = (params: Params): MessageService => {
     uploadFiles,
     uploadVoice,
     translatePrompt,
-    messageStorage: storage
+    messageStorage: storage,
   })
   const regenerateReplicateImage = buildRegenerateReplicateImage({
     ...params,
     sendImageByProvider: sendReplicateImageByProvider,
     translatePrompt,
-    messageStorage: storage
+    messageStorage: storage,
   })
 
   const paginate = buildPaginate({
     ...params,
-    messageStorage: storage
+    messageStorage: storage,
   })
   const sendTelegram = buildSendTelegram(params)
   const speechSend = buildSendSpeech({
     ...params,
-    messageStorage: storage
+    messageStorage: storage,
   })
   const sendSpeech2Text = buildSendSpeech2Text({
     ...params,
     messageStorage: storage,
-    constantCostPlugin
+    constantCostPlugin,
   })
+  const eventStream = buildEventStreamService(params)
   return {
     paginate,
     generatePrompt,
     translatePrompt,
     speech2text: {
-      send: sendSpeech2Text
+      send: sendSpeech2Text,
     },
 
     text: {
       send: sendText,
       regenerate: regenerateText,
-      sendByProvider: sendTextByProvider
+      sendByProvider: sendTextByProvider,
     },
     midjourney: {
       send: sendMidjourney,
       buttonClick: clickMidjourneyButton,
       processMj: processMj,
-      defineError
+      defineError,
     },
     replicateImage: {
       send: sendReplicateImage,
       regenerate: regenerateReplicateImage,
-      sendByProvider: sendReplicateImageByProvider
+      sendByProvider: sendReplicateImageByProvider,
     },
-    video:{
+    video: {
       send: sendVideo,
-      sendByProvider: sendVideoByProvider
+      sendByProvider: sendVideoByProvider,
     },
     speech: {
-      send: speechSend
+      send: speechSend,
     },
     image: {
       send: sendImage,
       regenerate: regenerateImage,
-      sendByProvider: sendImageByProvider
+      sendByProvider: sendImageByProvider,
     },
     telegram: {
-      send: sendTelegram
+      send: sendTelegram,
     },
     upload: {
       files: uploadFiles,
       voice: uploadVoice,
-      video: uploadVideo
+      video: uploadVideo,
     },
-    storage
+    storage,
+    eventStream,
   }
 }

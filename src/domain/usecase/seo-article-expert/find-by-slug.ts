@@ -8,8 +8,8 @@ export const buildFindBySlug = ({ adapter }: UseCaseParams): FindBySlug => {
     const expert = await adapter.seoArticleExpertRepository.get({
       where: { slug: slug },
       include: {
-        experience: true
-      }
+        experience: true,
+      },
     })
 
     return expert

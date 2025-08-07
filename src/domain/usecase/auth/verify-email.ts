@@ -8,26 +8,26 @@ export const buildVerifyEmail = ({ adapter }: UseCaseParams): VerifyEmail => {
     const code = await adapter.verificationCodeRepository.get({
       where: {
         code: verificationCode,
-        user_id: userId
+        user_id: userId,
       },
       include: {
-        user: true
-      }
+        user: true,
+      },
     })
 
     if (!code) {
       throw new NotFoundError({
-        code: 'VERIFICATION_CODE_NOT_FOUND'
+        code: 'VERIFICATION_CODE_NOT_FOUND',
       })
     }
 
     if (new Date() > code.expires_at) {
       await adapter.verificationCodeRepository.delete({
-        where: { id: code.id }
+        where: { id: code.id },
       })
 
       throw new InvalidDataError({
-        code: 'VERIFICATION_CODE_EXPIRED'
+        code: 'VERIFICATION_CODE_EXPIRED',
       })
     }
 
@@ -41,11 +41,11 @@ export const buildVerifyEmail = ({ adapter }: UseCaseParams): VerifyEmail => {
       where: { id: user.id },
       data: {
         emailVerified: true,
-        inactive: false
-      }
+        inactive: false,
+      },
     })
     await adapter.verificationCodeRepository.delete({
-      where: { id: code.id }
+      where: { id: code.id },
     })
   }
 }

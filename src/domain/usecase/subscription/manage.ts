@@ -11,33 +11,33 @@ export const buildManage = ({ adapter }: UseCaseParams): Manage => {
     const subscriptionsToRenew = await adapter.subscriptionRepository.list({
       where: {
         created_at: {
-          lt: monthAgo
-        }
+          lt: monthAgo,
+        },
       },
       include: {
         plan: true,
-        user: true
-      }
+        user: true,
+      },
     })
     if (!subscriptionsToRenew) {
       return
     }
     const freePlan = (await adapter.planRepository.get({
       where: {
-        type: PlanType.FREE
-      }
+        type: PlanType.FREE,
+      },
     })) as IPlan
     for (let i = 0; i < subscriptionsToRenew.length; i++) {
       const subscription = subscriptionsToRenew[i]
       await adapter.subscriptionRepository.update({
         where: {
-          id: subscription.id
+          id: subscription.id,
         },
         data: {
           plan_id: freePlan.id,
           balance: freePlan.tokens,
-          created_at: new Date()
-        }
+          created_at: new Date(),
+        },
       })
     }
   }

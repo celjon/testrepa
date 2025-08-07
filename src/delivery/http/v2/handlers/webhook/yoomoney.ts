@@ -13,14 +13,14 @@ export const buildYoomoney = ({ webhook }: Params): Yoomoney => {
         paymentId: paymentId,
         provider: TransactionProvider.YOOMONEY,
         status: TransactionStatus.SUCCEDED,
-        meta: req.body
+        meta: req.body,
       })
     } else if (req.body.event === 'payment.canceled') {
       await webhook.payment({
         paymentId: paymentId,
         provider: TransactionProvider.YOOMONEY,
         status: TransactionStatus.FAILED,
-        meta: req.body
+        meta: req.body,
       })
     }
     return res.status(200).json()

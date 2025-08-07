@@ -11,8 +11,8 @@ export const buildCount = ({ db }: Params): Count => {
       ...data,
       where: {
         deleted_at: null,
-        ...(data ? data.where : {})
-      }
+        ...(data ? data.where : {}),
+      },
     })
 
     return count

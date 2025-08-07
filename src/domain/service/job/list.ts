@@ -11,11 +11,11 @@ export const buildList =
   async ({ chat }) => {
     const jobs = await jobRepository.list({
       where: {
-        chat_id: chat.id
+        chat_id: chat.id,
       },
       include: {
-        chat: true
-      }
+        chat: true,
+      },
     })
 
     return jobs

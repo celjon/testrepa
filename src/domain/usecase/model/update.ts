@@ -31,12 +31,12 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
     pricing,
     providerId,
     childProviderId,
-    autoUpdatePricing
+    autoUpdatePricing,
   }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user || user.role !== Role.ADMIN) {
@@ -46,31 +46,31 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
     if (order) {
       const model = await adapter.modelRepository.get({
         where: {
-          id: modelId
-        }
+          id: modelId,
+        },
       })
       const orderModel = await adapter.modelRepository.get({
         where: {
           parent_id: model?.parent_id ?? null,
-          order
-        }
+          order,
+        },
       })
 
       if (model && orderModel) {
         await adapter.modelRepository.update({
           where: {
-            id: orderModel.id
+            id: orderModel.id,
           },
           data: {
-            order: model.order
-          }
+            order: model.order,
+          },
         })
       }
     }
 
     const model = await adapter.modelRepository.update({
       where: {
-        id: modelId
+        id: modelId,
       },
       data: {
         order,
@@ -82,34 +82,34 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
         pricing,
         provider_id: providerId,
         child_provider_id: childProviderId,
-        auto_update_pricing: autoUpdatePricing
-      }
+        auto_update_pricing: autoUpdatePricing,
+      },
     })
 
     if (order) {
       const models = await adapter.modelRepository.list({
         where: {
-          parent_id: model.parent_id
+          parent_id: model.parent_id,
         },
         orderBy: {
-          order: 'asc'
+          order: 'asc',
         },
         select: {
-          id: true
-        }
+          id: true,
+        },
       })
 
       await Promise.all(
         models.map(({ id }, index) =>
           adapter.modelRepository.update({
             where: {
-              id
+              id,
             },
             data: {
-              order: index + 1
-            }
-          })
-        )
+              order: index + 1,
+            },
+          }),
+        ),
       )
     }
 

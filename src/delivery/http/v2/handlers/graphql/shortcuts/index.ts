@@ -12,7 +12,7 @@ export class ShortcutResolver {
   @Query(() => [ShortcutGraphQLObject])
   async shortcuts(@Ctx() { req }: GraphQLContext): Promise<ShortcutGraphQLObject[]> {
     const data = await this.params.shortcut.list({
-      userId: req.user.id
+      userId: req.user.id,
     })
 
     return data

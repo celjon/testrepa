@@ -29,7 +29,7 @@ export const buildCreate = ({ service, adapter }: UseCaseParams): Create => {
       initial,
       platform,
       plan: subscription.plan,
-      order
+      order,
     })
 
     await adapter.chatRepository.updateMany({
@@ -37,14 +37,14 @@ export const buildCreate = ({ service, adapter }: UseCaseParams): Create => {
         user_id: userId,
         group_id: null,
         id: {
-          not: chat.id
-        }
+          not: chat.id,
+        },
       },
       data: {
         order: {
-          increment: 1
-        }
-      }
+          increment: 1,
+        },
+      },
     })
 
     return chat

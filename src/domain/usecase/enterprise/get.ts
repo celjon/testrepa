@@ -11,7 +11,7 @@ export const buildGet = ({ adapter }: UseCaseParams): Get => {
       where: {
         user_id: userId,
         enterprise_id: id,
-        role: EnterpriseRole.OWNER
+        role: EnterpriseRole.OWNER,
       },
       include: {
         enterprise: {
@@ -20,20 +20,20 @@ export const buildGet = ({ adapter }: UseCaseParams): Get => {
               include: {
                 user: {
                   include: {
-                    subscription: true
-                  }
+                    subscription: true,
+                  },
                 },
-                allowed_models: true
-              }
+                allowed_models: true,
+              },
             },
             subscription: {
               include: {
-                plan: true
-              }
-            }
-          }
-        }
-      }
+                plan: true,
+              },
+            },
+          },
+        },
+      },
     })
 
     if (!employee || !employee.enterprise) {

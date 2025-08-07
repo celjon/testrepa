@@ -42,6 +42,6 @@ export const buildArticleRepository = (params: Params): ArticleRepository => {
     update,
     updateMany,
     delete: deleteAction,
-    deleteMany
+    deleteMany,
   }
 }

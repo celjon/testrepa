@@ -10,7 +10,7 @@ export const buildUpdate = ({ db }: Params): Update => {
     const topic = await db.client.sEOArticleTopic.update(data)
     const validatedTopic: ISEOArticleTopic = {
       ...topic,
-      name: topic.name as LocalizedName
+      name: topic.name as LocalizedName,
     }
     return validatedTopic
   }

@@ -13,7 +13,9 @@ export type SEOArticleProofreadingUseCase = {
   deleteSEOArticleProofreading: Delete
 }
 
-export const buildSEOArticleProofreadingUseCase = (params: UseCaseParams): SEOArticleProofreadingUseCase => {
+export const buildSEOArticleProofreadingUseCase = (
+  params: UseCaseParams,
+): SEOArticleProofreadingUseCase => {
   const getSEOArticleProofreading = buildGet(params)
   const createSEOArticleProofreading = buildCreate(params)
   const createManySEOArticleProofreading = buildCreateMany(params)
@@ -24,6 +26,6 @@ export const buildSEOArticleProofreadingUseCase = (params: UseCaseParams): SEOAr
     createSEOArticleProofreading,
     createManySEOArticleProofreading,
     updateSEOArticleProofreading,
-    deleteSEOArticleProofreading
+    deleteSEOArticleProofreading,
   }
 }

@@ -13,7 +13,7 @@ export const buildGetProductUsageReport = ({ statistics }: Params): GetProductUs
     if (typeof req.query.product !== 'string' || !isValidProduct(req.query.product)) {
       throw new InvalidDataError({
         code: 'INVALID_DATA',
-        message: 'Invalid parameter: product'
+        message: 'Invalid parameter: product',
       })
     }
 
@@ -21,10 +21,13 @@ export const buildGetProductUsageReport = ({ statistics }: Params): GetProductUs
       userId: req.user.id,
       dateFrom: req.query.dateFrom as string,
       dateTo: req.query.dateTo as string,
-      product: req.query.product
+      product: req.query.product,
     })
 
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
     res.setHeader('Content-Disposition', 'attachment; filename=report.xlsx')
 
     return res.send(report)

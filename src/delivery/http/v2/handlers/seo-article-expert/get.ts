@@ -9,7 +9,7 @@ export type GetSEOArticleExpert = (req: AuthRequest, res: Response) => Promise<v
 export const buildGetSEOArticleExpert = ({ seoArticleExpert }: Params): GetSEOArticleExpert => {
   return async (req, res) => {
     const result = await seoArticleExpert.getSEOArticleExpert({
-      id: req.params.seoExpertId
+      id: req.params.seoExpertId,
     })
 
     res.status(200).json(result)

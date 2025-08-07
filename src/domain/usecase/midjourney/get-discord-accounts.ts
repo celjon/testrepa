@@ -1,4 +1,4 @@
-import { IMidjourneyDiscordAccount } from '@/domain/entity/midjourneyDiscordAccount'
+import { IMidjourneyDiscordAccount } from '@/domain/entity/midjourney-discord-account'
 import { UseCaseParams } from '@/domain/usecase/types'
 
 export type GetDiscordAccounts = () => Promise<IMidjourneyDiscordAccount[]>
@@ -8,6 +8,6 @@ export const buildGetDiscordAccounts =
   async () =>
     adapter.midjourneyDiscordAccountRepository.list({
       orderBy: {
-        order: 'asc'
-      }
+        order: 'asc',
+      },
     })

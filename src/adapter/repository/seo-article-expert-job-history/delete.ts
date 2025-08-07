@@ -4,7 +4,9 @@ import { ISEOArticleExpertJobHistory } from '@/domain/entity/seo-article-expert-
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Delete = (data: Prisma.SEOArticleExpertJobHistoryDeleteArgs) => Promise<ISEOArticleExpertJobHistory | never>
+export type Delete = (
+  data: Prisma.SEOArticleExpertJobHistoryDeleteArgs,
+) => Promise<ISEOArticleExpertJobHistory | never>
 
 export const buildDelete = ({ db }: Params): Delete => {
   return async (data) => {

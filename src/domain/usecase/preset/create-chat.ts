@@ -4,7 +4,11 @@ import { NotFoundError } from '@/domain/errors'
 import { isTextModel } from '@/domain/entity/model'
 import { IFile } from '@/domain/entity/file'
 
-export type CreateChat = (params: { id: string; userId: string; chatId?: string }) => Promise<IChat | never>
+export type CreateChat = (params: {
+  id: string
+  userId: string
+  chatId?: string
+}) => Promise<IChat | never>
 
 export const buildCreateChat =
   ({ adapter, service }: UseCaseParams): CreateChat =>
@@ -14,33 +18,33 @@ export const buildCreateChat =
       include: {
         attachments: {
           include: {
-            file: true
-          }
+            file: true,
+          },
         },
-        model: true
-      }
+        model: true,
+      },
     })
 
     if (!preset) {
       throw new NotFoundError({
-        code: 'PRESET_NOT_FOUND'
+        code: 'PRESET_NOT_FOUND',
       })
     }
 
     let chat = await adapter.chatRepository.get({
       where: {
         ...(chatId && {
-          id: chatId
+          id: chatId,
         }),
         ...(!chatId && {
           user_id: userId,
-          initial: true
+          initial: true,
         }),
-        deleted: false
+        deleted: false,
       },
       include: {
-        model: true
-      }
+        model: true,
+      },
     })
 
     if (!chat) {
@@ -48,19 +52,19 @@ export const buildCreateChat =
 
       if (!subscription || !subscription.plan) {
         throw new NotFoundError({
-          code: 'SUBSCRIPTION_NOT_FOUND'
+          code: 'SUBSCRIPTION_NOT_FOUND',
         })
       }
 
       chat = await service.chat.initialize({
         initial: true,
         userId,
-        plan: subscription.plan
+        plan: subscription.plan,
       })
 
       if (!chat) {
         throw new NotFoundError({
-          code: 'CHAT_NOT_FOUND'
+          code: 'CHAT_NOT_FOUND',
         })
       }
     }
@@ -69,25 +73,27 @@ export const buildCreateChat =
       chat =
         (await adapter.chatRepository.update({
           where: {
-            id: chat.id
+            id: chat.id,
           },
           data: {
             model_id: preset.model_id,
             settings: {
               upsert: {
                 create: {},
-                update: {}
-              }
-            }
+                update: {},
+              },
+            },
           },
           include: {
-            model: true
-          }
+            model: true,
+          },
         })) ?? chat
     }
 
     if (chat.model && chat.model_id && !chat.model.parent_id && isTextModel(chat.model)) {
-      const files = (preset.attachments || []).map((attachment) => attachment.file).filter((file) => !!file) as IFile[]
+      const files = (preset.attachments || [])
+        .map((attachment) => attachment.file)
+        .filter((file) => !!file) as IFile[]
 
       const copiedFiles = (await Promise.all(
         files.map((file) =>
@@ -97,20 +103,20 @@ export const buildCreateChat =
               name: file.name,
               size: file.size,
               url: file.url,
-              path: file.path
-            }
-          })
-        )
+              path: file.path,
+            },
+          }),
+        ),
       ).then((files) => files.filter((file) => !!file))) as IFile[]
 
       const { prompt } = await service.message.generatePrompt({
         content: preset.system_prompt,
-        files: copiedFiles
+        files: copiedFiles,
       })
 
       await adapter.chatSettingsRepository.update({
         where: {
-          chat_id: chat.id
+          chat_id: chat.id,
         },
         data: {
           text: {
@@ -120,36 +126,36 @@ export const buildCreateChat =
                 system_prompt: preset.system_prompt,
                 full_system_prompt: prompt,
                 files: {
-                  connect: copiedFiles.map(({ id }) => ({ id }))
-                }
+                  connect: copiedFiles.map(({ id }) => ({ id })),
+                },
               },
               update: {
                 preset_id: preset.id,
                 system_prompt: preset.system_prompt,
                 full_system_prompt: prompt,
                 files: {
-                  connect: copiedFiles.map(({ id }) => ({ id }))
-                }
-              }
-            }
-          }
-        }
+                  connect: copiedFiles.map(({ id }) => ({ id })),
+                },
+              },
+            },
+          },
+        },
       })
     } else {
       throw new NotFoundError({
-        code: 'MODEL_NOT_FOUND'
+        code: 'MODEL_NOT_FOUND',
       })
     }
 
     await adapter.presetRepository.update({
       where: {
-        id: preset.id
+        id: preset.id,
       },
       data: {
         usage_count: {
-          increment: 1
-        }
-      }
+          increment: 1,
+        },
+      },
     })
 
     return chat

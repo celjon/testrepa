@@ -5,11 +5,11 @@ import { buildDelete, Delete } from './delete'
 import { buildGet, Get } from './get'
 import { buildList, List } from './list'
 import { buildUpdate, Update } from './update'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 import { buildUpsert, Upsert } from './upsert'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
-import { buildGetActiveIndex, GetActiveIndex } from './getActiveIndex'
-import { buildSetActiveIndex, SetActiveIndex } from './setActiveIndex'
+import { buildDeleteMany, DeleteMany } from './delete-many'
+import { buildGetActiveIndex, GetActiveIndex } from './get-active-index'
+import { buildSetActiveIndex, SetActiveIndex } from './set-active-index'
 
 type Params = Pick<AdapterParams, 'db' | 'redis'>
 
@@ -27,7 +27,9 @@ export type MidjourneyDiscordAccountRepository = {
   setActiveIndex: SetActiveIndex
 }
 
-export const buildMidjourneyDiscordAccountRepository = (params: Params): MidjourneyDiscordAccountRepository => {
+export const buildMidjourneyDiscordAccountRepository = (
+  params: Params,
+): MidjourneyDiscordAccountRepository => {
   const create = buildCreate(params)
   const get = buildGet(params)
   const update = buildUpdate(params)
@@ -51,6 +53,6 @@ export const buildMidjourneyDiscordAccountRepository = (params: Params): Midjour
     count,
     upsert,
     getActiveIndex,
-    setActiveIndex
+    setActiveIndex,
   }
 }

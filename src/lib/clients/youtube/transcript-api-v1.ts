@@ -1,24 +1,23 @@
 // https://github.com/Kakulukian/youtube-transcript/blob/master/src/index.ts
-import axios, { AxiosInstance } from 'axios'
 import {
   YoutubeTranscriptDisabledError,
   YoutubeTranscriptNotAvailableError,
   YoutubeTranscriptTooManyRequestError,
-  YoutubeTranscriptVideoUnavailableError
+  YoutubeTranscriptVideoUnavailableError,
 } from './errors'
 import { TranscriptAPI, TranscriptConfig, TranscriptResponse } from './transcript-api'
 
 const RE_XML_TRANSCRIPT = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/g
 
 export class TranscriptAPIv1 implements TranscriptAPI {
-  async fetchTranscript(videoId: string, config?: TranscriptConfig): Promise<TranscriptResponse[]> {
-    const customAxios: AxiosInstance = config?.axios ?? axios
+  async fetchTranscript(videoId: string, config: TranscriptConfig): Promise<TranscriptResponse[]> {
+    const customAxios = config.axios
     const lang = config?.lang
 
     const response = await customAxios.get(`https://www.youtube.com/watch?v=${videoId}`, {
       headers: {
-        ...(config?.lang && { 'Accept-Language': config.lang })
-      }
+        ...(config?.lang && { 'Accept-Language': config.lang }),
+      },
     })
     const pageBody = response.data
 
@@ -59,7 +58,10 @@ export class TranscriptAPIv1 implements TranscriptAPI {
     const captionTrack =
       captions.captionTracks.find((track) => track.languageCode === lang) ??
       captions.captionTracks.find(
-        (track) => track.vssId === `.${lang}` || track.vssId === `a.${lang}` || (track.vssId && track.vssId.match(`.${lang}`))
+        (track) =>
+          track.vssId === `.${lang}` ||
+          track.vssId === `a.${lang}` ||
+          (track.vssId && track.vssId.match(`.${lang}`)),
       ) ??
       captions.captionTracks[0]
 
@@ -69,8 +71,8 @@ export class TranscriptAPIv1 implements TranscriptAPI {
 
     const transcriptResponse = await customAxios.get(captionTrack.baseUrl, {
       headers: {
-        ...(config?.lang && { 'Accept-Language': config.lang })
-      }
+        ...(config?.lang && { 'Accept-Language': config.lang }),
+      },
     })
 
     if (transcriptResponse.status !== 200) {
@@ -84,7 +86,7 @@ export class TranscriptAPIv1 implements TranscriptAPI {
       text: result[3],
       duration: parseFloat(result[2]),
       offset: parseFloat(result[1]),
-      lang: captions.captionTracks[0].languageCode
+      lang: captions.captionTracks[0].languageCode,
     }))
   }
 }

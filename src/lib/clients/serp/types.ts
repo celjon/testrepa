@@ -1,4 +1,4 @@
-import { SearchParams, SearchResults } from '@/adapter/gateway/webSearch/types'
+import { SearchParams, SearchResults } from '@/adapter/gateway/web-search/types'
 
 export type SerpApiClient = {
   getSearchResults: (params: SearchParams) => Promise<SearchResults>
@@ -171,7 +171,7 @@ export type RawGoogleScholarSearchResults = {
     {
       query: string
       link: string
-    }
+    },
   ]
   pagination: {
     current: number

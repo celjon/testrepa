@@ -13,8 +13,8 @@ export const buildSendVerifyUpdating = ({ user }: Params): SendVerifyUpdating =>
       userId: req.user?.id,
       email: req.body.email,
       metadata: {
-        locale
-      }
+        locale,
+      },
     })
     res.status(200).json({})
   }

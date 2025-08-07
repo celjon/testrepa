@@ -2,7 +2,7 @@ import { buildCreateChat, CreateChat } from './create'
 import { buildDeleteChat, DeleteChat } from './delete'
 import { buildList, List } from './list'
 import { buildGetChat, GetChat } from './get'
-import { buildClearContext, ClearContext } from './clearContext'
+import { buildClearContext, ClearContext } from './clear-context'
 import { IHandler } from '../types'
 import Express from 'express'
 import { buildChatRules } from './rules'
@@ -10,15 +10,15 @@ import { createRouteHandler } from '../../routeHandler'
 import { DeliveryParams } from '@/delivery/types'
 import { buildUpdate, Update } from './update'
 import { buildStream, Stream } from './stream'
-import { buildGetSettings, GetSettings } from './getSettings'
-import { buildUpdateSettings, UpdateSettings } from './updateSettings'
-import { buildGetJobs, GetJobs } from './getJobs'
+import { buildGetSettings, GetSettings } from './get-settings'
+import { buildUpdateSettings, UpdateSettings } from './update-settings'
+import { buildGetJobs, GetJobs } from './get-jobs'
 import { buildStop, Stop } from './stop'
-import { buildGetInitialChat, GetInitialChat } from './getInitial'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
+import { buildGetInitialChat, GetInitialChat } from './get-initial'
+import { buildDeleteMany, DeleteMany } from './delete-many'
 import { buildMove, Move } from './move'
 import { Middlewares } from '../../middlewares'
-import { buildDeleteAllExcept, DeleteAllExcept } from './deleteAllExcept'
+import { buildDeleteAllExcept, DeleteAllExcept } from './delete-all-except'
 
 type Params = Pick<DeliveryParams, 'chat' | 'message' | 'middlewares'>
 
@@ -53,7 +53,7 @@ const buildRegisterRoutes = (methods: ChatMethods, middlewares: Middlewares) => 
     listRules,
     moveChatsRules,
     updateChatRules,
-    updateChatSettingsRules
+    updateChatSettingsRules,
   } = buildChatRules(middlewares)
 
   return (root: Express.Router) => {
@@ -114,7 +114,11 @@ const buildRegisterRoutes = (methods: ChatMethods, middlewares: Middlewares) => 
      *                  items:
      *                    $ref: '#/components/entities/Chat'
      */
-    namespace.delete('/except', deleteAllChatsExceptRules, createRouteHandler(methods.deleteAllExcept))
+    namespace.delete(
+      '/except',
+      deleteAllChatsExceptRules,
+      createRouteHandler(methods.deleteAllExcept),
+    )
 
     /**
      * @openapi
@@ -347,7 +351,7 @@ const buildRegisterRoutes = (methods: ChatMethods, middlewares: Middlewares) => 
       '/:id/settings',
       middlewares.fileUpload().array('value'),
       updateChatSettingsRules,
-      createRouteHandler(methods.updateSettings)
+      createRouteHandler(methods.updateSettings),
     )
 
     /**
@@ -456,9 +460,9 @@ export const buildChatHandler = (params: Params): IHandler => {
         stream,
         getJobs,
         stop,
-        move
+        move,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

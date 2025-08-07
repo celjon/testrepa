@@ -1,4 +1,4 @@
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
 

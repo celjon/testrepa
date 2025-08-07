@@ -8,6 +8,6 @@ export const buildYoomoney = ({ paymentGateway }: Adapter): Yoomoney => {
   }
 
   return {
-    createPayment
+    createPayment,
   }
 }

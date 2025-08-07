@@ -3,7 +3,7 @@ import { buildCreate, Create } from './create'
 import { buildList, List } from './list'
 import { buildGet, Get } from './get'
 import { buildUpdate, Update } from './update'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 
 type Params = Pick<AdapterParams, 'db'>
 
@@ -26,6 +26,6 @@ export const buildDeveloperKeyRepository = (params: Params): DeveloperKeyReposit
     create,
     get,
     update,
-    updateMany
+    updateMany,
   }
 }

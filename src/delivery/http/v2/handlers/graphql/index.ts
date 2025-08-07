@@ -6,7 +6,7 @@ import { DeliveryParams } from '@/delivery/types'
 import { Middlewares } from '../../middlewares'
 import { IHandler } from '../types'
 import { Resolvers } from './types'
-import { buildSchema } from './buildSchema'
+import { buildSchema } from './build-schema'
 import { AuthResolver } from './auth'
 import { ChatResolver } from './chat'
 import { MessageResolver } from './message'
@@ -15,7 +15,10 @@ import { ModelResolver } from './model'
 import { ShortcutResolver } from './shortcuts'
 import { PlanResolver } from './plan'
 
-type Params = Pick<DeliveryParams, 'auth' | 'group' | 'chat' | 'message' | 'model' | 'shortcut' | 'plan' | 'middlewares'>
+type Params = Pick<
+  DeliveryParams,
+  'auth' | 'group' | 'chat' | 'message' | 'model' | 'shortcut' | 'plan' | 'middlewares'
+>
 
 const buildRegisterRoutes = (resolvers: Resolvers, middlewares: Middlewares) => {
   const schema = buildSchema(resolvers)
@@ -30,12 +33,12 @@ const buildRegisterRoutes = (resolvers: Resolvers, middlewares: Middlewares) => 
         objectCost: 2,
         scalarCost: 1,
         depthCostFactor: 1.5,
-        ignoreIntrospection: true
+        ignoreIntrospection: true,
       }),
       maxDepthPlugin({
-        n: 12
-      })
-    ]
+        n: 12,
+      }),
+    ],
   })
 
   return (root: Express.Router) => {
@@ -65,9 +68,9 @@ export const buildGraphQLHandler = (params: Params): IHandler => {
         group,
         model,
         shortcut,
-        plan
+        plan,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

@@ -2,7 +2,11 @@ import { IUser } from '@/domain/entity/user'
 import { InternalError } from '@/domain/errors'
 import { UseCaseParams } from '../types'
 
-export type Fingerprint = (data: { fingerprint: string; yandexMetricClientId: string | null; yandexMetricYclid: string | null }) => Promise<
+export type Fingerprint = (data: {
+  fingerprint: string
+  yandexMetricClientId: string | null
+  yandexMetricYclid: string | null
+}) => Promise<
   | {
       user: IUser
       accessToken: string
@@ -15,8 +19,8 @@ export const buildFingerprint = ({ service, adapter }: UseCaseParams): Fingerpri
   return async ({ fingerprint, yandexMetricClientId, yandexMetricYclid }) => {
     let user = await adapter.userRepository.get({
       where: {
-        anonymousDeviceFingerprint: fingerprint
-      }
+        anonymousDeviceFingerprint: fingerprint,
+      },
     })
 
     if (!user) {
@@ -24,20 +28,20 @@ export const buildFingerprint = ({ service, adapter }: UseCaseParams): Fingerpri
         anonymousDeviceFingerprint: fingerprint,
         emailVerified: false,
         yandexMetricClientId,
-        yandexMetricYclid
+        yandexMetricYclid,
       })
 
       const planModels = await adapter.planModelRepository.list({
         where: {
-          plan_id: user?.subscription?.plan?.id
+          plan_id: user?.subscription?.plan?.id,
         },
         include: {
           model: {
             include: {
-              parent: true
-            }
-          }
-        }
+              parent: true,
+            },
+          },
+        },
       })
 
       user!.subscription!.plan!.models = planModels
@@ -49,13 +53,13 @@ export const buildFingerprint = ({ service, adapter }: UseCaseParams): Fingerpri
 
     const { refreshToken, accessToken } = await service.auth.signAuthTokens({
       user,
-      keyEncryptionKey: null
+      keyEncryptionKey: null,
     })
 
     return {
       user,
       refreshToken,
-      accessToken
+      accessToken,
     }
   }
 }

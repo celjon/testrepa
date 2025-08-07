@@ -19,6 +19,6 @@ export const buildShortcutUseCase = (params: UseCaseParams): ShortcutUseCase => 
     list,
     create,
     update,
-    delete: deleteShortcut
+    delete: deleteShortcut,
   }
 }

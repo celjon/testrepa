@@ -25,7 +25,7 @@ export const buildGeoHandler = (params: Params): IHandler => {
 
   return {
     registerRoutes: buildRegisterRoutes({
-      get
-    })
+      get,
+    }),
   }
 }

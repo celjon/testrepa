@@ -10,6 +10,6 @@ export const buildSEOArticleCategoryService = (params: Params): SEOArticleCatego
   const paginate = buildPaginate(params)
 
   return {
-    paginate
+    paginate,
   }
 }

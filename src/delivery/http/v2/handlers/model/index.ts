@@ -3,38 +3,44 @@ import { IHandler } from '../types'
 import Express from 'express'
 import { createRouteHandler } from '../../routeHandler'
 import { DeliveryParams } from '@/delivery/types'
-import { buildListAll, ListAll } from './listAll'
+import { buildListAll, ListAll } from './list-all'
 import { buildDisable, Disable } from './disable'
 import { buildModelRules } from './rules'
 import { buildEnable, Enable } from './enable'
 import { Middlewares } from '../../middlewares'
 import { buildAdminRules } from '@/delivery/http/v2/handlers/admin/rules'
 import { buildUpdate, Update } from './update'
-import { buildGetProviders, GetProviders } from './getProviders'
-import { buildUpdateProvider, UpdateProvider } from './updateProvider'
+import { buildGetProviders, GetProviders } from './get-providers'
+import { buildUpdateProvider, UpdateProvider } from './update-provider'
 import { config } from '@/config'
-import { buildGetCustomization, GetCustomization } from './getCustomization'
-import { buildCreateCustom, CreateCustom } from './createCustom'
-import { buildUpdateCustom, UpdateCustom } from './updateCustom'
+import { buildGetCustomization, GetCustomization } from './get-customization'
+import { buildCreateCustom, CreateCustom } from './create-custom'
+import { buildUpdateCustom, UpdateCustom } from './update-custom'
 import { buildParse, Parse } from './parse'
-import { buildDeleteCustom, DeleteCustom } from './deleteCustom'
-import { buildCreateAccount, CreateAccount } from './createAccount'
-import { buildUpdateAccount, UpdateAccount } from './updateAccount'
-import { buildDeleteAccount, DeleteAccount } from './deleteAccount'
-import { buildCreateAccountModel, CreateAccountModel } from './createAccountModel'
-import { buildUpdateAccountModel, UpdateAccountModel } from './updateAccountModel'
-import { buildDeleteAccountModel, DeleteAccountModel } from './deleteAccountModel'
-import { buildCreateAccountQueue, CreateAccountQueue } from './createAccountQueue'
-import { buildUpdateAccountQueue, UpdateAccountQueue } from './updateAccountQueue'
-import { buildDeleteAccountQueue, DeleteAccountQueue } from './deleteAccountQueue'
-import { buildGetAccountQueues, GetAccountQueues } from './getAccountQueues'
-import { buildNextAccount, NextAccount } from './nextAccount'
-import { BalanceAccount, buildBalanceAccount } from './balanceAccount'
-import { buildGetModelProviders, GetModelProviders } from './getModelProviders'
-import { buildListCompact, ListCompact } from './listCompact'
+import { buildDeleteCustom, DeleteCustom } from './delete-custom'
+import { buildCreateAccount, CreateAccount } from './create-account'
+import { buildUpdateAccount, UpdateAccount } from './update-account'
+import { buildDeleteAccount, DeleteAccount } from './delete-account'
+import { buildCreateAccountModel, CreateAccountModel } from './create-account-model'
+import { buildUpdateAccountModel, UpdateAccountModel } from './update-account-model'
+import { buildDeleteAccountModel, DeleteAccountModel } from './delete-account-model'
+import { buildCreateAccountQueue, CreateAccountQueue } from './create-account-queue'
+import { buildUpdateAccountQueue, UpdateAccountQueue } from './update-account-queue'
+import { buildDeleteAccountQueue, DeleteAccountQueue } from './delete-account-queue'
+import { buildGetAccountQueues, GetAccountQueues } from './get-account-queues'
+import { buildNextAccount, NextAccount } from './next-account'
+import { BalanceAccount, buildBalanceAccount } from './balance-account'
+import { buildGetModelProviders, GetModelProviders } from './get-model-providers'
+import { buildListCompact, ListCompact } from './list-compact'
 import { buildCheckAccountQueue, CheckAccountQueue } from './check-account-queue'
-import { AutoUpdateAccountHARFile, buildAutoUpdateAccountHARFile } from './auto-update-account-har-file'
-import { AutoUpdateAccountQueueHARFiles, buildAutoUpdateAccountQueueHARFiles } from './auto-update-account-queue-har-files'
+import {
+  AutoUpdateAccountHARFile,
+  buildAutoUpdateAccountHARFile,
+} from './auto-update-account-har-file'
+import {
+  AutoUpdateAccountQueueHARFiles,
+  buildAutoUpdateAccountQueueHARFiles,
+} from './auto-update-account-queue-har-files'
 
 type Params = Pick<DeliveryParams, 'model' | 'middlewares'>
 
@@ -130,7 +136,12 @@ const buildRegisterRoutes = (methods: ModelMethods, middlewares: Middlewares) =>
      *                    items:
      *                      $ref: '#/components/entities/Model'
      */
-    namespace.get('/list', authRequired({ required: false }), listModelsRules, createRouteHandler(methods.list))
+    namespace.get(
+      '/list',
+      authRequired({ required: false }),
+      listModelsRules,
+      createRouteHandler(methods.list),
+    )
 
     /**
      * @openapi
@@ -189,7 +200,12 @@ const buildRegisterRoutes = (methods: ModelMethods, middlewares: Middlewares) =>
      *                                type: object
      *
      */
-    namespace.get('/list/compact', authRequired({ required: false }), listModelsRules, createRouteHandler(methods.listCompact))
+    namespace.get(
+      '/list/compact',
+      authRequired({ required: false }),
+      listModelsRules,
+      createRouteHandler(methods.listCompact),
+    )
 
     namespace.get('/list/all', createRouteHandler(methods.listAll))
 
@@ -251,96 +267,146 @@ const buildRegisterRoutes = (methods: ModelMethods, middlewares: Middlewares) =>
      */
     namespace.post('/enable', enableModelRules, createRouteHandler(methods.enable))
 
-    namespace.get('/provider/list', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.getProviders))
-    namespace.patch('/provider/:id', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.updateProvider))
+    namespace.get(
+      '/provider/list',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.getProviders),
+    )
+    namespace.patch(
+      '/provider/:id',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.updateProvider),
+    )
 
-    namespace.get('/custom/list', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.getCustomization))
+    namespace.get(
+      '/custom/list',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.getCustomization),
+    )
     namespace.post(
       '/custom',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
       fileUpload().single('icon'),
-      createRouteHandler(methods.createCustom)
+      createRouteHandler(methods.createCustom),
     )
     namespace.patch(
       '/custom/:id',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
       fileUpload().single('icon'),
-      createRouteHandler(methods.updateCustom)
+      createRouteHandler(methods.updateCustom),
     )
     namespace.delete(
       '/custom/:id',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
-      createRouteHandler(methods.deleteCustom)
+      createRouteHandler(methods.deleteCustom),
     )
 
-    namespace.post('/parse', allowedIps(config.admin.allowed_ips), authRequired({ adminOnly: true }), createRouteHandler(methods.parse))
+    namespace.post(
+      '/parse',
+      allowedIps(config.admin.allowed_ips),
+      authRequired({ adminOnly: true }),
+      createRouteHandler(methods.parse),
+    )
 
     namespace.post(
       '/account',
       allowedIps(config.admin.allowed_ips),
       authRequired(),
       fileUpload({ saveFiles: false, maxSize: Infinity }).single('g4fHarFile'),
-      createRouteHandler(methods.createAccount)
+      createRouteHandler(methods.createAccount),
     )
     namespace.patch(
       '/account/:id',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
       fileUpload({ saveFiles: false, maxSize: Infinity }).single('g4fHarFile'),
-      createRouteHandler(methods.updateAccount)
+      createRouteHandler(methods.updateAccount),
     )
-    namespace.delete('/account/:id', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.deleteAccount))
-    namespace.post('/account/balance', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.balanceAccount))
-    namespace.post('/account/next', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.nextAccount))
+    namespace.delete(
+      '/account/:id',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.deleteAccount),
+    )
+    namespace.post(
+      '/account/balance',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.balanceAccount),
+    )
+    namespace.post(
+      '/account/next',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.nextAccount),
+    )
     namespace.post(
       '/account/:id/auto-update-har-file',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
-      createRouteHandler(methods.autoUpdateAccountHARFile)
+      createRouteHandler(methods.autoUpdateAccountHARFile),
     )
 
-    namespace.get('/account-queue/list', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.getAccountQueues))
-    namespace.post('/account-queue', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.createAccountQueue))
+    namespace.get(
+      '/account-queue/list',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.getAccountQueues),
+    )
+    namespace.post(
+      '/account-queue',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.createAccountQueue),
+    )
     namespace.patch(
       '/account-queue/:id',
       allowedIps(config.admin.allowed_ips),
       authRequired(),
-      createRouteHandler(methods.updateAccountQueue)
+      createRouteHandler(methods.updateAccountQueue),
     )
     namespace.post(
       '/account-queue/:id/check',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
-      createRouteHandler(methods.checkAccountQueue)
+      createRouteHandler(methods.checkAccountQueue),
     )
     namespace.post(
       '/account-queue/:id/auto-update-har-files',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
-      createRouteHandler(methods.autoUpdateAccountQueueHARFiles)
+      createRouteHandler(methods.autoUpdateAccountQueueHARFiles),
     )
     namespace.delete(
       '/account-queue/:id',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
-      createRouteHandler(methods.deleteAccountQueue)
+      createRouteHandler(methods.deleteAccountQueue),
     )
 
-    namespace.post('/account-model', allowedIps(config.admin.allowed_ips), authRequired(), createRouteHandler(methods.createAccountModel))
+    namespace.post(
+      '/account-model',
+      allowedIps(config.admin.allowed_ips),
+      authRequired(),
+      createRouteHandler(methods.createAccountModel),
+    )
     namespace.patch(
       '/account-model/:id',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
-      createRouteHandler(methods.updateAccountModel)
+      createRouteHandler(methods.updateAccountModel),
     )
     namespace.delete(
       '/account-model/:id',
       allowedIps(config.admin.allowed_ips),
       authRequired({ adminOnly: true }),
-      createRouteHandler(methods.deleteAccountModel)
+      createRouteHandler(methods.deleteAccountModel),
     )
     namespace.get('/providers/:id', authRequired(), createRouteHandler(methods.getModelProviders))
 
@@ -406,9 +472,9 @@ export const buildModelHandler = (params: Params): IHandler => {
         getAccountQueues,
         balanceAccount,
         nextAccount,
-        checkAccountQueue: buildCheckAccountQueue(params)
+        checkAccountQueue: buildCheckAccountQueue(params),
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

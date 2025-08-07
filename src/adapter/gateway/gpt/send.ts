@@ -1,8 +1,12 @@
 import { AdapterParams } from '@/adapter/types'
 import { IMessage } from '@/domain/entity/message'
-import { IChatTextSettings } from '@/domain/entity/chatSettings'
+import { IChatTextSettings } from '@/domain/entity/chat-settings'
 import { APIError } from 'openai'
-import { ChatCompletionAssistantMessageParam, ChatCompletionContentPartImage, ChatCompletionUserMessageParam } from 'openai/resources'
+import {
+  ChatCompletionAssistantMessageParam,
+  ChatCompletionContentPartImage,
+  ChatCompletionUserMessageParam,
+} from 'openai/resources'
 import mime from 'mime-types'
 import { IFile } from '@/domain/entity/file'
 import { isCodex, isO1, isO3, isOpenAISearch } from '@/domain/entity/model'
@@ -40,7 +44,7 @@ export const buildSend =
             const images = await Promise.all(
               (message.images || []).map(async (messageImage) => {
                 const buffer = await params.storageGateway.read({
-                  path: (messageImage.original as IFile).path!
+                  path: (messageImage.original as IFile).path!,
                 })
 
                 const base64url = buffer.toString('base64')
@@ -50,44 +54,51 @@ export const buildSend =
                 return {
                   type: 'image_url',
                   image_url: {
-                    url: `data:${mimeType};base64,${base64url}`
-                  }
+                    url: `data:${mimeType};base64,${base64url}`,
+                  },
                 } satisfies ChatCompletionContentPartImage
-              })
+              }),
             )
 
             messageImages[message.id] = images
-          })
+          }),
         )
       }
 
-      const notSupportsAllSettings = isO1({ id: model }) || isO3({ id: model }) || isCodex({ id: model }) || isOpenAISearch({ id: model })
+      const notSupportsAllSettings =
+        isO1({ id: model }) ||
+        isO3({ id: model }) ||
+        isCodex({ id: model }) ||
+        isOpenAISearch({ id: model })
 
       const stream = await client.chat.completions.create({
         model,
         messages: [
           // https://platform.openai.com/docs/guides/reasoning-best-practices#how-to-prompt-reasoning-models-effectively
-          ...(model.includes('o3-mini') || model.includes('o1-preview') || model.includes('o4-mini') || model === 'o1'
+          ...(model.includes('o3-mini') ||
+          model.includes('o1-preview') ||
+          model.includes('o4-mini') ||
+          model === 'o1'
             ? [
                 {
                   role: 'developer' as const,
-                  content: 'Formatting re-enabled'
-                }
+                  content: 'Formatting re-enabled',
+                },
               ]
             : []),
           ...(!isO1({ id: model })
             ? [
                 {
                   role: 'system' as const,
-                  content: settings.full_system_prompt ?? settings.system_prompt ?? ''
-                }
+                  content: settings.full_system_prompt ?? settings.system_prompt ?? '',
+                },
               ]
             : []),
           ...messages.map((message) => {
             if (message.role === 'assistant') {
               return {
                 role: 'assistant',
-                content: message.full_content ?? message.content ?? ''
+                content: message.full_content ?? message.content ?? '',
               } satisfies ChatCompletionAssistantMessageParam
             }
 
@@ -102,30 +113,30 @@ export const buildSend =
                   content: [
                     {
                       type: 'text',
-                      text: message.full_content ?? message.content ?? ''
+                      text: message.full_content ?? message.content ?? '',
                     },
-                    ...images
-                  ]
-                })
+                    ...images,
+                  ],
+                }),
             } satisfies ChatCompletionUserMessageParam
-          })
+          }),
         ],
         stream: true,
         ...(notSupportsAllSettings
           ? {
-              max_completion_tokens: settings.max_tokens
+              max_completion_tokens: settings.max_tokens,
             }
           : {
               max_tokens: settings.max_tokens,
               temperature: settings.temperature,
               presence_penalty: settings.presence_penalty,
               top_p: settings.top_p,
-              frequency_penalty: settings.frequency_penalty
+              frequency_penalty: settings.frequency_penalty,
             }),
         stream_options: {
-          include_usage: true
+          include_usage: true,
         },
-        user: endUserId
+        user: endUserId,
       })
 
       const gpt$ = new SendObservable(stream, (subscriber) => {
@@ -142,7 +153,7 @@ export const buildSend =
                   status: 'pending',
                   value,
                   reasoningValue: null,
-                  usage: null
+                  usage: null,
                 })
               }
 
@@ -151,7 +162,7 @@ export const buildSend =
                   status: 'done',
                   value: content,
                   reasoningValue: null,
-                  usage: chunk.usage
+                  usage: chunk.usage,
                 })
               }
             }
@@ -172,14 +183,14 @@ export const buildSend =
       if (error?.code === 'context_length_exceeded') {
         throw new InvalidDataError({
           code: 'CONTEXT_LENGTH_EXCEEDED',
-          message: error.message
+          message: error.message,
         })
       }
 
       if (error?.code === 'string_above_max_length') {
         throw new InvalidDataError({
           code: 'MESSAGE_TOO_LONG',
-          message: error.message
+          message: error.message,
         })
       }
 

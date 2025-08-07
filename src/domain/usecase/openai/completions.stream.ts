@@ -1,10 +1,10 @@
 import { ChatCompletionMessageParam } from 'openai/resources'
 import { Platform } from '@prisma/client'
-import { Readable } from 'stream'
-import { logger } from '@/lib/logger'
+import { RawStream } from '@/adapter/gateway/types'
 import { ForbiddenError, NotFoundError } from '@/domain/errors'
 import { IMessage } from '@/domain/entity/message'
 import { UseCaseParams } from '@/domain/usecase/types'
+import { buildSendStreamTextByProvider } from './completions.stream.send-by-provider'
 
 export type CompletionsStream = (p: {
   userId: string
@@ -13,86 +13,82 @@ export type CompletionsStream = (p: {
     messages: Array<ChatCompletionMessageParam & IMessage>
     [key: string]: unknown
   }
+  developerKeyId?: string
 }) =>
   | Promise<{
-      responseBytesStream: Readable
-      breakNotifier: () => void
+      responseStream: RawStream
     }>
   | never
 
 export const buildCompletionsStream = ({ adapter, service }: UseCaseParams): CompletionsStream => {
-  return async ({ userId, params }) => {
+  const sendByProvider = buildSendStreamTextByProvider({ adapter, service })
+
+  return async ({ userId, params, developerKeyId }) => {
     if (params.model === 'auto') {
       throw new ForbiddenError({
-        code: 'INVALID_MODEL'
+        code: 'INVALID_MODEL',
       })
     }
 
     const model = await adapter.modelRepository.get({
       where: {
-        id: params.model
-      }
+        id: params.model,
+      },
     })
 
     if (!model) {
       throw new NotFoundError({
-        code: 'MODEL_NOT_FOUND'
+        code: 'MODEL_NOT_FOUND',
       })
     }
 
     const subscription = await service.user.getActualSubscriptionById(userId)
 
-    if (!subscription || (subscription && subscription.balance <= 0) || !subscription.plan) {
-      throw new ForbiddenError({
-        code: 'NOT_ENOUGH_TOKENS'
-      })
-    }
+    await service.subscription.checkBalance({ subscription, estimate: 0 })
 
-    const { hasAccess, reasonCode } = await service.plan.hasAccessToAPI({ plan: subscription.plan })
+    const { hasAccess, reasonCode } = await service.plan.hasAccessToAPI({
+      plan: subscription!.plan!,
+    })
 
     if (!hasAccess) {
       throw new ForbiddenError({
-        code: reasonCode ?? 'MODEL_NOT_ALLOWED_FOR_PLAN'
+        code: reasonCode ?? 'MODEL_NOT_ALLOWED_FOR_PLAN',
       })
     }
 
-    const result = await adapter.openrouterGateway.raw.completions.create.stream(
-      {
-        ...params,
-        model: model.prefix + model.id,
-        endUserId: userId
+    const result = await sendByProvider({
+      apiParams: params,
+      providerId: null,
+      model: model,
+      user: {
+        id: userId,
       },
-      async (_, usage) => {
+      onEnd: async ({ usage, provider_id }) => {
         if (usage) {
-          const caps = await service.model.getCaps({
+          const caps = await service.model.getCaps.text({
             model,
-            usage
+            usage,
           })
 
           await service.subscription.writeOffWithLimitNotification({
-            subscription,
+            subscription: subscription!,
             amount: caps,
             meta: {
               userId: userId,
               platform: Platform.API_COMPLETIONS,
-              model_id: model.id
-            }
-          })
-        } else {
-          logger.error({
-            location: 'completions.stream',
-            message: 'Unable to correctly calculate usage',
-            model_id: model.id
+              model_id: model.id,
+              provider_id,
+              developerKeyId,
+            },
           })
         }
-      }
-    )
+      },
+    })
 
-    const { responseBytesStream, breakNotifier } = result
+    const { responseStream } = result
 
     return {
-      responseBytesStream,
-      breakNotifier
+      responseStream,
     }
   }
 }

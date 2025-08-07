@@ -22,8 +22,18 @@ export type TinkoffClient = {
   }
 }
 
-export const getToken = (data: Record<string, any>) => {
-  const sorted = Object.entries(data).sort((a, b) => {
+// https://www.tbank.ru/kassa/dev/payments/#section/Token
+export const getToken = (data: {
+  terminalKey: string
+  amount: number
+  orderId: string | number
+  description?: string | undefined
+  password: string
+  notificationURL?: string | undefined
+  successURL?: string | undefined
+}) => {
+  // Sort by keys alphabetically
+  const sortedKVPairs = Object.entries(data).sort((a, b) => {
     if (a[0][0] < b[0][0]) {
       return -1
     }
@@ -33,86 +43,87 @@ export const getToken = (data: Record<string, any>) => {
     return 0
   })
 
-  const str = sorted.map((el) => el[1]).join('')
+  const str = sortedKVPairs.map((pair) => String(pair[1])).join('')
 
-  return createHash('sha256').update(str).digest('hex')
+  return createHash('sha256').update(str, 'utf8').digest('hex')
 }
 
 export const newClient = ({
   terminalKey,
   merchantPassword,
-  payment
+  payment,
 }: ClientParams): {
   client: TinkoffClient
 } => {
-  // const { protocol, host, port } = config.proxy
-  const createPayment = async (params: CreatePaymentParams): Promise<CreatePaymentPayloadSuccess | never> => {
+  const createPayment = async (
+    params: CreatePaymentParams,
+  ): Promise<CreatePaymentPayloadSuccess | never> => {
     const dataToHash = {
       terminalKey,
       amount: params.amount,
       orderId: params.orderId,
       ...(params.description && { description: params.description }),
-      password: merchantPassword
+      password: merchantPassword,
+      ...(payment?.webhook && {
+        notificationURL: payment.webhook,
+      }),
+      ...(payment?.successRedirect && {
+        successURL: payment.successRedirect,
+      }),
     }
 
     const token = getToken(dataToHash)
 
     const { data } = await axios
-      .post(
-        'https://securepay.tinkoff.ru/v2/Init',
-        {
-          TerminalKey: terminalKey,
-          Amount: params.amount,
-          Token: token,
-          OrderId: params.orderId,
-          Description: params.description || '',
-          DATA: {
-            ...(params.data.email && { Email: params.data.email })
-          },
-          ...(payment?.webhook && {
-            NotificationURL: payment.webhook
-          }),
-          ...(payment?.successRedirect && {
-            SuccessURL: payment.successRedirect
-          }),
-          Receipt: {
-            ...(params.receipt.email && {
-              Email: params.receipt.email
-            }),
-            Taxation: params.receipt.taxation,
-            Items: params.receipt.items.map((el) => {
-              return {
-                Name: el.name,
-                Amount: el.amount,
-                Price: el.price,
-                Tax: el.tax,
-                Quantity: el.quantity
-              }
-            })
-          }
+      .post('https://securepay.tinkoff.ru/v2/Init', {
+        TerminalKey: terminalKey,
+        Amount: params.amount,
+        Token: token,
+        OrderId: params.orderId,
+        Description: params.description || '',
+        DATA: {
+          ...(params.data.email && { Email: params.data.email }),
         },
-        {
-          // httpsAgent: new SocksProxyAgent(`${protocol}://${host}:${port}`)!
-        }
-      )
+        ...(payment?.webhook && {
+          NotificationURL: payment.webhook,
+        }),
+        ...(payment?.successRedirect && {
+          SuccessURL: payment.successRedirect,
+        }),
+        Receipt: {
+          ...(params.receipt.email && {
+            Email: params.receipt.email,
+          }),
+          Taxation: params.receipt.taxation,
+          Items: params.receipt.items.map((el) => {
+            return {
+              Name: el.name,
+              Amount: el.amount,
+              Price: el.price,
+              Tax: el.tax,
+              Quantity: el.quantity,
+            }
+          }),
+        },
+      })
       .catch((error) => {
         logger.error({
           location: 'tinkoff.createPayment',
-          message: getErrorString(error)
+          message: getErrorString(error),
         })
 
         if (error instanceof AxiosError) {
           throw new CreatePaymentError({
             message: error.message,
             errorCode: error.response?.statusText || '',
-            details: error.response?.data?.toString()
+            details: error.response?.data?.toString(),
           })
         }
 
         throw new CreatePaymentError({
           message: error.message,
           errorCode: 'unknown error',
-          details: ''
+          details: '',
         })
       })
 
@@ -120,7 +131,7 @@ export const newClient = ({
       throw new CreatePaymentError({
         errorCode: data.ErrorCode,
         message: data.Message,
-        details: data.Details
+        details: data.Details,
       })
     }
 
@@ -132,16 +143,16 @@ export const newClient = ({
       status: data.Status,
       errorCode: data.ErrorCode,
       amount: data.Amount,
-      orderId: data.OrderId
+      orderId: data.OrderId,
     }
   }
 
   return {
     client: {
       payment: {
-        create: createPayment
-      }
-    }
+        create: createPayment,
+      },
+    },
   }
 }
 

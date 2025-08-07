@@ -1,7 +1,11 @@
 import { UseCaseParams } from '@/domain/usecase/types'
 import { IArticle } from '@/domain/entity/article'
 
-export type ListSEOArticlesByCategorySlug = (params: { search: string; page: number; quantity: number }) => Promise<
+export type ListSEOArticlesByCategorySlug = (params: {
+  slug: string
+  page: number
+  quantity: number
+}) => Promise<
   | {
       data: IArticle[]
       pages: number
@@ -9,39 +13,41 @@ export type ListSEOArticlesByCategorySlug = (params: { search: string; page: num
   | never
 >
 
-export const buildListSEOArticlesByCategorySlug = ({ service }: UseCaseParams): ListSEOArticlesByCategorySlug => {
-  return async ({ search, page, quantity }) => {
+export const buildListSEOArticlesByCategorySlug = ({
+  service,
+}: UseCaseParams): ListSEOArticlesByCategorySlug => {
+  return async ({ slug, page, quantity }) => {
     const articles = await service.article.paginate({
       query: {
         where: {
           published_at: {
-            not: null
+            not: null,
           },
           topics: {
             some: {
               category: {
                 slug: {
-                  contains: search,
-                  mode: 'insensitive' as const
-                }
-              }
-            }
-          }
+                  contains: slug,
+                  mode: 'insensitive' as const,
+                },
+              },
+            },
+          },
         },
         include: {
           proofreadings: { include: { expert: true } },
           topics: {
             include: {
-              category: true
-            }
-          }
+              category: true,
+            },
+          },
         },
         orderBy: {
-          created_at: 'desc'
-        }
+          created_at: 'desc',
+        },
       },
       page,
-      quantity
+      quantity,
     })
 
     return articles

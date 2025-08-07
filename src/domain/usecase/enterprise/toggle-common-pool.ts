@@ -3,12 +3,15 @@ import { IEnterprise } from '@/domain/entity/enterprise'
 import { EnterpriseRole, Role } from '@prisma/client'
 import { ForbiddenError, InternalError } from '@/domain/errors'
 
-export type ToggleCommonPool = (data: { id: string; userId: string }) => Promise<IEnterprise | never>
+export type ToggleCommonPool = (data: {
+  id: string
+  userId: string
+}) => Promise<IEnterprise | never>
 
 export const buildToggleCommonPool = ({ adapter }: UseCaseParams): ToggleCommonPool => {
   return async ({ id, userId }) => {
     const user = await adapter.userRepository.get({
-      where: { id: userId }
+      where: { id: userId },
     })
 
     if (!user) {
@@ -16,7 +19,7 @@ export const buildToggleCommonPool = ({ adapter }: UseCaseParams): ToggleCommonP
     }
 
     const enterprise = await adapter.enterpriseRepository.get({
-      where: { id }
+      where: { id },
     })
 
     if (!enterprise) {
@@ -28,8 +31,8 @@ export const buildToggleCommonPool = ({ adapter }: UseCaseParams): ToggleCommonP
         where: {
           enterprise_id: id,
           user_id: userId,
-          role: EnterpriseRole.OWNER
-        }
+          role: EnterpriseRole.OWNER,
+        },
       })
       if (!employee) {
         throw new ForbiddenError()
@@ -38,23 +41,23 @@ export const buildToggleCommonPool = ({ adapter }: UseCaseParams): ToggleCommonP
 
     const updatedEnterprise = await adapter.enterpriseRepository.update({
       where: {
-        id
+        id,
       },
       data: {
-        common_pool: !enterprise.common_pool
+        common_pool: !enterprise.common_pool,
       },
       include: {
         employees: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
         subscription: {
           include: {
-            plan: true
-          }
-        }
-      }
+            plan: true,
+          },
+        },
+      },
     })
 
     if (!updatedEnterprise) {

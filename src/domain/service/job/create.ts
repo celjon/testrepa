@@ -1,7 +1,7 @@
 import { IJobInstance } from '@/domain/entity/job'
 import { ChatService } from '../chat'
 import { Adapter } from '@/domain/types'
-import { CreateInstance } from './createInstance'
+import { CreateInstance } from './create-instance'
 import { IChat } from '@/domain/entity/chat'
 import { Prisma } from '@prisma/client'
 
@@ -15,7 +15,7 @@ export type Create = (
     chat: IChat
     user_message_id?: string
     mj_native_message_id?: string | null
-  } & Omit<Prisma.JobCreateInput, 'chat'>
+  } & Omit<Prisma.JobCreateInput, 'chat'>,
 ) => Promise<IJobInstance>
 
 export const buildCreate =
@@ -27,8 +27,8 @@ export const buildCreate =
         chat_id: chat.id,
         timeout,
         user_message_id,
-        mj_native_message_id
-      }
+        mj_native_message_id,
+      },
     })
 
     job.chat = chat
@@ -38,9 +38,9 @@ export const buildCreate =
       event: {
         name: 'JOB_CREATE',
         data: {
-          job
-        }
-      }
+          job,
+        },
+      },
     })
 
     return createInstance({ job })

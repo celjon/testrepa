@@ -14,8 +14,8 @@ export class SEOArticleExpertJobHistoryGraphQLObject implements ISEOArticleExper
   @Field(() => Date)
   from_date!: Date
 
-  @Field(() => Date)
-  to_date!: Date
+  @Field(() => Date, { nullable: true })
+  to_date!: Date | null
 
   @Field(() => String)
   company!: string
@@ -48,7 +48,6 @@ export class SEOArticleExpertJobHistoryGraphQLObject implements ISEOArticleExper
  *         - id
  *         - post
  *         - from_date
- *         - to_date
  *         - company
  *         - city
  *         - duties

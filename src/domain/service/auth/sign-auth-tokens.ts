@@ -1,7 +1,13 @@
-import { IUser } from '@/domain/entity/user'
 import { signJWT } from '@/lib'
 
-export type signAuthTokens = (params: { user: IUser; immortal?: boolean; keyEncryptionKey: string | null }) => Promise<
+export type signAuthTokens = (params: {
+  user: {
+    id: string
+  }
+  immortal?: boolean
+  keyEncryptionKey: string | null
+  short?: boolean
+}) => Promise<
   | {
       accessToken: string
       refreshToken: string
@@ -10,18 +16,24 @@ export type signAuthTokens = (params: { user: IUser; immortal?: boolean; keyEncr
 >
 
 export const buildSignAuthTokens = (): signAuthTokens => {
-  return async ({ user, immortal = false, keyEncryptionKey }) => {
+  return async ({ user, immortal = false, keyEncryptionKey, short = false }) => {
+    let accessTokenExpiresIn = { expiresIn: '15m' }
+    let refreshTokenExpiresIn = { expiresIn: '1y' }
+    if (short) {
+      accessTokenExpiresIn = { expiresIn: '24h' }
+      refreshTokenExpiresIn = { expiresIn: '24h' }
+    }
+
     return {
       accessToken: signJWT({
         id: user.id,
         keyEncryptionKey,
-        ...(!immortal && { expiresIn: '24h' })
+        ...(!immortal && accessTokenExpiresIn),
       }),
       refreshToken: signJWT({
         id: user.id,
-        keyEncryptionKey,
-        ...(!immortal && { expiresIn: '1y' })
-      })
+        ...(!immortal && refreshTokenExpiresIn),
+      }),
     }
   }
 }

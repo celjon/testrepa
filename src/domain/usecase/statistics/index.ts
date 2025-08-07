@@ -16,6 +16,6 @@ export const buildStatisticsUseCase = (params: UseCaseParams): StatisticsUseCase
   return {
     platformTokens,
     getTokensByModel,
-    getProductUsageReport: buildGetProductUsageReport(params)
+    getProductUsageReport: buildGetProductUsageReport(params),
   }
 }

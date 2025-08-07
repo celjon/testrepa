@@ -9,7 +9,7 @@ export const buildGetChat = ({ chat }: Params): GetChat => {
   return async (req, res) => {
     const data = await chat.get({
       userId: req.user?.id,
-      chatId: req.params.id as string
+      chatId: req.params.id as string,
     })
 
     return res.status(200).json(data)

@@ -7,26 +7,34 @@ import { DeliveryParams } from '@/delivery/types'
 import { buildList, List } from './list'
 import { buildSend, buildSendMiddleware, Send } from './send'
 import { Middlewares } from '../../middlewares'
-import { buildButtonClick, ButtonClick } from './buttonClick'
+import { buildButtonClick, ButtonClick } from './button-click'
 import { buildUpdate, Update } from './update'
 import { buildDelete, Delete } from './delete'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
+import { buildDeleteMany, DeleteMany } from './delete-many'
 import { buildRegenerate, Regenerate } from './regenerate'
-import { buildSwitchNext, SwitchNext } from './switchNext'
-import { buildSwitchPrevious, SwitchPrevious } from './switchPrevious'
+import { buildSwitchNext, SwitchNext } from './switch-next'
+import { buildSwitchPrevious, SwitchPrevious } from './switch-previous'
 import { buildDeleteReport, DeleteReport } from './report/delete'
 import { buildCreateReport, CreateReport } from './report/create'
 import { buildListReport, ListReport } from './report/list'
-import { buildListAll, ListAll } from './listAll'
-import { buildPromptQueue, PromptQueue } from './prompt-queue'
-import { CancelPromptQueue, buildCancelPromptQueue } from './cancel-prompt-queue'
+import { buildListAll, ListAll } from './list-all'
+import { buildChatPromptQueue, ChatPromptQueue } from './chat-prompt-queue'
+import { buildCancelPromptQueue, CancelPromptQueue } from './cancel-prompt-queue'
+import { buildZipDownloadPromptQueue, ZipDownloadPromptQueue } from './zip-download-prompt-queue'
+import { buildOutputFilePromptQueue, OutputFilePromptQueue } from './output-file-prompt-queue'
+import { buildPromptQueueStream, PromptQueueStream } from './prompt-queue-stream'
 
-type Params = Pick<DeliveryParams, 'message' | 'promptQueuesRepository' | 'middlewares'>
+type Params = Pick<
+  DeliveryParams,
+  'message' | 'chat' | 'promptQueuesRepository' | 'middlewares' | 'storageGateway'
+>
 
 export type MessageMethods = {
   send: Send
-  promptQueue: PromptQueue
+  chatPromptQueue: ChatPromptQueue
   cancelPromptQueue: CancelPromptQueue
+  outputFilePromptQueue: OutputFilePromptQueue
+  zipDownloadPromptQueue: ZipDownloadPromptQueue
   regenerate: Regenerate
   switchNext: SwitchNext
   switchPrevious: SwitchPrevious
@@ -37,6 +45,7 @@ export type MessageMethods = {
   update: Update
   delete: Delete
   deleteMany: DeleteMany
+  promptQueueStream: PromptQueueStream
   report: {
     delete: DeleteReport
     create: CreateReport
@@ -54,13 +63,15 @@ const buildRegisterRoutes = (methods: MessageMethods, middlewares: Middlewares) 
     listMessagesRules,
     listAllMessagesRules,
     sendMessageRules,
-    promptQueueRules,
+    chatPromptQueueRules,
+    outputFilePromptQueueRules,
     queueCancelRules,
     regenerateMessageRules,
     switchMessageRules,
     listReportRules,
     deleteReportRules,
-    createReportRules
+    createReportRules,
+    downloadPromptQueueResultRules,
   } = buildMessageRules(middlewares)
 
   const sendMiddleware = buildSendMiddleware(middlewares)
@@ -94,30 +105,130 @@ const buildRegisterRoutes = (methods: MessageMethods, middlewares: Middlewares) 
 
     /**
      * @openapi
-     * /message/prompt-queue:
+     * /message/chat-prompt-queue:
      *   post:
      *     tags: [Message]
      *     security:
-     *      - bearerAuth: []
+     *       - bearerAuth: []
      *     produces:
      *       - application/json
      *     requestBody:
      *       required: true
      *       content:
-     *        application/json:
-     *          schema:
-     *            $ref: '#/components/rules/promptQueue'
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/rules/chatPromptQueue'
+     *     responses:
+     *       '200':
+     *         description: SSE‑соединение с прогрессом генерации
+     *         content:
+     *           text/event-stream:
+     *             schema:
+     *               type: string
+     *             example: |
+     *               data: {"queueId":"123e4567-e89b-12d3-a456-426614174000"}
+     *               data: {"percent":33}
+     *               data: {"percent":100,"done":true}
+     *               [DONE]
+     */
+    namespace.post(
+      '/chat-prompt-queue',
+      sendMiddleware,
+      chatPromptQueueRules,
+      createRouteHandler(methods.chatPromptQueue),
+    )
+
+    /**
+     * @openapi
+     * /message/output-file-prompt-queue:
+     *   post:
+     *     tags:
+     *       - Message
+     *     security:
+     *       - bearerAuth: []
+     *     produces:
+     *       - application/json
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/rules/outputFilePromptQueue'
+     *     responses:
+     *       '200':
+     *         description: SSE‑соединение с прогрессом генерации и ссылкой на ZIP
+     *         content:
+     *           text/event-stream:
+     *             schema:
+     *               type: string
+     *             example: |
+     *               data: {"queueId":"123e4567-e89b-12d3-a456-426614174000"}
+     *               data: {"percent":33}
+     *               data: {"percent":100,"done":true,"zipFilePath":"/tmp/responses_abc123.zip"}
+     *               [DONE]
+     */
+    namespace.post(
+      '/output-file-prompt-queue',
+      sendMiddleware,
+      outputFilePromptQueueRules,
+      createRouteHandler(methods.outputFilePromptQueue),
+    )
+
+    /**
+     * @openapi
+     * /message/zip-download-prompt-queue:
+     *   get:
+     *     tags: [Message]
+     *     produces:
+     *       - application/json
+     *     parameters:
+     *       - in: query
+     *         name: path
+     *         required: true
+     *         schema:
+     *           type: string
      *     responses:
      *       200:
+     *         description: Архив с результатами запроса (ZIP-файл)
      *         content:
-     *           application/json:
+     *           application/zip:
      *             schema:
-     *               type: object
-     *               properties:
-     *                 queueId:
-     *                   type: string
+     *               type: string
+     *               format: binary
      */
-    namespace.post('/prompt-queue', sendMiddleware, promptQueueRules, createRouteHandler(methods.promptQueue))
+    namespace.get(
+      '/zip-download-prompt-queue',
+      sendMiddleware,
+      downloadPromptQueueResultRules,
+      createRouteHandler(methods.zipDownloadPromptQueue),
+    )
+
+    /**
+     * @openapi
+     * /message/prompt-queue/{id}/stream:
+     *   get:
+     *     security:
+     *      - bearerAuth: []
+     *     tags: [Message]
+     *     produces:
+     *       - application/json
+     *     parameters:
+     *       - name: id
+     *         in: path
+     *         required: true
+     *         type: string
+     *     responses:
+     *        200:
+     *           content:
+     *              application/json:
+     *                schema:
+     *                      $ref: '#/components/entities/PromptQueueEvent'
+     */
+    namespace.get(
+      '/prompt-queue/:id/stream',
+      middlewares.authRequired(),
+      createRouteHandler(methods.promptQueueStream),
+    )
 
     /**
      * @openapi
@@ -195,7 +306,11 @@ const buildRegisterRoutes = (methods: MessageMethods, middlewares: Middlewares) 
      *                schema:
      *                   $ref: '#/components/entities/Message'
      */
-    namespace.post('/switch/previous/:id', switchMessageRules, createRouteHandler(methods.switchPrevious))
+    namespace.post(
+      '/switch/previous/:id',
+      switchMessageRules,
+      createRouteHandler(methods.switchPrevious),
+    )
 
     /**
      * @openapi
@@ -218,7 +333,11 @@ const buildRegisterRoutes = (methods: MessageMethods, middlewares: Middlewares) 
      *                schema:
      *                   $ref: '#/components/entities/MessageButton'
      */
-    namespace.post('/button/:buttonId/click', buttonClickRules, createRouteHandler(methods.buttonClick))
+    namespace.post(
+      '/button/:buttonId/click',
+      buttonClickRules,
+      createRouteHandler(methods.buttonClick),
+    )
 
     /**
      * @openapi
@@ -425,7 +544,9 @@ const buildRegisterRoutes = (methods: MessageMethods, middlewares: Middlewares) 
 
 export const buildMessageHandler = (params: Params): IHandler => {
   const send = buildSend(params)
-  const promptQueue = buildPromptQueue(params)
+  const promptQueue = buildChatPromptQueue(params)
+  const streamPromptQueue = buildOutputFilePromptQueue(params)
+  const zipDownloadPromptQueue = buildZipDownloadPromptQueue(params)
   const cancelPromptQueue = buildCancelPromptQueue(params)
   const regenerate = buildRegenerate(params)
   const switchNext = buildSwitchNext(params)
@@ -440,12 +561,15 @@ export const buildMessageHandler = (params: Params): IHandler => {
   const deleteReport = buildDeleteReport(params)
   const createReport = buildCreateReport(params)
   const listReport = buildListReport(params)
+  const stream = buildPromptQueueStream(params)
 
   return {
     registerRoutes: buildRegisterRoutes(
       {
         send,
-        promptQueue,
+        chatPromptQueue: promptQueue,
+        outputFilePromptQueue: streamPromptQueue,
+        zipDownloadPromptQueue,
         cancelPromptQueue,
         regenerate,
         switchNext,
@@ -457,13 +581,14 @@ export const buildMessageHandler = (params: Params): IHandler => {
         update,
         delete: deleteMessage,
         deleteMany,
+        promptQueueStream: stream,
         report: {
           delete: deleteReport,
           create: createReport,
-          list: listReport
-        }
+          list: listReport,
+        },
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

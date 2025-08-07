@@ -1,1 +1,1 @@
-export * from '@/domain/entity/chatEvent'
+export * from '@/domain/entity/chat-event'

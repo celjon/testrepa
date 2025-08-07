@@ -11,7 +11,7 @@ export const buildUnfavorite = ({ preset }: Params): Unfavorite => {
   return async (req, res) => {
     const data = await preset.unfavorite({
       id: req.params.id,
-      userId: req.user?.id
+      userId: req.user?.id,
     })
 
     return res.status(200).header('Content-Type', 'application/json').send(toJSONString(data))

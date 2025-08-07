@@ -20,13 +20,13 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
           name,
           slug: name?.en ? slugification(name.en) : undefined,
           article_id,
-          category_id
-        }
+          category_id,
+        },
       })
     }
     if (!seoArticleTopic) {
       throw new NotFoundError({
-        code: 'TOPIC_NOT_FOUND'
+        code: 'TOPIC_NOT_FOUND',
       })
     }
 

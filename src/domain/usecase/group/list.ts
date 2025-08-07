@@ -1,7 +1,13 @@
 import { IGroup } from '@/domain/entity/group'
 import { UseCaseParams } from '../types'
 
-export type List = (data: { userId: string; search?: string; page?: number; sort?: string; sortDirection?: string }) => Promise<{
+export type List = (data: {
+  userId: string
+  search?: string
+  page?: number
+  sort?: string
+  sortDirection?: string
+}) => Promise<{
   data: Array<IGroup>
   pages: number
 }>
@@ -14,16 +20,16 @@ export const buildList = ({ service }: UseCaseParams): List => {
           user_id: userId,
           name: {
             contains: search,
-            mode: 'insensitive'
-          }
+            mode: 'insensitive',
+          },
         },
         orderBy: sort
           ? {
-              [sort]: sortDirection
+              [sort]: sortDirection,
             }
-          : {}
+          : {},
       },
-      page
+      page,
     })
 
     return groups

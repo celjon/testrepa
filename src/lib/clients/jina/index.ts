@@ -10,8 +10,8 @@ export const newClient = ({ apiUrl, apiKey }: Params): { client: JinaApiClient }
   const api = axios.create({
     baseURL: apiUrl,
     headers: {
-      Authorization: `Bearer ${apiKey}`
-    }
+      Authorization: `Bearer ${apiKey}`,
+    },
   })
 
   return {
@@ -31,9 +31,9 @@ export const newClient = ({ apiUrl, apiKey }: Params): { client: JinaApiClient }
           headers: {
             'x-respond-with': 'markdown',
             Referer: 'https://bothub.chat/',
-            Accept: 'application/json'
+            Accept: 'application/json',
           },
-          signal: signal?.signal
+          signal: signal?.signal,
         })
 
         return {
@@ -41,10 +41,10 @@ export const newClient = ({ apiUrl, apiKey }: Params): { client: JinaApiClient }
           description: result.data.description,
           url: result.data.url,
           content: result.data.content,
-          tokens: result.data.usage.tokens
+          tokens: result.data.usage.tokens,
         }
-      }
-    }
+      },
+    },
   }
 }
 

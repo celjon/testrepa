@@ -1,3 +1,9 @@
+import { extname } from 'path'
+import { Readable } from 'stream'
+import * as mm from 'music-metadata'
+import { config } from '@/config'
+import { getErrorString } from '@/lib'
+import { logger } from '@/lib/logger'
 import { Adapter } from '@/domain/types'
 import { IChat } from '@/domain/entity/chat'
 import { IMessage } from '@/domain/entity/message'
@@ -10,12 +16,10 @@ import { SubscriptionService } from '../../subscription'
 import { UserService } from '../../user'
 import { ForbiddenError, NotFoundError } from '@/domain/errors'
 import { determinePlatform } from '@/domain/entity/action'
-import { logger } from '@/lib/logger'
 import { ModelService } from '../../model'
 import { MessageStorage } from '../storage/types'
 import { FileService } from '../../file'
 import { RawFile } from '@/domain/entity/file'
-import { extname } from 'path'
 import { Speech2TextService } from '../../speech2text'
 import { ConstantCostPlugin } from '../plugins/constant-cost'
 
@@ -42,10 +46,15 @@ export type SendSpeech2Text = (params: {
   platform?: Platform
   sentPlatform?: Platform
   onEnd?: (params: { userMessage: IMessage; assistantMessage: IMessage | null }) => unknown
+  developerKeyId?: string
 }) => Promise<IMessage>
 
 const isAcceptableFormat = (filename?: string) =>
-  filename ? ['flac', 'mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'ogg', 'wav', 'webm'].includes(extname(filename).split('.')[1]) : true
+  filename
+    ? ['flac', 'mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'ogg', 'wav', 'webm'].includes(
+        extname(filename).split('.')[1],
+      )
+    : true
 
 export const buildSendSpeech2Text = ({
   messageStorage,
@@ -58,61 +67,128 @@ export const buildSendSpeech2Text = ({
   jobService,
   modelService,
   employeeRepository,
-  constantCostPlugin
+  constantCostPlugin,
 }: Params): SendSpeech2Text => {
-  return async ({ subscription, chat, user, keyEncryptionKey, userMessage, voiceFile, videoFile, platform, onEnd, sentPlatform }) => {
+  return async ({
+    subscription,
+    chat,
+    user,
+    keyEncryptionKey,
+    userMessage,
+    voiceFile,
+    videoFile,
+    platform,
+    onEnd,
+    sentPlatform,
+    developerKeyId,
+  }) => {
     const { settings } = chat
 
     if (!settings || !settings.stt || !settings.stt.model) {
       throw new NotFoundError({
-        code: 'SETTINGS_NOT_FOUND'
+        code: 'SETTINGS_NOT_FOUND',
       })
     }
 
     const model = await modelRepository.get({
       where: {
-        id: settings.stt.model
-      }
+        id: settings.stt.model,
+      },
     })
 
     if (!chat.model || !model) {
       throw new NotFoundError({
-        code: 'MODEL_NOT_FOUND'
+        code: 'MODEL_NOT_FOUND',
       })
     }
 
     if (!voiceFile && !videoFile) {
       throw new NotFoundError({
-        code: 'MEDIA_FILE_REQUIRED'
+        code: 'MEDIA_FILE_REQUIRED',
       })
     }
 
     if (voiceFile && videoFile) {
       throw new ForbiddenError({
-        code: 'ATTACH_ONLY_ONE_FILE'
+        code: 'ATTACH_ONLY_ONE_FILE',
       })
     }
 
-    if (!isAcceptableFormat(voiceFile?.originalname) || !isAcceptableFormat(videoFile?.originalname)) {
+    if (
+      !isAcceptableFormat(voiceFile?.originalname) ||
+      !isAcceptableFormat(videoFile?.originalname)
+    ) {
       throw new ForbiddenError({
         code: 'MEDIA_FILE_IS_NOT_ACCEPTABLE',
         message:
-          'Media file processing is only available in one of the following formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav or webm'
+          'Media file processing is only available in one of the following formats: flac, mp3, mp4, mpeg, mpga, m4a, ogg, wav or webm',
       })
     }
 
     const employee = await employeeRepository.get({
       where: {
-        user_id: userMessage.id
-      }
+        user_id: userMessage.id,
+      },
     })
 
     platform = determinePlatform(platform, !!employee?.enterprise_id)
 
     const sttJob = await jobService.create({
       name: 'MODEL_GENERATION',
-      chat
+      chat,
     })
+
+    const { caps: pluginCaps } = await constantCostPlugin({
+      employee,
+      subscription,
+      settings,
+      sentPlatform: sentPlatform,
+      platform,
+      chatId: chat.id,
+      job: sttJob,
+      messages: [],
+      model,
+      prompt: '',
+      user: user,
+      keyEncryptionKey,
+    })
+
+    const mediaFileReadable = new Readable()
+    const mediaFile = videoFile ?? voiceFile
+    mediaFileReadable.push(mediaFile!.buffer)
+    mediaFileReadable.push(null)
+    const { format } = await mm
+      .parseStream(mediaFileReadable, {}, { duration: true })
+      .catch((error) => {
+        logger.error({
+          location: 'sendSpeech2Text',
+          message: `Unable to get duration for file ${mediaFile?.originalname}. Error: ${getErrorString(error)}`,
+          userId: user.id,
+          email: user.email ?? user.tg_id,
+          chatId: chat.id,
+          modelId: model.id,
+        })
+
+        return {
+          format: {
+            duration: undefined,
+          },
+        }
+      })
+
+    if (format.duration !== undefined) {
+      await subscriptionService.checkBalance({
+        subscription,
+        estimate:
+          pluginCaps +
+          (await modelService.getCaps.speechToText({
+            model,
+            audioMetadata: {
+              duration: format.duration,
+            },
+          })),
+      })
+    }
 
     let sttMessage = await messageStorage.create({
       user,
@@ -125,7 +201,7 @@ export const buildSendSpeech2Text = ({
           user_id: user.id,
           model_id: settings.stt.model,
           job_id: sttJob.id,
-          content: null
+          content: null,
         },
         include: {
           model: {
@@ -133,14 +209,14 @@ export const buildSendSpeech2Text = ({
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
-          job: true
-        }
-      }
+          job: true,
+        },
+      },
     })
 
     chatService.eventStream.emit({
@@ -148,31 +224,29 @@ export const buildSendSpeech2Text = ({
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: sttMessage
-        }
-      }
+          message: sttMessage,
+        },
+      },
     })
 
     await sttJob.start()
     ;(async () => {
       try {
-        const mediaFile = videoFile ?? voiceFile
-
         userMessage =
           (await messageStorage.update({
             user,
             keyEncryptionKey,
             data: {
               where: {
-                id: userMessage.id
+                id: userMessage.id,
               },
               data: {
-                content: mediaFile?.originalname
+                content: mediaFile?.originalname,
               },
               include: {
-                user: true
-              }
-            }
+                user: true,
+              },
+            },
           })) ?? userMessage
 
         chatService.eventStream.emit({
@@ -180,9 +254,9 @@ export const buildSendSpeech2Text = ({
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: userMessage
-            }
-          }
+              message: userMessage,
+            },
+          },
         })
 
         const { result, duration } = await speech2TextService.transcribe({
@@ -192,45 +266,34 @@ export const buildSendSpeech2Text = ({
             format_text: settings.stt?.format,
             speaker_labels: settings.stt?.speakers,
             prompt: userMessage.content ?? undefined,
-            mediaFile
-          }
-        })
-
-        const { caps: pluginCaps } = await constantCostPlugin({
-          employee,
-          subscription,
-          settings,
-          sentPlatform: sentPlatform,
-          platform,
-          chatId: chat.id,
-          job: sttJob,
-          messages: [],
-          model,
-          prompt: '',
-          user: user,
-          keyEncryptionKey
+            mediaFile,
+          },
         })
 
         let caps =
           pluginCaps +
-          (await modelService.getCaps({
+          (await modelService.getCaps.speechToText({
             model,
-            settings,
             audioMetadata: {
-              duration
-            }
+              duration,
+            },
           }))
 
-        const { transaction, subscription: newSubscription } = await subscriptionService.writeOffWithLimitNotification({
-          subscription,
-          amount: caps,
-          meta: {
-            userId: user.id,
-            enterpriseId: employee?.enterprise_id,
-            platform,
-            model_id: model?.id
-          }
-        })
+        const { transaction, subscription: newSubscription } =
+          await subscriptionService.writeOffWithLimitNotification({
+            subscription,
+            amount: caps,
+            meta: {
+              userId: user.id,
+              enterpriseId: employee?.enterprise_id,
+              platform,
+              model_id: model?.id,
+              provider_id: model.id.match(/^whisper/)
+                ? config.model_providers.openai.id
+                : config.model_providers.assemblyAI.id,
+              developerKeyId,
+            },
+          })
 
         subscription = newSubscription
 
@@ -242,12 +305,12 @@ export const buildSendSpeech2Text = ({
             keyEncryptionKey,
             data: {
               where: {
-                id: sttMessage.id
+                id: sttMessage.id,
               },
               data: {
                 status: MessageStatus.DONE,
                 transaction_id: transaction.id,
-                content: result
+                content: result,
               },
               include: {
                 user: true,
@@ -257,14 +320,14 @@ export const buildSendSpeech2Text = ({
                     icon: true,
                     parent: {
                       include: {
-                        icon: true
-                      }
-                    }
-                  }
+                        icon: true,
+                      },
+                    },
+                  },
                 },
-                job: true
-              }
-            }
+                job: true,
+              },
+            },
           })) ?? sttMessage
 
         userMessage =
@@ -273,12 +336,12 @@ export const buildSendSpeech2Text = ({
             keyEncryptionKey,
             data: {
               where: {
-                id: userMessage.id
+                id: userMessage.id,
               },
               data: {
-                full_content: result
-              }
-            }
+                full_content: result,
+              },
+            },
           })) ?? userMessage
 
         chat =
@@ -286,9 +349,9 @@ export const buildSendSpeech2Text = ({
             where: { id: chat.id },
             data: {
               total_caps: {
-                increment: caps
-              }
-            }
+                increment: caps,
+              },
+            },
           })) ?? chat
 
         chatService.eventStream.emit({
@@ -297,10 +360,10 @@ export const buildSendSpeech2Text = ({
             name: 'UPDATE',
             data: {
               chat: {
-                total_caps: chat.total_caps
-              }
-            }
-          }
+                total_caps: chat.total_caps,
+              },
+            },
+          },
         })
 
         chatService.eventStream.emit({
@@ -308,9 +371,9 @@ export const buildSendSpeech2Text = ({
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: sttMessage
-            }
-          }
+              message: sttMessage,
+            },
+          },
         })
 
         chatService.eventStream.emit({
@@ -318,37 +381,40 @@ export const buildSendSpeech2Text = ({
           event: {
             name: 'TRANSACTION_CREATE',
             data: {
-              transaction
-            }
-          }
+              transaction,
+            },
+          },
         })
-        
+
         chatService.eventStream.emit({
           chat,
           event: {
-            name: userService.hasEnterpriseActualSubscription(user) ? 'ENTERPRISE_SUBSCRIPTION_UPDATE' : 'SUBSCRIPTION_UPDATE',
+            name: userService.hasEnterpriseActualSubscription(user)
+              ? 'ENTERPRISE_SUBSCRIPTION_UPDATE'
+              : 'SUBSCRIPTION_UPDATE',
             data: {
               subscription: {
                 id: subscription.id,
-                balance: subscription.balance
-              }
-            }
-          }
+                balance: subscription.balance,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: sttMessage
+          assistantMessage: sttMessage,
         })
       } catch (error) {
         const errorJob = await sttJob.setError(error)
 
-        logger.log({
-          level: 'error',
-          message: `sendSpeech2Text ${JSON.stringify(error)}`,
+        logger.error({
+          location: 'sendSpeech2Text',
+          message: ` ${getErrorString(error)}`,
           userId: user.id,
           email: user.email ?? user.tg_id,
-          chatId: chat.id
+          chatId: chat.id,
+          modelId: model.id,
         })
 
         chatService.eventStream.emit({
@@ -359,15 +425,15 @@ export const buildSendSpeech2Text = ({
               message: {
                 id: sttMessage.id,
                 job_id: errorJob.id,
-                job: errorJob
-              }
-            }
-          }
+                job: errorJob,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: sttMessage
+          assistantMessage: sttMessage,
         })
       }
     })()

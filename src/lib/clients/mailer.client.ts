@@ -14,11 +14,11 @@ export const newClient = ({ host, port, user, password }: NewClientParams) => {
     port,
     auth: {
       user,
-      pass: password
+      pass: password,
     },
-    secure: true
+    secure: true,
   })
   return {
-    client
+    client,
   }
 }

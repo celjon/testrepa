@@ -12,7 +12,7 @@ export const buildAIToolsUseCase = (params: UseCaseParams): AIToolsUseCase => {
   return {
     completions: {
       sync: buildCompletionsSync(params),
-      stream: buildCompletionsStream(params)
-    }
+      stream: buildCompletionsStream(params),
+    },
   }
 }

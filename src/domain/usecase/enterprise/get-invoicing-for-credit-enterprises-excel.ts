@@ -16,11 +16,13 @@ export type GetInvoicingForCreditEnterprisesExcel = (data: {
   month: string | undefined
 }) => Promise<Buffer<ArrayBufferLike>>
 
-export function buildGetInvoicingForCreditEnterprisesExcel({ adapter }: UseCaseParams): GetInvoicingForCreditEnterprisesExcel {
+export function buildGetInvoicingForCreditEnterprisesExcel({
+  adapter,
+}: UseCaseParams): GetInvoicingForCreditEnterprisesExcel {
   return async ({ userId, year = '2025', month = '3' }) => {
     try {
       const user = await adapter.userRepository.get({
-        where: { id: userId }
+        where: { id: userId },
       })
       if (user!.role !== Role.ADMIN) {
         throw new ForbiddenError({ code: 'YOU_ARE_NOT_ADMIN' })
@@ -35,7 +37,7 @@ export function buildGetInvoicingForCreditEnterprisesExcel({ adapter }: UseCaseP
           creditedTokens: bigint
           month: string
           year: string
-        }[]
+        }[],
       ): {
         name: string
         creator: string
@@ -64,7 +66,7 @@ export function buildGetInvoicingForCreditEnterprisesExcel({ adapter }: UseCaseP
                 agreement_conclusion_date: currentAgreementConclusionDate,
                 creator: currentCreator,
                 creditedTokensForDates: currentData,
-                rubs_per_million_caps: currentrubs_per_million_caps
+                rubs_per_million_caps: currentrubs_per_million_caps,
               })
             }
 
@@ -88,7 +90,7 @@ export function buildGetInvoicingForCreditEnterprisesExcel({ adapter }: UseCaseP
           currentData.push({
             year: entry.year,
             month: getMonthName(parseInt(entry.month)),
-            creditedTokens: entry.creditedTokens
+            creditedTokens: entry.creditedTokens,
           })
 
           if (index === data.length - 1) {
@@ -97,34 +99,54 @@ export function buildGetInvoicingForCreditEnterprisesExcel({ adapter }: UseCaseP
               agreement_conclusion_date: currentAgreementConclusionDate,
               creator: currentCreator,
               creditedTokensForDates: currentData,
-              rubs_per_million_caps: currentrubs_per_million_caps
+              rubs_per_million_caps: currentrubs_per_million_caps,
             })
           }
         })
 
         return result
       }
-      const enterprisesData = await adapter.enterpriseRepository.getAggregateEnterpriseTokensCredited(month, year)
+
+      //MIGRATION_ON_CLICKHOUSE
+      /*const enterprisesData = await adapter.enterpriseRepository.getAggregateEnterpriseTokensCredited(month, year)*/
+
+      const enterprises = await adapter.enterpriseRepository.list({})
+      const enterprisesData = (
+        await adapter.enterpriseRepository.chGetEnterpriseTokensCredited(month, year)
+      ).map(({ enterprise_id, creditedTokens, month, year }) => {
+        const enterprise = enterprises.find((e) => e.id === enterprise_id)
+        return {
+          name: enterprise?.name ?? 'UNDEFINED',
+          creator: enterprise?.creator ?? 'USER',
+          agreement_conclusion_date: enterprise?.agreement_conclusion_date ?? null,
+          rubs_per_million_caps: enterprise?.rubs_per_million_caps ?? 216,
+          creditedTokens,
+          month,
+          year,
+        }
+      })
 
       if (enterprisesData.length === 0) {
         logger.info('No transactions found for the given period.')
         const emptyExcelDocument = adapter.excelGateway.createExcelInvoicingForCreditEnterprises({
           params: [
             {
-              creditedTokensForDates: [{ year: year ?? '', month: month ?? '', creditedTokens: 0n }],
+              creditedTokensForDates: [
+                { year: year ?? '', month: month ?? '', creditedTokens: 0n },
+              ],
               name: 'данные за данный период',
               creator: 'отсутствуют',
               agreement_conclusion_date: '',
-              rubs_per_million_caps: 250
-            }
-          ]
+              rubs_per_million_caps: 250,
+            },
+          ],
         })
         return emptyExcelDocument
       }
 
       const stats = transformData(enterprisesData)
       const excelDocument = adapter.excelGateway.createExcelInvoicingForCreditEnterprises({
-        params: stats
+        params: stats,
       })
       return excelDocument
     } catch (error) {
@@ -134,7 +156,12 @@ export function buildGetInvoicingForCreditEnterprisesExcel({ adapter }: UseCaseP
   }
 }
 
-function addMissingMonths(firstYear: number, firstMonth: number, startYear: number, startMonth: number): CreditedTokensForDates[] {
+function addMissingMonths(
+  firstYear: number,
+  firstMonth: number,
+  startYear: number,
+  startMonth: number,
+): CreditedTokensForDates[] {
   const filledDates: CreditedTokensForDates[] = []
   let currentYear = startYear
   let currentMonth = startMonth

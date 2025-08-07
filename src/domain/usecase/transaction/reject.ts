@@ -8,8 +8,8 @@ export const buildReject = ({ adapter }: UseCaseParams): Reject => {
   return async ({ userId, id }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (user?.role !== Role.ADMIN) {
@@ -19,11 +19,11 @@ export const buildReject = ({ adapter }: UseCaseParams): Reject => {
     const transaction = await adapter.transactionRepository.update({
       where: {
         id,
-        deleted: false
+        deleted: false,
       },
       data: {
-        status: TransactionStatus.FAILED
-      }
+        status: TransactionStatus.FAILED,
+      },
     })
 
     if (!transaction) {

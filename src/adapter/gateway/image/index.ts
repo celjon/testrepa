@@ -19,6 +19,6 @@ export const buildImageGateway = (): ImageGateway => {
     resize,
     extract,
     metadata,
-    download: buildDownload()
+    download: buildDownload(),
   }
 }

@@ -12,17 +12,19 @@ export const buildCreateMany = ({ adapter }: UseCaseParams): CreateMany => {
   return async ({ proofreadings }) => {
     if (proofreadings.length === 0) {
       throw new NotFoundError({
-        message: 'NO_PROOFREADINGS_PROVIDED'
+        message: 'NO_PROOFREADINGS_PROVIDED',
       })
     }
-    const expert = await adapter.seoArticleExpertRepository.get({ where: { id: proofreadings[0].expert_id } })
+    const expert = await adapter.seoArticleExpertRepository.get({
+      where: { id: proofreadings[0].expert_id },
+    })
     if (!expert) {
       throw new NotFoundError({
-        message: 'EXPERT_NOT_FOUND'
+        message: 'EXPERT_NOT_FOUND',
       })
     }
     const createdCount = await adapter.seoArticleProofreadingRepository.createMany({
-      data: proofreadings
+      data: proofreadings,
     })
 
     const articleIdsToUpdate = proofreadings.map((proofreading) => proofreading.article_id)
@@ -30,7 +32,7 @@ export const buildCreateMany = ({ adapter }: UseCaseParams): CreateMany => {
     if (articleIdsToUpdate.length > 0) {
       await adapter.articleRepository.updateMany({
         where: { id: { in: articleIdsToUpdate } },
-        data: { published_at: new Date() }
+        data: { published_at: new Date() },
       })
     }
 

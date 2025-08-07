@@ -12,7 +12,7 @@ export const buildUpdateArticle = ({ article }: Params): UpdateArticle => {
       userId: req.user.id,
       id: req.params.articleId,
       content: req.body.content,
-      published_at: req.body.published_at
+      published_at: req.body.published_at,
     })
 
     res.status(200).json(result)

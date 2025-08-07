@@ -59,5 +59,5 @@ export const DefaultMJConfig: MJConfig = {
   DiscordBaseUrl: 'https://discord.com',
   WsBaseUrl: 'wss://gateway.discord.gg/?encoding=json&v=9',
   fetch: fetch,
-  WebSocket: WebSocket
+  WebSocket: WebSocket,
 }

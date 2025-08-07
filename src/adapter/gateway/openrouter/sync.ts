@@ -4,16 +4,22 @@ import {
   ChatCompletionMessageParam,
   ChatCompletionMessageToolCall,
   ChatCompletionTool,
-  ChatCompletionToolChoiceOption
+  ChatCompletionToolChoiceOption,
 } from 'openai/resources'
 import { AdapterParams } from '@/adapter/types'
 import { logger } from '@/lib/logger'
 import { getErrorString } from '@/lib'
 import { ModelUsage } from '../types'
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 import { BaseError } from '@/domain/errors'
 
-const allowedSettings = ['temperature', 'presence_penalty', 'max_tokens', 'top_p', 'frequency_penalty']
+const allowedSettings = [
+  'temperature',
+  'presence_penalty',
+  'max_tokens',
+  'top_p',
+  'frequency_penalty',
+]
 
 type Message = {
   role: string
@@ -22,7 +28,7 @@ type Message = {
 
 type Params = Pick<AdapterParams, 'openRouterBalancer'>
 
-/* 
+/*
 Array<{
   role: 'user';
   content: string | Array<{
@@ -73,7 +79,15 @@ export type Sync = (params: {
 }>
 
 export const buildSync = (params: Params): Sync => {
-  return async ({ messages, settings, tools, tool_choice, endUserId, provider, ...otherParams }) => {
+  return async ({
+    messages,
+    settings,
+    tools,
+    tool_choice,
+    endUserId,
+    provider,
+    ...otherParams
+  }) => {
     try {
       const { model } = settings
       const openRouterProvider = params.openRouterBalancer.next()
@@ -103,17 +117,18 @@ export const buildSync = (params: Params): Sync => {
         messages: [
           {
             role: 'system',
-            content: settings.system_prompt ?? ''
+            content: settings.system_prompt ?? '',
           },
-          ...messages
+          ...messages,
         ],
         ...clearedSettings,
         user: endUserId,
         provider,
         transforms: ['middle-out'],
-        ...otherParams
+        ...otherParams,
       }
-      const completion = await openRouterProvider.client.chat.completions.create(createCompletionParams)
+      const completion =
+        await openRouterProvider.client.chat.completions.create(createCompletionParams)
 
       if (!completion.choices || completion.choices.length === 0) {
         throw new Error(`Completion error: ${JSON.stringify(completion)}`)
@@ -122,27 +137,27 @@ export const buildSync = (params: Params): Sync => {
       const result = completion.choices[0].message
       const message: Message = {
         role: result.role,
-        content: result.content ?? ''
+        content: result.content ?? '',
       }
 
       return {
         message,
         response: message,
         tool_calls: result.tool_calls,
-        usage: completion.usage ?? null
+        usage: completion.usage ?? null,
       }
     } catch (error) {
       if (error instanceof APIError) {
         logger.error({
           location: 'openrouterGateway.sync',
           message: getErrorString(error),
-          openaiKey: error.headers?.['Authorization']?.slice(0, 42)
+          openaiKey: error.headers?.['Authorization']?.slice(0, 42),
         })
 
         throw new BaseError({
           httpStatus: error.status,
           message: error.message,
-          code: error.code ?? undefined
+          code: error.code ?? undefined,
         })
       }
 

@@ -11,7 +11,7 @@ export const buildStop =
   async (req, res) => {
     await chat.stop({
       userId: req.user.id,
-      chatId: req.params.id
+      chatId: req.params.id,
     })
 
     return res.status(200).send()

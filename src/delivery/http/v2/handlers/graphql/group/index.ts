@@ -25,14 +25,14 @@ export class GroupResolver {
     @Arg('search', () => String, { nullable: true }) search?: string,
     @Arg('sort', () => String, { nullable: true }) sort?: string,
     @Arg('sortDirection', () => String, { nullable: true })
-    sortDirection?: string
+    sortDirection?: string,
   ): Promise<GroupsList> {
     return this.params.group.list({
       userId: req.user.id,
       page: page,
       search: search,
       sort: sort,
-      sortDirection: sortDirection
+      sortDirection: sortDirection,
     })
   }
 }

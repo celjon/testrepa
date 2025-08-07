@@ -1,6 +1,6 @@
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
-import { IPresetCategory } from '@/domain/entity/presetCategory'
+import { IPresetCategory } from '@/domain/entity/preset-category'
 
 type Params = Pick<AdapterParams, 'db'>
 

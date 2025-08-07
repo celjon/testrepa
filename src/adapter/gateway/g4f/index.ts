@@ -1,13 +1,13 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildGetModels, GetModels } from './getModels'
-import { buildGetProviders, GetProviders } from './getProviders'
+import { buildGetModels, GetModels } from './get-models'
+import { buildGetProviders, GetProviders } from './get-providers'
 import { buildSend, Send } from './send'
 import { buildSync, Sync } from './sync'
-import { buildSendImage, SendImage } from './sendImage'
-import { buildWriteHarFile, WriteHarFile } from './writeHarFile'
-import { buildDeleteHarFile, DeleteHarFile } from './deleteHarFile'
-import { buildGetHarFiles, GetHarFiles } from './getHarFiles'
-import { AutoUpdateHARFiles, buildAutoUpdateHARFiles } from './auto-update-har-files'
+import { buildSendImage, SendImage } from './send-image'
+import { buildWriteHarFile, WriteHarFile } from './write-har-file'
+import { buildDeleteHarFile, DeleteHarFile } from './delete-har-file'
+import { buildGetHarFiles, GetHarFiles } from './get-har-files'
+import { buildAutoUpdateHARFiles, AutoUpdateHARFiles } from './auto-update-har-files'
 
 type Params = Pick<AdapterParams, 'g4f'>
 
@@ -43,6 +43,6 @@ export const buildG4FGateway = (params: Params): G4FGateway => {
     writeHarFile,
     autoUpdateHARFiles,
     deleteHarFile,
-    getHarFiles
+    getHarFiles,
   }
 }

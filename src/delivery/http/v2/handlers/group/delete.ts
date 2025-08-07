@@ -9,7 +9,7 @@ export const buildDelete = ({ group }: Params): Delete => {
   return async (req, res) => {
     const data = await group.delete({
       userId: req.user?.id,
-      groupId: req.params.id
+      groupId: req.params.id,
     })
 
     return res.status(200).json(data)

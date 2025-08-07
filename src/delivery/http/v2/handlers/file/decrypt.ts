@@ -11,7 +11,7 @@ export const buildDecrypt = ({ file }: Params): Decrypt => {
     const data = await file.decrypt({
       userId: req.user.id,
       keyEncryptionKey: req.user.keyEncryptionKey,
-      fileId: req.params.fileId
+      fileId: req.params.fileId,
     })
 
     return res.status(200).json(data)

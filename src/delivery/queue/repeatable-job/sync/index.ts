@@ -2,6 +2,7 @@ import { Client } from 'minio'
 import { DeliveryParams } from '@/delivery/types'
 import { Scheduler } from '../types'
 import { buildDeleteStaleObjects } from './delete-stale-objects'
+import { buildDeleteUselessObjects } from '@/delivery/queue/repeatable-job/sync/delete-useless-objects'
 // import { buildDeleteDeletedChats } from './delete-deleted-chats'
 
 type Params = DeliveryParams & {
@@ -13,16 +14,23 @@ export const scheduleSyncDataJobs = (params: Params, schedule: Scheduler) => {
   // schedule(
   //   {
   //     cronExpression: '0 4 * * *',
-  //     jobId: 'sync:deleteStaleObjects'
+  //     jobId: 'sync:deleteDeletedChats'
   //   },
   //   buildDeleteDeletedChats(params)
   // )
-
   schedule(
     {
       cronExpression: '0 1 * * *',
-      jobId: 'sync:deleteDeletedChats'
+      jobId: 'sync:deleteUselessObjects',
     },
-    buildDeleteStaleObjects(params)
+
+    buildDeleteUselessObjects(params),
+  )
+  schedule(
+    {
+      cronExpression: '0 2 * * *',
+      jobId: 'sync:deleteStaleObjects',
+    },
+    buildDeleteStaleObjects(params),
   )
 }

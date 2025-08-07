@@ -5,25 +5,31 @@ import { CreateQueueWorker, Queues } from '@/queues/types'
 import { RepeatableJobHandler, Scheduler } from './types'
 import { scheduleSyncDataJobs } from './sync'
 import { scheduleModelJobs } from './model'
+import { scheduleG4FJobs } from './g4f'
+import { scheduleSubscriptionsJobs } from '@/delivery/queue/repeatable-job/subscription'
 
 type Params = DeliveryParams & {
   minioClient: Client
 }
 
-export const startRepeatableJobQueue = (params: Params, { repeatableJob }: Queues, createWorker: CreateQueueWorker) => {
+export const startRepeatableJobQueue = (
+  params: Params,
+  { repeatableJob }: Queues,
+  createWorker: CreateQueueWorker,
+) => {
   const handlers: Record<string, RepeatableJobHandler> = {}
 
   createWorker(repeatableJob.name, async (job) => {
     logger.info({
       location: 'startRepeatableJobQueue',
-      message: `Processing job ${job.data.jobId}`
+      message: `Processing job ${job.data.jobId}`,
     })
     if (handlers[job.data.jobId]) {
       await handlers[job.data.jobId]()
     } else {
       logger.warn({
         message: `Unknown jobId: ${job.data.jobId}`,
-        location: 'startRepeatableJobQueue'
+        location: 'startRepeatableJobQueue',
       })
     }
   })
@@ -33,18 +39,20 @@ export const startRepeatableJobQueue = (params: Params, { repeatableJob }: Queue
     repeatableJob.add(
       params.jobId,
       {
-        jobId: params.jobId
+        jobId: params.jobId,
       },
       {
         repeat: {
           pattern: params.cronExpression,
-          key: params.jobId
+          key: params.jobId,
         },
-        jobId: params.jobId
-      }
+        jobId: params.jobId,
+      },
     )
   }
 
   scheduleSyncDataJobs(params, schedule)
   scheduleModelJobs(params, schedule)
+  scheduleG4FJobs(params, schedule)
+  scheduleSubscriptionsJobs(params, schedule)
 }

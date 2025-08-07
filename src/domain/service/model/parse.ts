@@ -1,10 +1,16 @@
 import { config } from '@/config'
-import { Adapter } from '../../types'
+import { Adapter } from '@/adapter'
 import { ModelCustomAction, Prisma } from '@prisma/client'
 import { logger } from '@/lib/logger'
-import { isDeepseekR1, isMidjourney, isStableDiffusion, isVeo } from '@/domain/entity/model'
+import { isDeepseekR1, isMidjourney, isStableDiffusion, isVeo, isVeo3 } from '@/domain/entity/model'
 import { TgBotParseMode } from '@/lib/clients/tg-bot'
-import { AudioPricing, ImageLLMPricing, ImagePricing, SpeechPricing, TextPricing } from './pricing-schemas'
+import {
+  AudioPricing,
+  ImageLLMPricing,
+  ImagePricing,
+  SpeechPricing,
+  TextPricing,
+} from './pricing-schemas'
 
 type ParsedModelProvider = {
   id: string
@@ -73,13 +79,20 @@ export const buildParse =
     g4fGateway,
     openrouterGateway,
     tgNotificationBotGateway,
-    replicateGateway
+    replicateGateway,
   }: Adapter): Parse =>
   async () => {
     logger.info('Starting model parsing.')
     let parsedModels: ParsedModel[] = []
 
-    const [openaiModels, g4fProviders, g4fModels, openRouterModels, openRouterProviders, replicateModels] = await Promise.all([
+    const [
+      openaiModels,
+      g4fProviders,
+      g4fModels,
+      openRouterModels,
+      openRouterProviders,
+      replicateModels,
+    ] = await Promise.all([
       openaiGateway.getModels().then((models) => {
         logger.info(`Fetched ${models.length} OpenAI models.`)
 
@@ -87,13 +100,21 @@ export const buildParse =
       }),
       g4fGateway.getProviders().then((providers) => {
         logger.info(`Fetched ${providers.length} GPT4FREE providers.`)
-
-        return providers.filter((provider) => provider.id === 'OpenaiAccount')
+        return providers.filter(
+          (provider) => provider.id === 'OpenaiAccount' || provider.id === 'Anthropic',
+        )
       }),
-      g4fGateway.getModels('OpenaiAccount').then((models) => {
-        logger.info(`Fetched ${models.length} GPT4FREE models.`)
-        return models
-      }),
+      (async () => {
+        const g4fModels = await g4fGateway.getModels('OpenaiAccount').then((models) => {
+          logger.info(`Fetched ${models.length} GPT4FREE models.`)
+          return models
+        })
+        const anthropicModels = await g4fGateway.getModels('Anthropic').then((models) => {
+          logger.info(`Fetched ${models.length} GPT4FREE models.`)
+          return models
+        })
+        return [...g4fModels, ...anthropicModels]
+      })(),
       openrouterGateway.getModels().then((models) => {
         logger.info(`Fetched ${models.length} OpenRouter models.`)
 
@@ -108,7 +129,7 @@ export const buildParse =
         logger.info(`Fetched ${models.length} Replicate models.`)
 
         return models
-      })
+      }),
     ])
 
     // Parse OpenAI Models
@@ -119,18 +140,22 @@ export const buildParse =
       label: 'OpenAI',
       features: ['TEXT_TO_TEXT', 'DOCUMENT_TO_TEXT'],
       providers: [parsedOpenAIProvider],
-      children: [] as ParsedModel[]
+      children: [] as ParsedModel[],
     } satisfies ParsedModel
 
     for (const openaiModel of openaiModels) {
       const features: string[] = []
 
       if (openaiModel.id.match(/^gpt-image/)) {
-        features.push('TEXT_TO_IMAGE', 'TEXT_TO_IMAGE_LLM')
+        features.push('TEXT_TO_IMAGE', 'TEXT_TO_IMAGE_LLM', 'IMAGE_TO_IMAGE')
       } else if (openaiModel.id.match(/^gpt/)) {
         features.push('TEXT_TO_TEXT', 'DOCUMENT_TO_TEXT')
       } else if (openaiModel.id.match(/^dall-e/)) {
         features.push('TEXT_TO_IMAGE')
+
+        if (openaiModel.id.match(/^dall-e-2/)) {
+          features.push('IMAGE_TO_IMAGE')
+        }
       } else if (openaiModel.id.match(/^tts/)) {
         features.push('TEXT_TO_AUDIO')
       } else if (openaiModel.id.match(/^whisper/)) {
@@ -147,57 +172,56 @@ export const buildParse =
               input: 1,
               input_image: 1,
               output: 1,
-              discount: 1
+              discount: 1,
             } satisfies TextPricing)),
           ...(features.includes('TEXT_TO_IMAGE_LLM') &&
             ({
               input: ((5 / 1_000_000) * 1.5) / 0.000002,
               input_image: ((10 / 1_000_000) * 1.5) / 0.000002,
               output: ((40 / 1_000_000) * 1.5) / 0.000002,
-              discount: 1
+              discount: 1,
             } satisfies ImageLLMPricing)),
           ...(openaiModel.id.match(/^dall-e/) &&
             ({
               standard: {
                 '1024x1024': 20000,
-                '1792x1024': 40000
+                '1792x1024': 40000,
               },
               hd: {
                 '1024x1024': 20000,
-                '1792x1024': 40000
+                '1792x1024': 40000,
               },
-              discount: 1
+              discount: 1,
             } satisfies ImagePricing)),
           ...(openaiModel.id.match(/^tts-1/) &&
             ({
               input: 7.5,
-              discount: 1
+              discount: 1,
             } satisfies SpeechPricing)),
           ...(openaiModel.id.match(/^tts-1-hd/) &&
             ({
               input: 15,
-              discount: 1
+              discount: 1,
             } satisfies SpeechPricing)),
           ...(openaiModel.id.match(/^whisper/) &&
             ({
               input: 3000,
-              discount: 1
-            } satisfies AudioPricing))
+              discount: 1,
+            } satisfies AudioPricing)),
         },
         context_length: 4095,
         max_tokens: 4096,
         features,
         providers: [parsedOpenAIProvider],
-        created_at: new Date(openaiModel.created * 1000)
+        created_at: new Date(openaiModel.created * 1000),
       })
     }
 
     logger.info(`Parsed ${parsedOpenAI.children.length} OpenAI models.`)
     parsedModels.push(parsedOpenAI)
 
-    // Parse ImaginePro Models
-    logger.info('Parsing ImaginePro models.')
-    const parsedImagineProProvider = config.model_providers.imaginepro satisfies ParsedModelProvider
+    // Parse Midjourney Models
+    logger.info('Parsing Midjourney models.')
     const parsedMidjourneyProvider = config.model_providers.midjourney satisfies ParsedModelProvider
     const parsedMidjourneyModel = {
       id: 'midjourney',
@@ -206,9 +230,9 @@ export const buildParse =
         relax_mode: 20000,
         fast_mode: 40000,
         turbo_mode: 80000,
-        discount: 1
+        discount: 1,
       },
-      providers: [parsedImagineProProvider],
+      providers: [parsedMidjourneyProvider],
       features: ['TEXT_TO_IMAGE', 'IMAGE_TO_TEXT'],
       functions: [
         {
@@ -216,18 +240,18 @@ export const buildParse =
           name: 'imagine',
           label: 'Imagine',
           is_default: true,
-          features: ['TEXT_TO_IMAGE', 'IMAGE_TO_TEXT']
+          features: ['TEXT_TO_IMAGE', 'IMAGE_TO_TEXT'],
         },
         {
           id: 'describe',
           name: 'describe',
           label: 'Describe',
-          features: ['IMAGE_TO_TEXT']
-        }
-      ]
+          features: ['IMAGE_TO_TEXT'],
+        },
+      ],
     } satisfies ParsedModel
 
-    logger.info('Parsed ImaginePro models.')
+    logger.info('Parsed Midjourney models.')
     parsedModels.push(parsedMidjourneyModel)
 
     // Parse OpenRouter Models
@@ -237,8 +261,8 @@ export const buildParse =
       fallback: parsedOpenAIProvider,
       children: openRouterProviders.map((openRouterProvider) => ({
         id: `${config.model_providers.openrouter.id}-${openRouterProvider.replace(/ /g, '-').toLowerCase()}`,
-        name: openRouterProvider
-      }))
+        name: openRouterProvider,
+      })),
     } satisfies ParsedModelProvider
 
     openRouterModels.push({
@@ -250,7 +274,7 @@ export const buildParse =
       architecture: {
         modality: 'text+image->text',
         tokenizer: 'Claude',
-        instruct_type: ''
+        instruct_type: '',
       },
       pricing: {
         prompt: '0.000003',
@@ -260,7 +284,7 @@ export const buildParse =
       },
       top_provider: {
         max_completion_tokens: 64000,
-        is_moderated: false
+        is_moderated: false,
       },
       per_request_limits: null,
     })
@@ -279,7 +303,8 @@ export const buildParse =
       const parentModelId = idMatch[1]
       const childModelId = idMatch[2]
       const prefix = `${parentModelId}/`
-      let parsedParentModel: ParsedModel | null = parsedModels.find(({ id }) => id === parentModelId) ?? null
+      let parsedParentModel: ParsedModel | null =
+        parsedModels.find(({ id }) => id === parentModelId) ?? null
 
       if (!parsedParentModel) {
         const nameMatch = openRouterModel.name.match(/^([a-zA-Z0-9-.() ]+): ([a-zA-Z0-9-.() ]+)$/)
@@ -306,8 +331,8 @@ export const buildParse =
             label: parentModelName,
             prefix,
             providers: [parsedOpenRouterProvider],
-            children: []
-          })
+            children: [],
+          }),
         )
       } else if (parsedParentModel.providers) {
         parsedParentModel.prefix = prefix
@@ -320,13 +345,14 @@ export const buildParse =
         continue
       }
 
-      let parsedChildModel: ParsedModel | null = parsedParentModel.children.find(({ id }) => id === childModelId) ?? null
+      let parsedChildModel: ParsedModel | null =
+        parsedParentModel.children.find(({ id }) => id === childModelId) ?? null
 
       const pricing = {
         input: (+openRouterModel.pricing.prompt * 1.5) / 0.000002,
         input_image: (+openRouterModel.pricing.image * 1.5) / 1_000 / 0.000002,
         output: (+openRouterModel.pricing.completion * 1.5) / 0.000002,
-        discount: 1
+        discount: 1,
       }
       const contextLength = openRouterModel.context_length
       const maxTokens = openRouterModel.top_provider.max_completion_tokens
@@ -354,15 +380,17 @@ export const buildParse =
             context_length: contextLength,
             max_tokens: maxTokens,
             features,
-            providers: [parsedOpenRouterProvider]
-          })
+            providers: [parsedOpenRouterProvider],
+          }),
         )
       } else if (parsedChildModel.providers) {
         parsedChildModel.pricing = pricing
         parsedChildModel.prefix = prefix
         parsedChildModel.context_length = contextLength
         parsedChildModel.max_tokens = maxTokens
-        parsedChildModel.features = [...new Set([...(parsedChildModel.features ?? []), ...features])]
+        parsedChildModel.features = [
+          ...new Set([...(parsedChildModel.features ?? []), ...features]),
+        ]
 
         if (!parsedChildModel.providers.some(({ id }) => id === parsedOpenRouterProvider.id)) {
           parsedChildModel.providers.push(parsedOpenRouterProvider)
@@ -373,10 +401,13 @@ export const buildParse =
 
     // Parse Replicate Models
     logger.info('Parsing Replicate models.')
+    const parsedGoogleGenAIProvider = config.model_providers
+      .googleGenAI satisfies ParsedModelProvider
+    const parsedai302Provider = config.model_providers.ai302 satisfies ParsedModelProvider
     const parsedReplicateProvider = config.model_providers.replicate satisfies ParsedModelProvider
     const parsedReplicateModels: { [key: string]: ParsedModel } = {}
-
-    const capitalize = (str: string) => str.replace(/(?:^|\s|["'([{])+\S/g, (match) => match.toUpperCase())
+    const capitalize = (str: string) =>
+      str.replace(/(?:^|\s|["'([{])+\S/g, (match) => match.toUpperCase())
 
     for (const replicateModel of replicateModels) {
       if (!parsedReplicateModels[replicateModel.owner]) {
@@ -400,7 +431,7 @@ export const buildParse =
           provider_id: parsedReplicateProvider.id,
           features: [],
           children: [],
-          created_at: new Date()
+          created_at: new Date(),
         }
       }
 
@@ -408,23 +439,31 @@ export const buildParse =
         id: `${replicateModel.name.replace(/ /g, '-').toLowerCase()}`,
         label: replicateModel.name,
         prefix: `${replicateModel.owner}/`,
-        providers: [parsedReplicateProvider],
-        provider_id: parsedReplicateProvider.id,
+        providers: !isVeo3({ id: `${replicateModel.name.replace(/ /g, '-').toLowerCase()}` })
+          ? [parsedReplicateProvider]
+          : [parsedai302Provider],
+        provider_id: !isVeo3({ id: `${replicateModel.name.replace(/ /g, '-').toLowerCase()}` })
+          ? parsedReplicateProvider.id
+          : parsedai302Provider.id,
         features: replicateModel.features,
         pricing: !isVeo({ id: `${replicateModel.name.replace(/ /g, '-').toLowerCase()}` })
           ? {
               per_image: 40_000,
-              discount: 1
+              discount: 1,
             }
           : {
-              per_second: 300_000,
-              discount: 1
+              per_second: replicateModel.name === 'veo-3' ? 450_000 : 300_000,
+              discount: 1,
             },
-        created_at: new Date(replicateModel.created_at)
+        created_at: new Date(replicateModel.created_at),
       })
     }
     for (const parentReplicateModel of Object.values(parsedReplicateModels)) {
-      if (parentReplicateModel.children?.length === 1 && !isStableDiffusion(parentReplicateModel) && !isVeo(parentReplicateModel)) {
+      if (
+        parentReplicateModel.children?.length === 1 &&
+        !isStableDiffusion(parentReplicateModel) &&
+        !isVeo(parentReplicateModel)
+      ) {
         if (!parsedReplicateModels['replicate-other']) {
           parsedReplicateModels['replicate-other'] = {
             id: 'replicate-other',
@@ -436,9 +475,9 @@ export const buildParse =
             children: [],
             pricing: {
               per_image: 40_000,
-              discount: 1
+              discount: 1,
             },
-            created_at: new Date()
+            created_at: new Date(),
           }
         }
 
@@ -457,8 +496,8 @@ export const buildParse =
       fallback: parsedOpenRouterProvider,
       children: g4fProviders.map((provider) => ({
         ...provider,
-        id: `${config.model_providers.g4f.id}-${provider.id.replace(/ /g, '-').toLowerCase()}`
-      }))
+        id: `${config.model_providers.g4f.id}-${provider.id.replace(/ /g, '-').toLowerCase()}`,
+      })),
     } satisfies ParsedModelProvider
 
     for (const g4fModel of g4fModels) {
@@ -478,23 +517,28 @@ export const buildParse =
               input: 1,
               input_image: 1,
               output: 1,
-              discount: 1
+              discount: 1,
             },
             context_length: 4095,
             max_tokens: 4096,
             features,
-            providers: [parsedG4FProvider]
-          })
+            providers: [parsedG4FProvider],
+          }),
         )
       } else if (parsedModel.children && !isStableDiffusion(parsedModel)) {
-        const parsedChildModel: ParsedModel | undefined = parsedModel.children.find(({ id }) => id === g4fModel.id)
+        const parsedChildModel: ParsedModel | undefined = parsedModel.children.find(
+          ({ id }) => id === g4fModel.id,
+        )
 
         if (!parsedChildModel) continue
 
         if (!parsedChildModel.providers) parsedChildModel.providers = []
 
         if (!parsedChildModel.features) parsedChildModel.features = features
-        else parsedChildModel.features = [...new Set([...(parsedChildModel.features ?? []), ...features])]
+        else
+          parsedChildModel.features = [
+            ...new Set([...(parsedChildModel.features ?? []), ...features]),
+          ]
 
         parsedChildModel.providers.unshift(parsedG4FProvider)
         if (!parsedModel.providers?.some(({ id }) => id === parsedG4FProvider.id)) {
@@ -507,9 +551,9 @@ export const buildParse =
     // Parse AssemblyAi Models
     logger.info('Parsing AssemblyAi models.')
     const parsedAssemblyAiProvider = {
-      id: 'assembly-ai',
-      label: 'AssemblyAi',
-      name: 'AssemblyAi'
+      id: config.model_providers.assemblyAI.id,
+      label: config.model_providers.assemblyAI.name,
+      name: config.model_providers.assemblyAI.name,
     } satisfies ParsedModelProvider
     const parsedAssemblyAiModel = {
       id: 'assembly-ai',
@@ -522,22 +566,22 @@ export const buildParse =
           label: 'AssemblyAI-nano',
           pricing: {
             input: 2000,
-            discount: 1
+            discount: 1,
           },
           providers: [parsedAssemblyAiProvider],
-          features: ['AUDIO_TO_TEXT']
+          features: ['AUDIO_TO_TEXT', 'BIG_AUDIO_TO_TEXT'],
         },
         {
           id: 'assembly-ai-best',
           label: 'AssemblyAI-best',
           pricing: {
             input: 5500,
-            discount: 1
+            discount: 1,
           },
           providers: [parsedAssemblyAiProvider],
-          features: ['AUDIO_TO_TEXT']
-        }
-      ]
+          features: ['AUDIO_TO_TEXT', 'BIG_AUDIO_TO_TEXT'],
+        },
+      ],
     } satisfies ParsedModel
 
     logger.info('Parsed AssemblyAi models.')
@@ -548,7 +592,7 @@ export const buildParse =
     const parsedRunwayProvider = {
       id: 'runway',
       label: 'Runway',
-      name: 'Runway'
+      name: 'Runway',
     } satisfies ParsedModelProvider
     const parsedRunwayModel = {
       id: 'runway',
@@ -560,23 +604,23 @@ export const buildParse =
           id: 'gen3a_turbo',
           label: 'Gen3A-turbo',
           pricing: {
-            per_second: 150_000,
-            discount: 1
+            per_second: 30_000,
+            discount: 1,
           },
           providers: [parsedRunwayProvider],
-          features: ['IMAGE_TO_VIDEO', 'TEXT_TO_VIDEO']
+          features: ['IMAGE_TO_VIDEO', 'TEXT_TO_VIDEO'],
         },
         {
           id: 'gen4_turbo',
           label: 'Gen4-turbo',
           pricing: {
-            per_second: 150_000,
-            discount: 1
+            per_second: 30_000,
+            discount: 1,
           },
           providers: [parsedRunwayProvider],
-          features: ['IMAGE_TO_VIDEO', 'TEXT_TO_VIDEO']
-        }
-      ]
+          features: ['IMAGE_TO_VIDEO', 'TEXT_TO_VIDEO'],
+        },
+      ],
     } satisfies ParsedModel
 
     logger.info('Parsed Runway models.')
@@ -588,7 +632,7 @@ export const buildParse =
       id: 'other',
       label: 'Other',
       features: ['TEXT_TO_TEXT', 'DOCUMENT_TO_TEXT'],
-      children: [] as ParsedModel[]
+      children: [] as ParsedModel[],
     } satisfies ParsedModel
 
     parsedModels = parsedModels.filter((parsedModel) => {
@@ -623,13 +667,13 @@ export const buildParse =
 
             return parsedModel.children
           })
-          .flat()
-      )
+          .flat(),
+      ),
     ]
     const modelCustomization = await modelCustomRepository.list({
       orderBy: {
-        order: 'asc'
-      }
+        order: 'asc',
+      },
     })
 
     for (const modelCustom of modelCustomization) {
@@ -653,7 +697,9 @@ export const buildParse =
         childModelIdRegexp = null
       }
 
-      const parsedFoundModels: ParsedModel[] = parsedModels.filter(({ id }) => (modelIdRegexp ? modelIdRegexp.test(id) : id === modelId))
+      const parsedFoundModels: ParsedModel[] = parsedModels.filter(({ id }) =>
+        modelIdRegexp ? modelIdRegexp.test(id) : id === modelId,
+      )
       let parsedFoundModel: ParsedModel | null = parsedFoundModels[0] ?? null
 
       if (modelCustom.action === ModelCustomAction.INCLUDE && modelId) {
@@ -661,7 +707,7 @@ export const buildParse =
           parsedFoundModel = {
             id: modelId,
             custom: true,
-            children: []
+            children: [],
           }
           parsedModels.push(parsedFoundModel)
         } else {
@@ -671,7 +717,7 @@ export const buildParse =
         // Include child models
         if (childModelId && parsedFoundModel.children) {
           const parsedFoundChildModels: ParsedModel[] = parsedAllChildModels.filter(({ id }) =>
-            childModelIdRegexp ? childModelIdRegexp.test(id) : id === childModelId
+            childModelIdRegexp ? childModelIdRegexp.test(id) : id === childModelId,
           )
 
           for (const parsedFoundChildModel of parsedFoundChildModels) {
@@ -721,12 +767,14 @@ export const buildParse =
             }
 
             parsedFoundModel.children = parsedFoundModel.children.filter(({ id }) =>
-              childModelIdRegexp ? !childModelIdRegexp.test(id) : id !== childModelId
+              childModelIdRegexp ? !childModelIdRegexp.test(id) : id !== childModelId,
             )
           }
           // Exclude models
         } else if (modelId) {
-          parsedModels = parsedModels.filter(({ id }) => (modelIdRegexp ? !modelIdRegexp.test(id) : id !== modelId))
+          parsedModels = parsedModels.filter(({ id }) =>
+            modelIdRegexp ? !modelIdRegexp.test(id) : id !== modelId,
+          )
         }
       }
     }
@@ -747,7 +795,9 @@ export const buildParse =
 
       const parsedChildModels: ParsedModel[] = parsedModel.children
       const features: string[] = parsedFirstChildModel.features.filter((parentModelFeature) =>
-        parsedChildModels.every(({ features = [] }) => features.some((feature) => feature === parentModelFeature))
+        parsedChildModels.every(({ features = [] }) =>
+          features.some((feature) => feature === parentModelFeature),
+        ),
       )
 
       parsedModel.features = features
@@ -759,7 +809,11 @@ export const buildParse =
       const parsedModel = parsedModels[index]
 
       parsedModel.order = index + 1
-      for (let childIndex = 0; parsedModel.children && childIndex < parsedModel.children.length; childIndex++) {
+      for (
+        let childIndex = 0;
+        parsedModel.children && childIndex < parsedModel.children.length;
+        childIndex++
+      ) {
         const parsedChildModel = parsedModel.children[childIndex]
 
         parsedChildModel.order = childIndex + 1
@@ -771,23 +825,24 @@ export const buildParse =
     const parsedProviders: ParsedModelProvider[] = [
       parsedOpenRouterProvider,
       parsedOpenAIProvider,
-      parsedImagineProProvider,
       parsedMidjourneyProvider,
       parsedReplicateProvider,
+      parsedGoogleGenAIProvider,
+      parsedai302Provider,
       parsedG4FProvider,
       parsedAssemblyAiProvider,
-      parsedRunwayProvider
+      parsedRunwayProvider,
     ]
 
     // Upsert Providers
     const getProviderUpsertArgs = (
       parsedProvider: ParsedModelProvider,
       index: number,
-      parsedParentProvider?: ParsedModelProvider
+      parsedParentProvider?: ParsedModelProvider,
     ): Prisma.ModelProviderUpsertArgs => {
       return {
         where: {
-          id: parsedProvider.id
+          id: parsedProvider.id,
         },
         create: {
           id: parsedProvider.id,
@@ -795,38 +850,40 @@ export const buildParse =
           label: parsedProvider.label,
           order: index + 1,
           ...(parsedParentProvider && {
-            parent_id: parsedParentProvider.id
+            parent_id: parsedParentProvider.id,
           }),
           ...('supported_accounts' in parsedProvider &&
             typeof parsedProvider.supported_accounts === 'boolean' && {
-              supported_accounts: parsedProvider.supported_accounts
+              supported_accounts: parsedProvider.supported_accounts,
             }),
           ...('supported_account_queue_types' in parsedProvider &&
             Array.isArray(parsedProvider.supported_account_queue_types) && {
-              supported_account_queue_types: parsedProvider.supported_account_queue_types
-            })
+              supported_account_queue_types: parsedProvider.supported_account_queue_types,
+            }),
         },
         update: {
           name: parsedProvider.name,
           ...(parsedParentProvider && {
-            parent_id: parsedParentProvider.id
+            parent_id: parsedParentProvider.id,
           }),
           ...('supported_accounts' in parsedProvider &&
             typeof parsedProvider.supported_accounts === 'boolean' && {
-              supported_accounts: parsedProvider.supported_accounts
+              supported_accounts: parsedProvider.supported_accounts,
             }),
           ...('supported_account_queue_types' in parsedProvider &&
             Array.isArray(parsedProvider.supported_account_queue_types) && {
-              supported_account_queue_types: parsedProvider.supported_account_queue_types
-            })
-        }
+              supported_account_queue_types: parsedProvider.supported_account_queue_types,
+            }),
+        },
       }
     }
 
     const providerCount = await modelProviderRepository.count()
 
     await Promise.all(
-      parsedProviders.map((parsedProvider, index) => modelProviderRepository.upsert(getProviderUpsertArgs(parsedProvider, index)))
+      parsedProviders.map((parsedProvider, index) =>
+        modelProviderRepository.upsert(getProviderUpsertArgs(parsedProvider, index)),
+      ),
     )
     if (providerCount === 0) {
       await Promise.all(
@@ -835,17 +892,17 @@ export const buildParse =
             parsedProvider.fallback &&
             modelProviderRepository.update({
               where: {
-                id: parsedProvider.id
+                id: parsedProvider.id,
               },
               data: {
                 fallback: {
                   connect: {
-                    id: parsedProvider.fallback.id
-                  }
-                }
-              }
-            })
-        )
+                    id: parsedProvider.fallback.id,
+                  },
+                },
+              },
+            }),
+        ),
       )
     }
     await Promise.all(
@@ -854,20 +911,25 @@ export const buildParse =
           parsedProvider.children &&
           Promise.all(
             parsedProvider.children.map((parsedChildProvider, index) =>
-              modelProviderRepository.upsert(getProviderUpsertArgs(parsedChildProvider, index, parsedProvider))
-            )
-          )
-      )
+              modelProviderRepository.upsert(
+                getProviderUpsertArgs(parsedChildProvider, index, parsedProvider),
+              ),
+            ),
+          ),
+      ),
     )
 
     // Upsert Models
     logger.info('Upserting models.')
     const modelCount = await modelRepository.count()
 
-    const getModelUpsertArgs = (parsedModel: ParsedModel, parsedParentModel?: ParsedModel): Prisma.ModelUpsertArgs => ({
+    const getModelUpsertArgs = (
+      parsedModel: ParsedModel,
+      parsedParentModel?: ParsedModel,
+    ): Prisma.ModelUpsertArgs => ({
       where: {
         id: parsedModel.id,
-        deleted_at: undefined
+        deleted_at: undefined,
       },
       create: {
         id: parsedModel.id,
@@ -875,10 +937,10 @@ export const buildParse =
         pricing: parsedModel.pricing,
         prefix: parsedModel.prefix,
         ...(parsedModel.context_length && {
-          context_length: parsedModel.context_length
+          context_length: parsedModel.context_length,
         }),
         ...(parsedModel.max_tokens && {
-          max_tokens: parsedModel.max_tokens
+          max_tokens: parsedModel.max_tokens,
         }),
         features: parsedModel.features,
         ...(parsedModel.functions && {
@@ -889,18 +951,18 @@ export const buildParse =
                 name: parsedModelFunction.name,
                 label: parsedModelFunction.label,
                 is_default: parsedModelFunction.is_default,
-                features: parsedModelFunction.features
-              }))
-            }
-          }
+                features: parsedModelFunction.features,
+              })),
+            },
+          },
         }),
         ...(parsedModel.providers && {
           providers: {
-            connect: parsedModel.providers.map(({ id }) => ({ id }))
-          }
+            connect: parsedModel.providers.map(({ id }) => ({ id })),
+          },
         }),
         ...(parsedParentModel && {
-          parent_id: parsedParentModel.id
+          parent_id: parsedParentModel.id,
         }),
         provider_id: parsedModel.provider_id,
         child_provider_id: parsedModel.child_provider_id,
@@ -911,12 +973,12 @@ export const buildParse =
         ...(parsedModel.custom && {
           icon_id: parsedModel.icon_id ?? null,
           ...(parsedModel.message_color && {
-            message_color: parsedModel.message_color
-          })
+            message_color: parsedModel.message_color,
+          }),
         }),
         ...(!parsedModel.custom && {
           icon_id: null,
-          message_color: null
+          message_color: null,
         }),
         deleted_at: null,
         disabled: true,
@@ -926,35 +988,35 @@ export const buildParse =
       update: {
         ...(parsedModel.providers && {
           providers: {
-            connect: parsedModel.providers.map(({ id }) => ({ id }))
-          }
+            connect: parsedModel.providers.map(({ id }) => ({ id })),
+          },
         }),
         ...(parsedParentModel && {
-          parent_id: parsedParentModel.id
+          parent_id: parsedParentModel.id,
         }),
         ...(parsedModel.custom && {
           icon_id: parsedModel.icon_id ?? null,
           ...(parsedModel.label && {
-            label: parsedModel.label
+            label: parsedModel.label,
           }),
           ...(parsedModel.provider_id && {
             provider_id: parsedModel.provider_id,
-            child_provider_id: null
+            child_provider_id: null,
           }),
           ...(parsedModel.child_provider_id && {
-            child_provider_id: parsedModel.child_provider_id
+            child_provider_id: parsedModel.child_provider_id,
           }),
           ...(parsedModel.message_color && {
-            message_color: parsedModel.message_color
-          })
+            message_color: parsedModel.message_color,
+          }),
         }),
         ...(!parsedModel.custom && {
           icon_id: null,
-          message_color: null
+          message_color: null,
         }),
         custom: parsedModel.custom ?? false,
         deleted_at: null,
-      }
+      },
     })
 
     const notifyNewModels = async (parsedModels: ParsedModel[]) => {
@@ -969,10 +1031,10 @@ export const buildParse =
           filteredParsedModels
             .map(
               (parsedModel) =>
-                `A new model <b>${parsedModel.prefix ? parsedModel.prefix : ''}${parsedModel.id}</b>${parsedModel.providers && parsedModel.providers.length > 0 ? ` from provider <b>${parsedModel.providers[0].label ?? parsedModel.providers[0].name ?? parsedModel.providers[0].id}</b>` : ''} has been released!\nEnable it in the <a href=${JSON.stringify(config.frontend.address + 'admin')}>admin panel</a> now.`
+                `A new model <b>${parsedModel.prefix ? parsedModel.prefix : ''}${parsedModel.id}</b>${parsedModel.providers && parsedModel.providers.length > 0 ? ` from provider <b>${parsedModel.providers[0].label ?? parsedModel.providers[0].name ?? parsedModel.providers[0].id}</b>` : ''} has been released!\nEnable it in the <a href=${JSON.stringify(config.frontend.address + 'admin')}>admin panel</a> now.`,
             )
             .join('\n\n'),
-          TgBotParseMode.HTML
+          TgBotParseMode.HTML,
         )
       } catch (error) {
         logger.error(error)
@@ -984,34 +1046,32 @@ export const buildParse =
     const upsertModel = async (parsedModel: ParsedModel, parsedParentModel?: ParsedModel) => {
       try {
         const { where, create, update } = getModelUpsertArgs(parsedModel, parsedParentModel)
-        const model = await modelRepository.get({
-          where
+        
+        // Check if model exists before upsert
+        const existingModel = await modelRepository.get({ where })
+        
+        // Use atomic upsert operation to avoid race conditions
+        const model = await modelRepository.upsert({
+          where,
+          create,
+          update: {
+            ...update,
+            // Handle pricing updates for existing models
+            ...(parsedModel.pricing && {
+              pricing: parsedModel.pricing,
+            }),
+            ...(parsedModel.discount && {
+              pricing: {
+                ...(parsedModel.pricing ? { ...parsedModel.pricing } : {}),
+                discount: parsedModel.discount,
+              },
+            }),
+          },
         })
 
-        if (model) {
-          await modelRepository.update({
-            where,
-            data: {
-              ...update,
-              ...(model.auto_update_pricing &&
-                parsedModel.pricing && {
-                  pricing: parsedModel.pricing
-                }),
-              ...(typeof model.pricing === 'object' &&
-                parsedModel.discount && {
-                  pricing: {
-                    ...(model.auto_update_pricing && parsedModel.pricing ? { ...parsedModel.pricing } : { ...model.pricing }),
-                    discount: parsedModel.discount
-                  }
-                })
-            }
-          })
-        } else {
+        // If model didn't exist before upsert, it's a new model
+        if (!existingModel) {
           parsedNewModels.push(parsedModel)
-
-          await modelRepository.create({
-            data: create
-          })
           logger.info(`Created new model ${parsedModel.id}.`)
         }
       } catch (error) {
@@ -1030,9 +1090,9 @@ export const buildParse =
             Promise.all(
               parsedModel.children
                 .filter((parsedChildModel) => !parsedChildModel.custom)
-                .map((parsedChildModel) => upsertModel(parsedChildModel, parsedModel))
-            )
-        )
+                .map((parsedChildModel) => upsertModel(parsedChildModel, parsedModel)),
+            ),
+        ),
     )
     await Promise.all(
       parsedModels
@@ -1043,9 +1103,9 @@ export const buildParse =
             Promise.all(
               parsedModel.children
                 .filter((parsedChildModel) => !!parsedChildModel.custom)
-                .map((parsedChildModel) => upsertModel(parsedChildModel, parsedModel))
-            )
-        )
+                .map((parsedChildModel) => upsertModel(parsedChildModel, parsedModel)),
+            ),
+        ),
     )
 
     if (modelCount > 0) {
@@ -1056,25 +1116,25 @@ export const buildParse =
     logger.info('Deleting old models.')
     const parsedAllModelsIds: string[] = parsedModels.flatMap((parsedModel) => [
       parsedModel.id,
-      ...(parsedModel.children?.map(({ id }) => id) || [])
+      ...(parsedModel.children?.map(({ id }) => id) || []),
     ])
 
     const modelDeleteResult = await modelRepository.updateMany({
       where: {
         id: { notIn: parsedAllModelsIds },
-        deleted_at: null
+        deleted_at: null,
       },
-      data: { deleted_at: new Date() }
+      data: { deleted_at: new Date() },
     })
 
     await planModelRepository.updateMany({
       where: {
         model_id: { notIn: parsedAllModelsIds },
-        deleted_at: null
+        deleted_at: null,
       },
       data: {
-        deleted_at: new Date()
-      }
+        deleted_at: new Date(),
+      },
     })
     logger.info(`Deleted ${modelDeleteResult.count} old models.`)
     logger.info('Model parsing completed.')

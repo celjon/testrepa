@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client'
 import { IModel } from '@/domain/entity/model'
-import { IChatImageSettings } from '@/domain/entity/chatSettings'
+import { IChatImageSettings } from '@/domain/entity/chat-settings'
 import { RawFileWithoutBuffer } from '@/domain/entity/file'
 
 export type Update = (params: {
@@ -10,14 +10,16 @@ export type Update = (params: {
 }) => Prisma.ChatImageSettingsUpdateInput
 
 export const buildUpdate = (): Update => {
-  return ({ values }) => {
+  return ({ values, defaultModel }) => {
+    const model = values?.model ?? defaultModel?.id
+
     return {
       ...values,
-      ...(values?.model && {
+      ...(model && {
         size: '1024x1024',
-        quality: values.model === 'gpt-image-1' ? 'low' : 'standard',
-        style: 'default'
-      })
+        quality: model === 'gpt-image-1' ? 'low' : 'standard',
+        style: 'default',
+      }),
     }
   }
 }

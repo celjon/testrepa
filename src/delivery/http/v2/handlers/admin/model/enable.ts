@@ -10,7 +10,7 @@ export const buildModelEnable = ({ model }: Params): ModelEnable => {
     const data = await model.enable({
       userId: req.user?.id,
       modelId: req.body.modelId,
-      platform: req.body.platform
+      platform: req.body.platform,
     })
 
     res.status(200).json(data)

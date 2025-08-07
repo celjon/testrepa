@@ -1,14 +1,14 @@
-import { buildCreateKey, CreateKey } from './createKey'
-import { buildGetKeys, GetKeys } from './getKeys'
+import { buildCreateKey, CreateKey } from './create-key'
+import { buildGetKeys, GetKeys } from './get-keys'
 import Express from 'express'
 import { IHandler } from '../types'
 import { createRouteHandler } from '../../routeHandler'
 import { DeliveryParams } from '@/delivery/types'
 import { Middlewares } from '../../middlewares'
 import { buildDeveloperRules } from './rules'
-import { buildDeleteKey, DeleteKey } from './deleteKey'
-import { buildDeleteKeys, DeleteKeys } from './deleteKeys'
-import { buildUpdateKey, UpdateKey } from './updateKey'
+import { buildDeleteKey, DeleteKey } from './delete-key'
+import { buildDeleteKeys, DeleteKeys } from './delete-keys'
+import { buildUpdateKey, UpdateKey } from './update-key'
 
 type Params = Pick<DeliveryParams, 'developer' | 'middlewares'>
 
@@ -21,7 +21,8 @@ export type DeveloperMethods = {
 }
 
 const buildRegisterRoutes = (methods: DeveloperMethods, middlewares: Middlewares) => {
-  const { createKeyRules, listKeysRules, deleteKeyRules, deleteManyKeyRules, updateKeyRules } = buildDeveloperRules(middlewares)
+  const { createKeyRules, listKeysRules, deleteKeyRules, deleteManyKeyRules, updateKeyRules } =
+    buildDeveloperRules(middlewares)
 
   return (root: Express.Router) => {
     const namespace = Express.Router()
@@ -49,9 +50,9 @@ export const buildDeveloperHandler = (params: Params): IHandler => {
         getKeys,
         updateKey,
         deleteKey,
-        deleteKeys
+        deleteKeys,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

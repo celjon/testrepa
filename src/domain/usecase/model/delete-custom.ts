@@ -1,4 +1,4 @@
-import { IModelCustom } from '@/domain/entity/modelCustom'
+import { IModelCustom } from '@/domain/entity/model-custom'
 import { UseCaseParams } from '@/domain/usecase/types'
 
 export type DeleteCustom = (params: { customId: string }) => Promise<IModelCustom | null | never>
@@ -8,31 +8,31 @@ export const buildDeleteCustom =
   async ({ customId }) => {
     const modelCustom = await adapter.modelCustomRepository.delete({
       where: {
-        id: customId
-      }
+        id: customId,
+      },
     })
 
     const modelCustomization = await adapter.modelCustomRepository.list({
       orderBy: {
-        order: 'asc'
+        order: 'asc',
       },
       select: {
         id: true,
-        order: true
-      }
+        order: true,
+      },
     })
 
     await Promise.all(
       modelCustomization.map(({ id }, index) =>
         adapter.modelCustomRepository.update({
           where: {
-            id
+            id,
           },
           data: {
-            order: index + 1
-          }
-        })
-      )
+            order: index + 1,
+          },
+        }),
+      ),
     )
 
     return modelCustom

@@ -1,7 +1,12 @@
 import { UseCaseParams } from '@/domain/usecase/types'
 import { IArticle } from '@/domain/entity/article'
 
-export type ListSEOArticlesByTopicSlug = (params: { categorySlug: string; topicSlug: string; page: number; quantity: number }) => Promise<
+export type ListSEOArticlesByTopicSlug = (params: {
+  categorySlug: string
+  topicSlug: string
+  page: number
+  quantity: number
+}) => Promise<
   | {
       data: IArticle[]
       pages: number
@@ -9,43 +14,45 @@ export type ListSEOArticlesByTopicSlug = (params: { categorySlug: string; topicS
   | never
 >
 
-export const buildListSEOArticlesByTopicSlug = ({ service }: UseCaseParams): ListSEOArticlesByTopicSlug => {
+export const buildListSEOArticlesByTopicSlug = ({
+  service,
+}: UseCaseParams): ListSEOArticlesByTopicSlug => {
   return async ({ categorySlug, topicSlug, page, quantity }) => {
     const articles = await service.article.paginate({
       query: {
         where: {
           published_at: {
-            not: null
+            not: null,
           },
           topics: {
             some: {
-              slug: {
-                equals: topicSlug,
-                mode: 'insensitive' as const
-              },
-              category: {
-                slug: {
-                  equals: categorySlug,
-                  mode: 'insensitive' as const
-                }
-              }
-            }
-          }
+              AND: [
+                {
+                  slug: { equals: topicSlug, mode: 'insensitive' },
+                },
+                {
+                  category: {
+                    slug: { equals: categorySlug, mode: 'insensitive' },
+                  },
+                },
+              ],
+            },
+          },
         },
         include: {
           proofreadings: { include: { expert: true } },
           topics: {
             include: {
-              category: true
-            }
-          }
+              category: true,
+            },
+          },
         },
         orderBy: {
-          created_at: 'desc'
-        }
+          created_at: 'desc',
+        },
       },
       page,
-      quantity
+      quantity,
     })
 
     return articles

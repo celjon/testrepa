@@ -3,7 +3,9 @@ import { SEOArticleCategory } from '@prisma/client'
 import { ISEOArticleTopic, SEOArticleTopicGraphQLObject } from '@/domain/entity/seo-article-topic'
 import { GraphQLJSON } from 'graphql-scalars'
 
-export interface ISEOArticleCategory extends SEOArticleCategory {}
+export interface ISEOArticleCategory extends SEOArticleCategory {
+  topics?: ISEOArticleTopic[]
+}
 
 @ObjectType('SEOArticleCategory')
 export class SEOArticleCategoryGraphQLObject implements ISEOArticleCategory {

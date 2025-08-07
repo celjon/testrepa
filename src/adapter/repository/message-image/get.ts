@@ -1,5 +1,5 @@
 import { AdapterParams } from '@/adapter/types'
-import { IMessageImage } from '@/domain/entity/messageImage'
+import { IMessageImage } from '@/domain/entity/message-image'
 import { Prisma } from '@prisma/client'
 
 type Params = Pick<AdapterParams, 'db'>

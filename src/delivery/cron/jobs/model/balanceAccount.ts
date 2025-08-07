@@ -11,7 +11,7 @@ export const buildBalanceAccount = ({ model }: Params): BalanceAccount => {
     return model.balanceAccount().catch((error) => {
       logger.error({
         location: 'cron.job.model.balanceAccount',
-        message: getErrorString(error)
+        message: getErrorString(error),
       })
     })
   }

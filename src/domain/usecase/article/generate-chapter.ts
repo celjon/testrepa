@@ -33,29 +33,42 @@ export type GenerateChapter = (params: {
   closeStream: () => void
 }>
 
-export const buildGenerateChapter = ({ service, adapter, getChildModel, handleResponseStreamWithChat }: Params): GenerateChapter => {
-  return async ({ articleId, model_id, creativity, chapterPrompt, language, userId, keyEncryptionKey }) => {
+export const buildGenerateChapter = ({
+  service,
+  adapter,
+  getChildModel,
+  handleResponseStreamWithChat,
+}: Params): GenerateChapter => {
+  return async ({
+    articleId,
+    model_id,
+    creativity,
+    chapterPrompt,
+    language,
+    userId,
+    keyEncryptionKey,
+  }) => {
     const { model, subscription, employee, user } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
 
     const article = await adapter.articleRepository.get({
-      where: { id: articleId }
+      where: { id: articleId },
     })
     if (!article || !article.chat_id) {
       throw new NotFoundError({
-        code: 'ARTICLE_NOT_FOUND'
+        code: 'ARTICLE_NOT_FOUND',
       })
     }
 
     const chat = await adapter.chatRepository.get({
       where: { id: article.chat_id, deleted: false },
-      include: { settings: { include: { text: true } } }
+      include: { settings: { include: { text: true } } },
     })
     if (!chat) {
       throw new NotFoundError({
-        code: 'CHAT_NOT_FOUND'
+        code: 'CHAT_NOT_FOUND',
       })
     }
 
@@ -63,7 +76,9 @@ export const buildGenerateChapter = ({ service, adapter, getChildModel, handleRe
     const selectedArticleStyle =
       article.style === ArticleStyle.CUSTOM
         ? article.customStyle
-        : localizedPrompts.articleStyle[article.style as unknown as Exclude<ValidArticleStyle, 'CUSTOM'>]
+        : localizedPrompts.articleStyle[
+            article.style as unknown as Exclude<ValidArticleStyle, 'CUSTOM'>
+          ]
 
     const prompt = dedent`
       <article>
@@ -87,9 +102,9 @@ export const buildGenerateChapter = ({ service, adapter, getChildModel, handleRe
           disabled: false,
           content: prompt,
           full_content: prompt,
-          platform: determinePlatform(Platform.WEB, !!employee?.enterprise_id)
-        }
-      }
+          platform: determinePlatform(Platform.WEB, !!employee?.enterprise_id),
+        },
+      },
     })
 
     service.chat.eventStream.emit({
@@ -97,9 +112,9 @@ export const buildGenerateChapter = ({ service, adapter, getChildModel, handleRe
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: userMessage
-        }
-      }
+          message: userMessage,
+        },
+      },
     })
 
     const messages = await service.message.storage.list({
@@ -108,13 +123,13 @@ export const buildGenerateChapter = ({ service, adapter, getChildModel, handleRe
       data: {
         where: {
           chat_id: chat.id,
-          user_id: userId
+          user_id: userId,
         },
         orderBy: {
-          created_at: 'asc'
+          created_at: 'asc',
         },
-        take: 1
-      }
+        take: 1,
+      },
     })
 
     const textStream$ = await service.message.text.sendByProvider({
@@ -126,9 +141,9 @@ export const buildGenerateChapter = ({ service, adapter, getChildModel, handleRe
         // message that contains the original utils prompt
         system_prompt: messages[0].content ?? '',
         temperature: creativity,
-        max_tokens: model.max_tokens
+        max_tokens: model.max_tokens,
       },
-      planType: subscription?.plan?.type ?? null
+      planType: subscription?.plan?.type ?? null,
     })
 
     const { responseStream$, closeStream } = await handleResponseStreamWithChat({
@@ -140,7 +155,7 @@ export const buildGenerateChapter = ({ service, adapter, getChildModel, handleRe
       subscription,
       employee,
       textStream$,
-      additionalCaps: 0
+      additionalCaps: 0,
     })
 
     let isFirstDelta = true
@@ -161,15 +176,15 @@ export const buildGenerateChapter = ({ service, adapter, getChildModel, handleRe
             where: { id: article.id },
             data: {
               content: `${article.content}${data.content}\n\n`,
-              spentCaps: article.spentCaps + data.spentCaps
-            }
+              spentCaps: article.spentCaps + data.spentCaps,
+            },
           })
 
           return {
             status: data.status,
             contentDelta: `${data.contentDelta}\n\n`,
             caps: data.caps,
-            spentCaps: data.spentCaps
+            spentCaps: data.spentCaps,
           }
         }
 
@@ -177,14 +192,14 @@ export const buildGenerateChapter = ({ service, adapter, getChildModel, handleRe
           status: data.status,
           contentDelta: data.contentDelta,
           caps: data.caps,
-          spentCaps: data.spentCaps
+          spentCaps: data.spentCaps,
         }
-      })
+      }),
     )
 
     return {
       responseStream$: response$,
-      closeStream
+      closeStream,
     }
   }
 }

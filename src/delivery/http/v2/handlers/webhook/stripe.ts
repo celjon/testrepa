@@ -20,7 +20,7 @@ export const buildStripe = ({ webhook }: Params): Stripe => {
         provider: TransactionProvider.STRIPE,
         status: TransactionStatus.SUCCEDED,
         meta: req.body,
-        locale: 'en'
+        locale: 'en',
       })
     } else if (event.type === 'checkout.session.expired') {
       await webhook.payment({
@@ -28,7 +28,7 @@ export const buildStripe = ({ webhook }: Params): Stripe => {
         provider: TransactionProvider.STRIPE,
         status: TransactionStatus.FAILED,
         meta: req.body,
-        locale: 'en'
+        locale: 'en',
       })
     }
     return res.status(200).json()

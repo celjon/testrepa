@@ -11,7 +11,7 @@ export const buildStop =
   async (req, res) => {
     const data = await job.stop({
       jobId: req.params.id,
-      userId: req.user.id
+      userId: req.user.id,
     })
 
     return res.status(200).json(data)

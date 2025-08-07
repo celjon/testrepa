@@ -43,6 +43,10 @@ export class SubscriptionGraphQLObject implements ISubscription {
   balance!: bigint
 
   @Field(() => Number)
+  credit_limit!: number
+
+  //DELETE AFTER RUM MIGRATION SCRIPT
+  @Field(() => Number)
   hard_limit!: number
 
   @Field(() => Number)
@@ -67,7 +71,7 @@ export class SubscriptionGraphQLObject implements ISubscription {
  *            - enterprise_id
  *            - balance
  *            - payment_plan
- *            - hard_limit
+ *            - credit_limit
  *            - soft_limit
  *            - system_limit
  *            - created_at
@@ -84,7 +88,7 @@ export class SubscriptionGraphQLObject implements ISubscription {
  *                type: number
  *            payment_plan:
  *                type: string
- *            hard_limit:
+ *            credit_limit:
  *                type: number
  *            soft_limit:
  *                type: number

@@ -7,14 +7,14 @@ import { buildList, List } from './list'
 import { buildPresetRules } from './rules'
 import { buildDelete, Delete } from './delete'
 import { buildUpdate, buildUpdateMiddleware, Update } from './update'
-import { buildCreateCategory, CreateCategory } from './createCategory'
-import { buildUpdateCategory, UpdateCategory } from './updateCategory'
-import { buildDeleteCategory, DeleteCategory } from './deleteCategory'
-import { buildGetCategories, GetCategories } from './getCategories'
+import { buildCreateCategory, CreateCategory } from './create-category'
+import { buildUpdateCategory, UpdateCategory } from './update-category'
+import { buildDeleteCategory, DeleteCategory } from './delete-category'
+import { buildGetCategories, GetCategories } from './get-categories'
 import { buildFavorite, Favorite } from './favorite'
 import { buildUnfavorite, Unfavorite } from './unfavorite'
-import { buildGetFilters, GetFilters } from './getFilters'
-import { buildCreateChat, CreateChat } from './createChat'
+import { buildGetFilters, GetFilters } from './get-filters'
+import { buildCreateChat, CreateChat } from './create-chat'
 import { Middlewares } from '../../middlewares'
 
 type Params = Pick<DeliveryParams, 'preset' | 'middlewares'>
@@ -46,7 +46,7 @@ const buildRegisterRoutes = (methods: PresetMethods, middlewares: Middlewares) =
     getFiltersRules,
     listRules,
     updateCategoryRules,
-    updateRules
+    updateRules,
   } = buildPresetRules(middlewares)
   const updateMiddleware = buildUpdateMiddleware(middlewares)
   const createMiddleware = buildCreateMiddleware(middlewares)
@@ -214,7 +214,11 @@ const buildRegisterRoutes = (methods: PresetMethods, middlewares: Middlewares) =
      *                schema:
      *                      $ref: '#/components/entities/PresetCategory'
      */
-    namespace.delete('/category/:id', deleteCategoryRules, createRouteHandler(methods.deleteCategory))
+    namespace.delete(
+      '/category/:id',
+      deleteCategoryRules,
+      createRouteHandler(methods.deleteCategory),
+    )
 
     /**
      * @openapi
@@ -243,7 +247,11 @@ const buildRegisterRoutes = (methods: PresetMethods, middlewares: Middlewares) =
      *                schema:
      *                      $ref: '#/components/entities/PresetCategory'
      */
-    namespace.patch('/category/:id', updateCategoryRules, createRouteHandler(methods.updateCategory))
+    namespace.patch(
+      '/category/:id',
+      updateCategoryRules,
+      createRouteHandler(methods.updateCategory),
+    )
 
     /**
      * @openapi
@@ -403,9 +411,9 @@ export const buildPresetHandler = (params: Params): IHandler => {
         favorite,
         unfavorite,
         getFilters,
-        createChat
+        createChat,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

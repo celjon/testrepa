@@ -6,6 +6,6 @@ export const buildDeleteAccountModel =
   ({ adapter }: UseCaseParams): DeleteAccountModel =>
   async ({ id }) => {
     await adapter.modelAccountModelRepository.deleteMany({
-      where: { id }
+      where: { id },
     })
   }

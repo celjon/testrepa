@@ -16,7 +16,14 @@ export type PaymentItem = {
 
   tax: 'none' | 'vat0' | 'vat10' | 'vat20' | 'vat110' | 'vat120'
 
-  paymentMethod?: 'full_prepayment' | 'prepayment' | 'advance' | 'full_payment' | 'partial_payment' | 'credit' | 'credit_payment'
+  paymentMethod?:
+    | 'full_prepayment'
+    | 'prepayment'
+    | 'advance'
+    | 'full_payment'
+    | 'partial_payment'
+    | 'credit'
+    | 'credit_payment'
 }
 
 export type CreatePaymentParams = {

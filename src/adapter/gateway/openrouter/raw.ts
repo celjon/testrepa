@@ -1,12 +1,16 @@
 import { z } from 'zod'
 import { APIError } from 'openai'
-import { ChatCompletionCreateParamsNonStreaming, ChatCompletionMessageParam } from 'openai/resources'
-import { Readable } from 'stream'
+import {
+  ChatCompletion,
+  ChatCompletionCreateParamsStreaming,
+  ChatCompletionMessageParam,
+} from 'openai/resources'
+import { Observable } from 'rxjs'
 import { logger } from '@/lib/logger'
 import { getErrorString } from '@/lib'
 import { AdapterParams } from '@/adapter/types'
 import { BaseError } from '@/domain/errors'
-import { ModelUsage } from '../types'
+import { ModelUsage, RawStream, RawStreamChunk } from '../types'
 
 type Params = Pick<AdapterParams, 'openRouterBalancer'>
 
@@ -18,134 +22,100 @@ export type SendRawStream = (
     provider?: {
       order?: string[]
     }
+    middleOut: boolean
     [key: string]: unknown
   },
-  onEnd: (content: string, usage: ModelUsage | null) => void
+  onEnd: (content: string, usage: ModelUsage | null) => void,
 ) => Promise<{
-  responseBytesStream: Readable
-  breakNotifier: () => void
+  responseStream: RawStream
 }>
 
 export const buildSendRawStream = ({ openRouterBalancer }: Params): SendRawStream => {
   return async ({ model, provider, ...params }, onEnd) => {
-    const openRouterProvider = openRouterBalancer.next()
-
     try {
+      const openRouterProvider = openRouterBalancer.next()
+
       const stream = await openRouterProvider.client.chat.completions.create({
-        ...{
-          ...params,
-          provider,
-          transforms: ['middle-out'] as const,
-          stream: true,
-          stream_options: {
-            include_usage: true
-          }
+        ...(params.middleOut ? { transforms: ['middle-out'] as const } : {}),
+        ...params,
+        stream: true,
+        stream_options: {
+          include_usage: true,
         },
-        model
-      })
+        model,
+        ...{ provider },
+      } satisfies ChatCompletionCreateParamsStreaming)
 
       let content = ''
-      let finalSent = false
-      let usage: ModelUsage | null = null
 
-      const streamIterator = stream[Symbol.asyncIterator]()
-
-      const responseBytesStream = new Readable({
-        async read() {
+      const responseStream = new Observable<RawStreamChunk>((subscriber) => {
+        const processStream = async () => {
           try {
-            const chunk = await streamIterator.next()
+            for await (const chunk of stream) {
+              if (chunk.choices && chunk.choices[0]?.delta?.content) {
+                content += chunk.choices[0]?.delta?.content
+              }
 
-            if (chunk.done) {
-              this.push('[DONE]')
-              this.emit('end')
-              return
+              if (chunk.usage) {
+                subscriber.next(chunk)
+                onEnd(content, chunk.usage ?? null)
+              } else {
+                subscriber.next(chunk)
+              }
             }
 
-            if (chunk.value.usage) {
-              usage = chunk.value.usage ?? null
-            }
-
-            if (chunk.value.choices && chunk.value.choices[0]?.delta?.content) {
-              content += chunk.value.choices[0]?.delta?.content
-            }
-
-            this.push(`data: ${JSON.stringify(chunk.value)}\n\n`)
-          } catch (e) {
-            if (e instanceof APIError) {
-              logger.error({
-                location: 'openrouterGateway.sendRawStream',
-                message: getErrorString(e),
-                openaiKey: e.headers?.['Authorization']?.slice(0, 42)
-              })
-            }
-
-            if (isOpenrouterError(e)) {
-              this.push(
-                `error: ${
-                  e.error.metadata.raw ??
-                  JSON.stringify({
-                    error: {
-                      message: e.error.message
-                    }
-                  })
-                }\n\n`
+            subscriber.complete()
+          } catch (error) {
+            if (isOpenrouterError(error)) {
+              subscriber.error(
+                error.error.metadata.raw ?? {
+                  error: { message: error.error.message },
+                },
               )
             } else {
-              this.push(`error: ${JSON.stringify(e)}\n\n`)
+              subscriber.error(error)
             }
-
-            this.push('[DONE]')
-            this.emit('end')
           }
         }
-      })
 
-      responseBytesStream.on('end', () => {
-        if (!finalSent) {
-          finalSent = true
-          onDone()
-        }
-      })
-
-      responseBytesStream.on('error', () => {
-        if (!finalSent) {
-          finalSent = true
-          onDone()
-        }
-      })
-
-      const breakNotifier = async () => {
-        if (!finalSent) {
-          finalSent = true
-          onDone()
-          responseBytesStream.emit('end')
+        processStream()
+        return () => {
           stream.controller.abort()
         }
-      }
+      })
 
-      const onDone = () => {
-        onEnd(content, usage)
-      }
       return {
-        responseBytesStream,
-        breakNotifier
+        responseStream,
       }
-    } catch (e) {
-      if (e instanceof APIError) {
-        logger.error({
-          location: 'openrouterGateway.sendRawStream',
-          message: getErrorString(e),
-          openaiKey: e.headers?.['Authorization']?.slice(0, 42)
-        })
+    } catch (error) {
+      logger.error({
+        location: 'openrouterGateway.sendRawSync',
+        message: getErrorString(error),
+        openaiKey: error.headers?.['Authorization']?.slice(0, 42),
+        model: params.model,
+        userId: params.endUserId,
+      })
 
+      if (isOpenrouterError(error)) {
         throw new BaseError({
-          httpStatus: e.status,
-          message: e.message,
-          code: e.code || undefined
+          httpStatus: error.error.code,
+          message:
+            (typeof error.error.metadata.raw === 'string'
+              ? error.error.metadata.raw
+              : JSON.stringify(error.error.metadata.raw)) ?? error.error.message,
+          code: undefined,
         })
       }
 
-      throw e
+      if (error instanceof APIError) {
+        throw new BaseError({
+          httpStatus: error.status,
+          message: error.message,
+          code: error.code || undefined,
+        })
+      }
+
+      throw error
     }
   }
 }
@@ -157,16 +127,10 @@ export type SendRawSync = (params: {
   provider?: {
     order?: string[]
   }
+  middleOut: boolean
   [key: string]: unknown
 }) => Promise<{
-  response: {
-    choices: {
-      message: {
-        role: 'assistant'
-        content: string | null
-      }
-    }[]
-  }
+  response: ChatCompletion
   usage: ModelUsage | null
 }>
 
@@ -175,13 +139,10 @@ export const buildSendRawSync = ({ openRouterBalancer }: Params): SendRawSync =>
     try {
       const openRouterProvider = openRouterBalancer.next()
       const completions = await openRouterProvider.client.chat.completions.create({
+        ...(params.middleOut ? { transforms: ['middle-out'] as const } : {}),
         ...params,
-        transforms: ['middle-out'] as const,
         stream: false,
-        stream_options: {
-          include_usage: true
-        }
-      } as ChatCompletionCreateParamsNonStreaming)
+      })
 
       if ('error' in completions && completions.error) {
         throw completions
@@ -189,32 +150,37 @@ export const buildSendRawSync = ({ openRouterBalancer }: Params): SendRawSync =>
 
       return {
         response: completions,
-        usage: completions.usage ?? null
+        usage: completions.usage ?? null,
       }
-    } catch (e: any) {
-      if (e instanceof APIError) {
-        logger.error({
-          location: 'openrouterGateway.sendRawSync',
-          message: getErrorString(e),
-          openaiKey: e.headers?.['Authorization']?.slice(0, 42)
-        })
+    } catch (error) {
+      logger.error({
+        location: 'openrouterGateway.sendRawSync',
+        message: getErrorString(error),
+        openaiKey: error.headers?.['Authorization']?.slice(0, 42),
+        model: params.model,
+        userId: params.endUserId,
+      })
 
+      if (isOpenrouterError(error)) {
         throw new BaseError({
-          httpStatus: e.status,
-          message: e.message,
-          code: e.code || undefined
+          httpStatus: error.error.code,
+          message:
+            (typeof error.error.metadata.raw === 'string'
+              ? error.error.metadata.raw
+              : JSON.stringify(error.error.metadata.raw)) ?? error.error.message,
+          code: undefined,
         })
       }
 
-      if (isOpenrouterError(e)) {
+      if (error instanceof APIError) {
         throw new BaseError({
-          httpStatus: e.error.code,
-          message: e.error.metadata.raw ?? e.error.message,
-          code: undefined
+          httpStatus: error.status,
+          message: error.message,
+          code: error.code || undefined,
         })
       }
 
-      throw e
+      throw error
     }
   }
 }
@@ -224,10 +190,10 @@ const openrouterErrorSchema = z.object({
     message: z.string(),
     code: z.number(),
     metadata: z.object({
-      raw: z.string().optional(),
-      provider_name: z.string()
-    })
-  })
+      raw: z.union([z.string(), z.object({})]).optional(),
+      provider_name: z.string(),
+    }),
+  }),
 })
 
 type OpenrouterError = z.infer<typeof openrouterErrorSchema>

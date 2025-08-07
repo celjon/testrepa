@@ -7,20 +7,21 @@ import { ImageService } from './image'
 import { MidjourneyService } from './midjourney'
 import {
   IModel,
-  isAudioModel,
+  isSpeechToTextModel,
   isImageModel,
   isMidjourney,
   isReplicateImageModel,
-  isSpeechModel,
+  isTextToSpeechModel,
   isTextModel,
-  isVideoModel
+  isVideoModel,
 } from '@/domain/entity/model'
 import { NotFoundError } from '@/domain/errors'
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 import { ModelService } from '../../model'
-import { ReplicateImageService } from './replicateImage'
-import { SpeechService } from './speech'
+import { ReplicateImageService } from './replicate-image'
+import { TextToSpeechService } from './text-to-speech'
 import { VideoService } from './video'
+import { SpeechToTextService } from './speech-to-text'
 
 type Params = Adapter & {
   modelService: ModelService
@@ -28,7 +29,8 @@ type Params = Adapter & {
   imageService: ImageService
   midjourneyService: MidjourneyService
   replicateImageService: ReplicateImageService
-  speechService: SpeechService
+  textToSpeechService: TextToSpeechService
+  speechToTextService: SpeechToTextService
   videoService: VideoService
 }
 
@@ -45,8 +47,7 @@ type Settings = {
 // Handles changes of chat.model, sets appropriate default child model in settings
 export type Upsert = (params: {
   chat?: IChat
-  // parent model
-  model: IModel
+  parentModel: IModel
   plan: IPlan
   disableUpdate?: boolean
 }) => Promise<IChatSettings>
@@ -58,19 +59,20 @@ export const buildUpsert =
     imageService,
     midjourneyService,
     replicateImageService,
-    speechService,
+    textToSpeechService,
+    speechToTextService,
     modelService,
-    videoService
+    videoService,
   }: Params): Upsert =>
-  async ({ chat, model, plan, disableUpdate = false }) => {
+  async ({ chat, parentModel: model, plan, disableUpdate = false }) => {
     const getDefaultChildModelOrThrow = async () => {
       const defaultModel = await modelService.getDefault({
         plan,
-        parentId: model.id
+        parentId: model.id,
       })
       if (!defaultModel) {
         throw new NotFoundError({
-          code: 'DEFAULT_MODEL_NOT_FOUND'
+          code: 'DEFAULT_MODEL_NOT_FOUND',
         })
       }
       return defaultModel
@@ -82,9 +84,7 @@ export const buildUpsert =
       const defaultModel = await getDefaultChildModelOrThrow()
       if (!chat || !chat.settings || !chat.settings.text) {
         newSettings.text = {
-          create: textService.create({
-            defaultModel
-          })
+          create: textService.create({ defaultModel }),
         }
       } else {
         if (chat.settings && disableUpdate) {
@@ -92,36 +92,28 @@ export const buildUpsert =
         }
 
         newSettings.text = {
-          update: {
-            model: defaultModel.id,
-            max_tokens: defaultModel.max_tokens
-          }
+          update: textService.update({ defaultModel }),
         }
       }
     } else if (isMidjourney(model)) {
       if (!chat || !chat.settings || !chat.settings.mj) {
         newSettings.mj = {
-          create: midjourneyService.create({
-            plan
-          })
+          create: midjourneyService.create({ plan }),
         }
       } else {
         if (chat.settings && disableUpdate) {
           return chat.settings
         }
 
-        newSettings.mj = {
-          update: {}
-        }
+        newSettings.mj = { update: {} }
       }
     } else if (isReplicateImageModel(model)) {
       const defaultModel = await getDefaultChildModelOrThrow()
-
-      if (!chat || !chat.settings || !chat?.settings?.replicateImage) {
+      if (!chat?.settings?.replicateImage) {
         newSettings.replicateImage = {
           create: replicateImageService.create({
-            defaultModel
-          })
+            defaultModel: defaultModel,
+          }),
         }
       } else {
         if (chat.settings && disableUpdate) {
@@ -130,19 +122,17 @@ export const buildUpsert =
 
         newSettings.replicateImage = {
           update: replicateImageService.update({
-            defaultModel,
-            settings: chat.settings.replicateImage
-          })
+            defaultModel: defaultModel,
+            settings: chat.settings.replicateImage,
+          }),
         }
       }
-    } else if (isSpeechModel(model)) {
+    } else if (isTextToSpeechModel(model)) {
       const defaultModel = await getDefaultChildModelOrThrow()
 
       if (!chat || !chat.settings || !chat.settings.speech) {
         newSettings.speech = {
-          create: speechService.create({
-            defaultModel
-          })
+          create: textToSpeechService.create({ defaultModel }),
         }
       } else {
         if (chat.settings && disableUpdate) {
@@ -150,9 +140,7 @@ export const buildUpsert =
         }
 
         newSettings.speech = {
-          update: {
-            model: defaultModel.id
-          }
+          update: textToSpeechService.create({ defaultModel }),
         }
       }
     } else if (isImageModel(model)) {
@@ -160,9 +148,7 @@ export const buildUpsert =
 
       if (!chat || !chat.settings || !chat.settings.image) {
         newSettings.image = {
-          create: imageService.create({
-            defaultModel
-          })
+          create: imageService.create({ defaultModel }),
         }
       } else {
         if (chat.settings && disableUpdate) {
@@ -170,19 +156,15 @@ export const buildUpsert =
         }
 
         newSettings.image = {
-          update: {
-            model: defaultModel.id
-          }
+          update: imageService.update({ defaultModel }),
         }
       }
-    } else if (isAudioModel(model)) {
+    } else if (isSpeechToTextModel(model)) {
       const defaultModel = await getDefaultChildModelOrThrow()
 
       if (!chat || !chat.settings || !chat.settings.stt) {
         newSettings.stt = {
-          create: {
-            model: defaultModel.id
-          }
+          create: speechToTextService.create({ defaultModel }),
         }
       } else {
         if (chat.settings && disableUpdate) {
@@ -190,9 +172,7 @@ export const buildUpsert =
         }
 
         newSettings.stt = {
-          create: {
-            model: defaultModel.id
-          }
+          create: speechToTextService.update({ defaultModel }),
         }
       }
     } else if (isVideoModel(model)) {
@@ -201,8 +181,8 @@ export const buildUpsert =
       if (!chat || !chat.settings || !chat?.settings?.video) {
         newSettings.video = {
           create: videoService.create({
-            defaultModel
-          })
+            defaultModel,
+          }),
         }
       } else {
         if (chat.settings && disableUpdate) {
@@ -210,9 +190,7 @@ export const buildUpsert =
         }
 
         newSettings.video = {
-          update: {
-            model: defaultModel.id
-          }
+          update: videoService.update({ defaultModel }),
         }
       }
     }
@@ -221,29 +199,29 @@ export const buildUpsert =
     const includeSettings: Prisma.ChatSettingsInclude = Object.keys(newSettings).reduce(
       (include, key) => ({
         ...include,
-        [key]: true
+        [key]: true,
       }),
-      {}
+      {},
     )
 
     if (settings) {
       settings = await chatSettingsRepository.update({
         where: {
-          id: settings.id
+          id: settings.id,
         },
         data: newSettings,
-        include: includeSettings
+        include: includeSettings,
       })
     } else {
       settings = await chatSettingsRepository.create({
         data: newSettings,
-        include: includeSettings
+        include: includeSettings,
       })
     }
 
     if (!settings) {
       throw new NotFoundError({
-        code: 'SETTINGS_NOT_FOUND'
+        code: 'SETTINGS_NOT_FOUND',
       })
     }
 

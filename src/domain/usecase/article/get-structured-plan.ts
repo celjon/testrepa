@@ -1,12 +1,17 @@
 import dedent from 'dedent'
 import { ArticleLinkStyle, ArticleStyle, Platform } from '@prisma/client'
+import { config } from '@/config'
 import { logger } from '@/lib/logger'
 import { InvalidDataError } from '@/domain/errors'
 import { IModel } from '@/domain/entity/model'
 import { ISubscription } from '@/domain/entity/subscription'
 import { IEmployee } from '@/domain/entity/employee'
 import { UseCaseParams } from '../types'
-import { ArticleStructuredPlan, articleStructuredPlanSchema, articleStructuredPlanResponseFormat } from './types'
+import {
+  ArticleStructuredPlan,
+  articleStructuredPlanResponseFormat,
+  articleStructuredPlanSchema,
+} from './types'
 import { articlePrompts } from './article-prompts'
 import { ValidArticleStyle } from '@/domain/entity/article'
 
@@ -24,6 +29,7 @@ export type GetStructuredPlan = (params: {
   subscription?: ISubscription
   employee: IEmployee | null
   isAdmin?: boolean
+  developerKeyId?: string
 }) => Promise<ArticleStructuredPlan>
 
 const generateSourcesChapter = true
@@ -39,9 +45,14 @@ export const buildGetStructuredPlan = ({ service, adapter }: Params): GetStructu
     model,
     subscription,
     employee,
-    isAdmin
+    isAdmin,
+    developerKeyId,
   }) => {
-    const selectedArticleStyle = articleStyle === ArticleStyle.CUSTOM ? customStyle : articlePrompts.en.articleStyle[articleStyle]
+    await service.enterprise.checkMonthLimit({ userId })
+    const selectedArticleStyle =
+      articleStyle === ArticleStyle.CUSTOM
+        ? customStyle
+        : articlePrompts.en.articleStyle[articleStyle]
 
     const prompt = dedent`
       You are a JSON structure expert. Your task is to convert the provided article plan into a specific JSON format.
@@ -94,9 +105,9 @@ export const buildGetStructuredPlan = ({ service, adapter }: Params): GetStructu
       messages: [],
       settings: {
         model: model.prefix + model.id,
-        system_prompt: prompt
+        system_prompt: prompt,
       },
-      response_format: articleStructuredPlanResponseFormat
+      response_format: articleStructuredPlanResponseFormat,
     })
 
     const content = result.message.content
@@ -107,19 +118,19 @@ export const buildGetStructuredPlan = ({ service, adapter }: Params): GetStructu
     } catch (error) {
       logger.error('UNABLE_TO_STRUCTURIZE_ARTICLE_PLAN', { error, content })
       throw new InvalidDataError({
-        code: 'UNABLE_TO_STRUCTURIZE_ARTICLE_PLAN'
+        code: 'UNABLE_TO_STRUCTURIZE_ARTICLE_PLAN',
       })
     }
 
     if (!result.usage) {
       throw new InvalidDataError({
-        code: 'UNABLE_TO_STRUCTURIZE_ARTICLE_PLAN'
+        code: 'UNABLE_TO_STRUCTURIZE_ARTICLE_PLAN',
       })
     }
 
-    const caps = await service.model.getCaps({
+    const caps = await service.model.getCaps.text({
       model: model,
-      usage: result.usage
+      usage: result.usage,
     })
 
     if (!isAdmin && subscription) {
@@ -130,8 +141,10 @@ export const buildGetStructuredPlan = ({ service, adapter }: Params): GetStructu
           userId: userId,
           enterpriseId: employee?.enterprise_id,
           platform: Platform.EASY_WRITER,
-          model_id: model.id
-        }
+          model_id: model.id,
+          provider_id: config.model_providers.openrouter.id,
+          developerKeyId,
+        },
       })
     }
     return structuredPlan.chapters

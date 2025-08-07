@@ -26,7 +26,7 @@ const buildRegisterRoutes = (methods: SEOArticleCategoryMethods, middlewares: Mi
     listSEOArticleCategoryRules,
     createSEOArticleCategoryRules,
     updateSEOArticleCategoryRules,
-    deleteSEOArticleCategoryRules
+    deleteSEOArticleCategoryRules,
   } = buildSEOArticleCategoryRules(middlewares)
   return (root: Express.Router) => {
     const namespace = Express.Router()
@@ -52,7 +52,11 @@ const buildRegisterRoutes = (methods: SEOArticleCategoryMethods, middlewares: Mi
      *             schema:
      *               $ref: '#/components/entities/SEOArticleCategory'
      */
-    namespace.get('/get-by-id/:seoArticleCategoryId', getSEOArticleCategoryRules, createRouteHandler(methods.getSEOArticleCategory))
+    namespace.get(
+      '/get-by-id/:seoArticleCategoryId',
+      getSEOArticleCategoryRules,
+      createRouteHandler(methods.getSEOArticleCategory),
+    )
 
     /**
      * @openapi
@@ -83,8 +87,14 @@ const buildRegisterRoutes = (methods: SEOArticleCategoryMethods, middlewares: Mi
      *                     $ref: '#/components/entities/SEOArticleCategory'
      *                 pages:
      *                   type: integer
+     *                 count:
+     *                   type: integer
      */
-    namespace.get('/list', listSEOArticleCategoryRules, createRouteHandler(methods.listSEOArticleCategory))
+    namespace.get(
+      '/list',
+      listSEOArticleCategoryRules,
+      createRouteHandler(methods.listSEOArticleCategory),
+    )
     /**
      * @openapi
      * /seo-article-category/create:
@@ -110,7 +120,11 @@ const buildRegisterRoutes = (methods: SEOArticleCategoryMethods, middlewares: Mi
      *             schema:
      *               $ref: '#/components/entities/SEOArticleCategory'
      */
-    namespace.post('/create', createSEOArticleCategoryRules, createRouteHandler(methods.createSEOArticleCategory))
+    namespace.post(
+      '/create',
+      createSEOArticleCategoryRules,
+      createRouteHandler(methods.createSEOArticleCategory),
+    )
 
     /**
      * @openapi
@@ -141,7 +155,11 @@ const buildRegisterRoutes = (methods: SEOArticleCategoryMethods, middlewares: Mi
      *             schema:
      *               $ref: '#/components/entities/SEOArticleCategory'
      */
-    namespace.patch('/:seoArticleCategoryId', updateSEOArticleCategoryRules, createRouteHandler(methods.updateSEOArticleCategory))
+    namespace.patch(
+      '/:seoArticleCategoryId',
+      updateSEOArticleCategoryRules,
+      createRouteHandler(methods.updateSEOArticleCategory),
+    )
 
     /**
      * @openapi
@@ -165,7 +183,11 @@ const buildRegisterRoutes = (methods: SEOArticleCategoryMethods, middlewares: Mi
      *             schema:
      *               $ref: '#/components/entities/SEOArticleCategory'
      */
-    namespace.delete('/:seoArticleCategoryId', deleteSEOArticleCategoryRules, createRouteHandler(methods.deleteSEOArticleCategory))
+    namespace.delete(
+      '/:seoArticleCategoryId',
+      deleteSEOArticleCategoryRules,
+      createRouteHandler(methods.deleteSEOArticleCategory),
+    )
 
     root.use('/seo-article-category', namespace)
   }
@@ -185,9 +207,9 @@ export const buildSEOArticleCategoryHandler = (params: Params): IHandler => {
         listSEOArticleCategory,
         createSEOArticleCategory,
         updateSEOArticleCategory,
-        deleteSEOArticleCategory
+        deleteSEOArticleCategory,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

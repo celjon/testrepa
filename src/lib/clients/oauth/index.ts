@@ -1,9 +1,10 @@
 import axios from 'axios'
 import { OAuth2Client, ProviderCredentials } from './types'
-import { buildGetConsentURL } from './getConsentURL'
-import { buildGetAccessToken } from './getAccessToken'
-import { buildGetUserInfo } from './getUserInfo'
+import { buildGetConsentURL } from './get-consent-url'
+import { buildGetTokens } from './get-tokens'
+import { buildGetUserInfo } from './get-user-info'
 import { buildTelegramOAuth } from './telegram'
+import { buildAppleOAuth, genereateClientSecret } from './apple'
 
 const buildProviders = (credentials: Record<string, ProviderCredentials>) => {
   return {
@@ -12,7 +13,8 @@ const buildProviders = (credentials: Record<string, ProviderCredentials>) => {
       clientSecret: credentials.google.clientSecret,
       authorizeURL: 'https://accounts.google.com/o/oauth2/v2/auth',
       exchangeURL: 'https://www.googleapis.com/oauth2/v4/token',
-      scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
+      scope:
+        'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     },
     // https://yandex.ru/dev/id/doc/ru/codes/code-url
     yandex: {
@@ -22,8 +24,8 @@ const buildProviders = (credentials: Record<string, ProviderCredentials>) => {
       exchangeURL: 'https://oauth.yandex.ru/token',
       scope: '', // leave empty to use settings from registered app
       additionalParams: {
-        force_confirm: 'yes'
-      }
+        force_confirm: 'yes',
+      },
     },
     // https://id.vk.com/about/business/go/docs/ru/vkid/latest/vk-id/connection/start-integration/auth-flow-web#Bez-SDK-s-obmenom-koda-na-bekende
     vk: {
@@ -33,20 +35,36 @@ const buildProviders = (credentials: Record<string, ProviderCredentials>) => {
       scope: 'email vkid.personal_info',
       additionalParams: {
         prompt: 'consent',
-        provider: 'vkid' // vkid, ok_ru, mail_ru
-      }
+        provider: 'vkid', // vkid, ok_ru, mail_ru
+      },
     },
     telegram: {
       clientId: credentials.telegram.clientId,
       authorizeURL: 'https://oauth.telegram.org/auth',
       exchangeURL: '',
-      scope: ''
-    }
+      scope: '',
+    },
+    apple: {
+      clientId: credentials.apple.clientId,
+      appId: credentials.apple.appId ?? '',
+      clientSecret: genereateClientSecret({
+        clientId: credentials.apple.clientId,
+        teamId: credentials.apple.teamId ?? '',
+        keyId: credentials.apple.keyId ?? '',
+        privateKey: credentials.apple.privateKey ?? '',
+      }),
+      authorizeURL: 'https://appleid.apple.com/auth/authorize',
+      exchangeURL: 'https://appleid.apple.com/auth/token',
+      scope: 'name email',
+      additionalParams: {
+        response_mode: 'form_post',
+      },
+    },
   }
 }
 
 export const newClient = async (
-  credentials: Record<string, ProviderCredentials>
+  credentials: Record<string, ProviderCredentials>,
 ): Promise<{
   client: OAuth2Client
 }> => {
@@ -54,26 +72,31 @@ export const newClient = async (
   const providers = buildProviders(credentials)
 
   const telegramCustomHandler = buildTelegramOAuth(providers.telegram)
-  const customHandlers = { telegram: telegramCustomHandler }
+  const appleCustomHandler = buildAppleOAuth({
+    providerConfig: providers.apple,
+    axiosInstance,
+  })
+
+  const customHandlers = { telegram: telegramCustomHandler, apple: appleCustomHandler }
 
   const getConsentURL = buildGetConsentURL({ providers, customHandlers })
-  const getAccessToken = buildGetAccessToken({
+  const getTokens = buildGetTokens({
     axiosInstance,
     providers,
-    customHandlers
+    customHandlers,
   })
   const getUserInfo = buildGetUserInfo({
     axiosInstance,
     providers,
-    customHandlers
+    customHandlers,
   })
 
   return {
     client: {
       getConsentURL,
-      getAccessToken,
-      getUserInfo
-    }
+      getTokens,
+      getUserInfo,
+    },
   }
 }
 

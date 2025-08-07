@@ -3,7 +3,14 @@ import { UnauthorizedError } from '@/domain/errors'
 import { UseCaseParams } from '../types'
 import { Register } from '@/domain/usecase/auth/register'
 
-export type Authorize = (data: { email: string; password: string; isOrgJoin: boolean; ip: string }) => Promise<
+export type Authorize = (data: {
+  email: string
+  password: string
+  isOrgJoin: boolean
+  ip: string
+  user_agent: string | null
+  isAdminPanel?: boolean
+}) => Promise<
   | {
       user: IUser
       accessToken: string
@@ -11,13 +18,18 @@ export type Authorize = (data: { email: string; password: string; isOrgJoin: boo
   | never
 >
 
-export const buildAuthorize = ({ service, adapter, registerFunc }: UseCaseParams & { registerFunc: Register }): Authorize => {
-  return async ({ email, password, isOrgJoin, ip }) => {
+export const buildAuthorize = ({
+  service,
+  adapter,
+  registerFunc,
+}: UseCaseParams & {
+  registerFunc: Register
+}): Authorize => {
+  return async ({ email, password, isOrgJoin, ip, user_agent, isAdminPanel }) => {
     let user = await service.auth.checkCredentials({
       email,
-      password
+      password,
     })
-
     if (isOrgJoin && !user) {
       const tempUser = await registerFunc({
         email: email,
@@ -26,7 +38,7 @@ export const buildAuthorize = ({ service, adapter, registerFunc }: UseCaseParams
         yandexMetricYclid: null,
         receiveEmails: false,
         autoVerified: true,
-        ip
+        ip,
       })
       user = tempUser.user
     }
@@ -37,13 +49,13 @@ export const buildAuthorize = ({ service, adapter, registerFunc }: UseCaseParams
 
     user = (await adapter.userRepository.get({
       where: {
-        id: user.id
+        id: user.id,
       },
       include: {
         subscription: {
           include: {
-            plan: true
-          }
+            plan: true,
+          },
         },
         employees: {
           include: {
@@ -51,31 +63,42 @@ export const buildAuthorize = ({ service, adapter, registerFunc }: UseCaseParams
               include: {
                 subscription: {
                   include: {
-                    plan: true
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    plan: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })) as IUser
 
     if (user.email && !user.emailVerified) {
       throw new UnauthorizedError({
-        code: 'EMAIL_NOT_VERIFIED'
+        code: 'EMAIL_NOT_VERIFIED',
       })
     }
 
     const keyEncryptionKey = user.kekSalt
       ? await adapter.cryptoGateway.deriveKEK({
           password: password,
-          kekSalt: user.kekSalt
+          kekSalt: user.kekSalt,
         })
       : null
-    const { refreshToken, accessToken } = await service.auth.signAuthTokens({
+
+    const { accessToken, refreshToken } = await service.auth.signAuthTokens({
       user,
-      keyEncryptionKey
+      keyEncryptionKey,
+      short: isAdminPanel,
+    })
+
+    await adapter.refreshTokenRepository.create({
+      data: {
+        user_id: user.id,
+        token: refreshToken,
+        ip,
+        user_agent,
+      },
     })
 
     user.encryptedDEK = null
@@ -85,7 +108,7 @@ export const buildAuthorize = ({ service, adapter, registerFunc }: UseCaseParams
     return {
       user,
       accessToken,
-      refreshToken
+      refreshToken,
     }
   }
 }

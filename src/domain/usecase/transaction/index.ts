@@ -5,6 +5,10 @@ import { buildListWithdraw, ListWithdraw } from './list-withdraw'
 import { buildReject, Reject } from './reject'
 import { buildSubmit, Submit } from './submit'
 import { buildListById, ListById } from './list-by-id'
+import {
+  buildGetUserSpendingByDeveloperKeyLabel,
+  GetUserSpendingByDeveloperKeyLabel,
+} from './get-user-spending-by-developer-key-label'
 
 export type TransactionUseCase = {
   list: List
@@ -13,6 +17,7 @@ export type TransactionUseCase = {
   submit: Submit
   excel: Excel
   listById: ListById
+  getAggregatedUserSpendingStatsExcelByDeveloperKey: GetUserSpendingByDeveloperKeyLabel
 }
 
 export const buildTransactionUseCase = (params: UseCaseParams): TransactionUseCase => {
@@ -22,6 +27,8 @@ export const buildTransactionUseCase = (params: UseCaseParams): TransactionUseCa
   const reject = buildReject(params)
   const submit = buildSubmit(params)
   const listById = buildListById(params)
+  const getAggregatedUserSpendingStatsExcelByDeveloperKey =
+    buildGetUserSpendingByDeveloperKeyLabel(params)
 
   return {
     list,
@@ -29,6 +36,7 @@ export const buildTransactionUseCase = (params: UseCaseParams): TransactionUseCa
     reject,
     submit,
     excel,
-    listById
+    listById,
+    getAggregatedUserSpendingStatsExcelByDeveloperKey,
   }
 }

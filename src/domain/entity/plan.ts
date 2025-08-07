@@ -15,6 +15,9 @@ export interface IPlanModel extends PlanModel {
   model: IModel
 }
 
+export const validPlanCurrencies = ['RUB', 'USD', 'EUR'] as const
+export type PlanCurrency = (typeof validPlanCurrencies)[number]
+
 export const PlanType = PT
 export type TPlanType = PT
 
@@ -97,3 +100,11 @@ export class PlanModelGraphQLObject implements IPlanModel {
  *            tokens:
  *                type: number
  */
+
+export const planOrder: PT[] = [
+  PlanType.FREE,
+  PlanType.BASIC,
+  PlanType.PREMIUM,
+  PlanType.DELUXE,
+  PlanType.ELITE,
+]

@@ -12,7 +12,7 @@ export const buildStream =
   async (req, res) => {
     const chatEventStream = await chat.stream({
       userId: req.user?.id,
-      chatId: req.params.id
+      chatId: req.params.id,
     })
     setSSEHeaders(res)
 
@@ -22,7 +22,7 @@ export const buildStream =
       },
       complete: () => {
         res.end()
-      }
+      },
     })
 
     res.on('close', () => {

@@ -10,7 +10,7 @@ export const buildListEnterprises = ({ enterprise }: Params): ListEnterprises =>
     const enterprises = await enterprise.list({
       search: req.query.search as string,
       page: req.query.page as any,
-      userId: req.user?.id
+      userId: req.user?.id,
     })
 
     return res.status(200).json(enterprises)

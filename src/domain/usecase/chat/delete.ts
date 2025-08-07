@@ -9,21 +9,21 @@ export const buildDelete = ({ adapter, service }: UseCaseParams): Delete => {
     const chat = await adapter.chatRepository.delete({
       where: {
         id: chatId,
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     if (!chat) {
       throw new NotFoundError({
-        code: 'CHAT_NOT_FOUND'
+        code: 'CHAT_NOT_FOUND',
       })
     }
 
     service.chat.eventStream.emit({
       chat,
       event: {
-        name: 'DELETE'
-      }
+        name: 'DELETE',
+      },
     })
 
     return chat

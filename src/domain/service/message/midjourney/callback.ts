@@ -5,7 +5,7 @@ import { Adapter } from '@/adapter'
 import axios from 'axios'
 import { randomUUID } from 'crypto'
 import { FileType, MessageImageStatus } from '@prisma/client'
-import { IMessageImage } from '@/domain/entity/messageImage'
+import { IMessageImage } from '@/domain/entity/message-image'
 
 type Params = Adapter & {
   chatService: ChatService
@@ -28,12 +28,13 @@ export const buildCallback = ({ imageGateway, chatService }: Params): Callback =
         const { data: imageBuffer } = await axios<Buffer>({
           method: 'get',
           url,
-          responseType: 'arraybuffer'
+          responseType: 'arraybuffer',
         })
 
-        const { width: imageWidth = 2048, height: imageHeight = 2048 } = await imageGateway.metadata({
-          buffer: imageBuffer
-        })
+        const { width: imageWidth = 2048, height: imageHeight = 2048 } =
+          await imageGateway.metadata({
+            buffer: imageBuffer,
+          })
 
         const messageImageId = randomUUID()
         const mjImageId = randomUUID()
@@ -56,7 +57,8 @@ export const buildCallback = ({ imageGateway, chatService }: Params): Callback =
             path: null,
             size: 0,
             created_at: new Date(),
-            isEncrypted: false
+            deleted_at: null,
+            isEncrypted: false,
           },
           is_nsfw: false,
           preview_id: mjPreviewImageId,
@@ -68,9 +70,10 @@ export const buildCallback = ({ imageGateway, chatService }: Params): Callback =
             path: null,
             size: 0,
             created_at: new Date(),
-            isEncrypted: false
+            deleted_at: null,
+            isEncrypted: false,
           },
-          created_at: new Date()
+          created_at: new Date(),
         })
       }
 
@@ -83,10 +86,10 @@ export const buildCallback = ({ imageGateway, chatService }: Params): Callback =
               id: messageId,
               job_id: mjJob.id,
               job: mjJob.job,
-              images
-            }
-          }
-        }
+              images,
+            },
+          },
+        },
       })
     }
   }

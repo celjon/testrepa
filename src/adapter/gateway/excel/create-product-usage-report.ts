@@ -2,7 +2,10 @@ import * as XLSX from 'xlsx'
 import { getMonthName } from '@/lib'
 import { Product, ProductUsage } from '@/domain/entity/statistics'
 
-export type CreateProductUsageReport = (params: { usage: ProductUsage; product: Product }) => Promise<Buffer<ArrayBufferLike>>
+export type CreateProductUsageReport = (params: {
+  usage: ProductUsage
+  product: Product
+}) => Promise<Buffer<ArrayBufferLike>>
 
 export const buildCreateProductUsageReport = (): CreateProductUsageReport => {
   return async ({ usage, product }) => {
@@ -22,7 +25,7 @@ export const buildCreateProductUsageReport = (): CreateProductUsageReport => {
       'PREMIUM Запросов',
       'DELUXE Запросов',
       'ELITE Запросов',
-      'Всего запросов (платные тарифы)'
+      'Всего запросов (платные тарифы)',
     ])
 
     for (const row of usage) {
@@ -39,7 +42,7 @@ export const buildCreateProductUsageReport = (): CreateProductUsageReport => {
         row.usage.premium.requests,
         row.usage.deluxe.requests,
         row.usage.elite.requests,
-        row.usage.totalPaid.requests
+        row.usage.totalPaid.requests,
       ])
     }
 
@@ -59,7 +62,7 @@ export const buildCreateProductUsageReport = (): CreateProductUsageReport => {
       { wch: 20 },
       { wch: 20 },
       { wch: 20 },
-      { wch: 35 }
+      { wch: 35 },
     ]
 
     XLSX.utils.book_append_sheet(wb, ws, `${product.toLowerCase()}`)

@@ -8,7 +8,7 @@ import {
   process_endpoint,
   RE_SPACE_NAME,
   set_space_hardware,
-  set_space_timeout
+  set_space_timeout,
 } from './utils'
 
 import type {
@@ -23,12 +23,16 @@ import type {
   SpaceStatus,
   SpaceStatusCallback,
   Status,
-  UploadResponse
+  UploadResponse,
 } from './types'
 import WebSocket from 'isomorphic-ws'
 
 type event = <K extends EventType>(eventType: K, listener: EventListener<K>) => SubmitReturn
-type predict = (endpoint: string | number, data?: unknown[], event_data?: unknown) => Promise<unknown>
+type predict = (
+  endpoint: string | number,
+  data?: unknown[],
+  event_data?: unknown,
+) => Promise<unknown>
 
 type client_return = {
   predict: predict
@@ -57,21 +61,23 @@ export async function duplicate(
     status_callback: SpaceStatusCallback
     hardware?: (typeof hardware_types)[number]
     timeout?: number
-  }
+  },
 ) {
   const { hf_token, private: _private, hardware, timeout } = options
 
   if (hardware && !hardware_types.includes(hardware)) {
-    throw new Error(`Invalid hardware type provided. Valid types are: ${hardware_types.map((v) => `"${v}"`).join(',')}.`)
+    throw new Error(
+      `Invalid hardware type provided. Valid types are: ${hardware_types.map((v) => `"${v}"`).join(',')}.`,
+    )
   }
   const headers = {
-    Authorization: `Bearer ${hf_token}`
+    Authorization: `Bearer ${hf_token}`,
   }
 
   const user = (
     await (
       await fetch('https://huggingface.co/api/whoami-v2', {
-        headers
+        headers,
       })
     ).json()
   ).name
@@ -81,7 +87,7 @@ export async function duplicate(
     repository: string
     private?: boolean
   } = {
-    repository: `${user}/${space_name}`
+    repository: `${user}/${space_name}`,
   }
 
   if (_private) {
@@ -92,7 +98,7 @@ export async function duplicate(
     const response = await fetch(`https://huggingface.co/api/spaces/${app_reference}/duplicate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     })
 
     if (response.status === 409) {
@@ -123,7 +129,11 @@ export async function duplicate(
 export function api_factory(fetch_implementation: typeof fetch) {
   return { post_data, upload_files, client, handle_blob }
 
-  async function post_data(url: string, body: unknown, token?: `hf_${string}`): Promise<[PostResponse, number]> {
+  async function post_data(
+    url: string,
+    body: unknown,
+    token?: `hf_${string}`,
+  ): Promise<[PostResponse, number]> {
     const headers: {
       Authorization?: string
       'Content-Type': 'application/json'
@@ -135,7 +145,7 @@ export function api_factory(fetch_implementation: typeof fetch) {
       var response = await fetch_implementation(url, {
         method: 'POST',
         body: JSON.stringify(body),
-        headers
+        headers,
       })
     } catch (e) {
       return [{ error: BROKEN_CONNECTION_MSG }, 500]
@@ -144,7 +154,11 @@ export function api_factory(fetch_implementation: typeof fetch) {
     return [output, response.status]
   }
 
-  async function upload_files(root: string, files: Array<File | Blob>, token?: `hf_${string}`): Promise<UploadResponse> {
+  async function upload_files(
+    root: string,
+    files: Array<File | Blob>,
+    token?: `hf_${string}`,
+  ): Promise<UploadResponse> {
     const headers: {
       Authorization?: string
     } = {}
@@ -160,7 +174,7 @@ export function api_factory(fetch_implementation: typeof fetch) {
       var response = await fetch_implementation(`${root}/upload`, {
         method: 'POST',
         body: formData,
-        headers
+        headers,
       })
     } catch (e) {
       return { error: BROKEN_CONNECTION_MSG }
@@ -175,7 +189,7 @@ export function api_factory(fetch_implementation: typeof fetch) {
       hf_token?: `hf_${string}`
       status_callback?: SpaceStatusCallback
       normalise_files?: boolean
-    } = { normalise_files: true }
+    } = { normalise_files: true },
   ): Promise<client_return> {
     return new Promise((res) => {
       const createClient = async () => {
@@ -183,7 +197,7 @@ export function api_factory(fetch_implementation: typeof fetch) {
         const return_obj = {
           predict,
           submit,
-          view_api
+          view_api,
           // duplicate
         }
 
@@ -195,7 +209,10 @@ export function api_factory(fetch_implementation: typeof fetch) {
         //   global.WebSocket = ws.WebSocket;
         // }
 
-        const { ws_protocol, http_protocol, host, space_id } = await process_endpoint(app_reference, hf_token)
+        const { ws_protocol, http_protocol, host, space_id } = await process_endpoint(
+          app_reference,
+          hf_token,
+        )
 
         const session_hash = Math.random().toString(36).substring(2)
         const last_status: Record<string, Status['stage']> = {}
@@ -219,7 +236,7 @@ export function api_factory(fetch_implementation: typeof fetch) {
 
           return {
             config,
-            ...return_obj
+            ...return_obj,
           }
         }
 
@@ -229,7 +246,11 @@ export function api_factory(fetch_implementation: typeof fetch) {
           if (status_callback) status_callback(status)
           if (status.status === 'running')
             try {
-              config = await resolve_config(fetch_implementation, `${http_protocol}//${host}`, hf_token)
+              config = await resolve_config(
+                fetch_implementation,
+                `${http_protocol}//${host}`,
+                hf_token,
+              )
 
               const _config: any = await config_success(config)
               res(_config)
@@ -240,7 +261,7 @@ export function api_factory(fetch_implementation: typeof fetch) {
                   status: 'error',
                   message: 'Could not load this space.',
                   load_status: 'error',
-                  detail: 'NOT_FOUND'
+                  detail: 'NOT_FOUND',
                 })
               }
             }
@@ -254,14 +275,18 @@ export function api_factory(fetch_implementation: typeof fetch) {
         } catch (e) {
           console.error(e)
           if (space_id) {
-            await check_space_status(space_id, RE_SPACE_NAME.test(space_id) ? 'space_name' : 'subdomain', handle_space_sucess)
+            await check_space_status(
+              space_id,
+              RE_SPACE_NAME.test(space_id) ? 'space_name' : 'subdomain',
+              handle_space_sucess,
+            )
           } else {
             if (status_callback)
               status_callback({
                 status: 'error',
                 message: 'Could not load this space.',
                 load_status: 'error',
-                detail: 'NOT_FOUND'
+                detail: 'NOT_FOUND',
               })
           }
         }
@@ -298,7 +323,11 @@ export function api_factory(fetch_implementation: typeof fetch) {
           })
         }
 
-        function submit(endpoint: string | number, data: unknown[], event_data?: unknown): SubmitReturn {
+        function submit(
+          endpoint: string | number,
+          data: unknown[],
+          event_data?: unknown,
+        ): SubmitReturn {
           let fn_index: number
           let api_info: EndpointInfo<JsApiData>
 
@@ -313,7 +342,9 @@ export function api_factory(fetch_implementation: typeof fetch) {
           }
 
           if (typeof fn_index !== 'number') {
-            throw new Error('There is no endpoint matching that name of fn_index matching that number.')
+            throw new Error(
+              'There is no endpoint matching that name of fn_index matching that number.',
+            )
           }
 
           let websocket: WebSocket
@@ -323,167 +354,175 @@ export function api_factory(fetch_implementation: typeof fetch) {
           let complete: false | Record<string, any> = false
           const listener_map: ListenerMap<EventType> = {}
 
-          handle_blob(`${http_protocol}//${host + config.path}`, data, api_info, hf_token).then((_payload) => {
-            payload = { data: _payload || [], event_data, fn_index }
-            if (skip_queue(fn_index, config)) {
-              fire_event({
-                type: 'status',
-                endpoint: _endpoint,
-                stage: 'pending',
-                queue: false,
-                fn_index,
-                time: new Date()
-              })
+          handle_blob(`${http_protocol}//${host + config.path}`, data, api_info, hf_token).then(
+            (_payload) => {
+              payload = { data: _payload || [], event_data, fn_index }
+              if (skip_queue(fn_index, config)) {
+                fire_event({
+                  type: 'status',
+                  endpoint: _endpoint,
+                  stage: 'pending',
+                  queue: false,
+                  fn_index,
+                  time: new Date(),
+                })
 
-              post_data(
-                `${http_protocol}//${host + config.path}/run${_endpoint.startsWith('/') ? _endpoint : `/${_endpoint}`}`,
-                {
-                  ...payload,
-                  session_hash
-                },
-                hf_token
-              )
-                .then(([output, status_code]) => {
-                  const data = transform_files ? transform_output(output.data, api_info, config.root, config.root_url) : output.data
-                  if (status_code == 200) {
-                    fire_event({
-                      type: 'data',
-                      endpoint: _endpoint,
-                      fn_index,
-                      data: data,
-                      time: new Date()
-                    })
+                post_data(
+                  `${http_protocol}//${host + config.path}/run${_endpoint.startsWith('/') ? _endpoint : `/${_endpoint}`}`,
+                  {
+                    ...payload,
+                    session_hash,
+                  },
+                  hf_token,
+                )
+                  .then(([output, status_code]) => {
+                    const data = transform_files
+                      ? transform_output(output.data, api_info, config.root, config.root_url)
+                      : output.data
+                    if (status_code == 200) {
+                      fire_event({
+                        type: 'data',
+                        endpoint: _endpoint,
+                        fn_index,
+                        data: data,
+                        time: new Date(),
+                      })
 
-                    fire_event({
-                      type: 'status',
-                      endpoint: _endpoint,
-                      fn_index,
-                      stage: 'complete',
-                      eta: output.average_duration,
-                      queue: false,
-                      time: new Date()
-                    })
-                  } else {
+                      fire_event({
+                        type: 'status',
+                        endpoint: _endpoint,
+                        fn_index,
+                        stage: 'complete',
+                        eta: output.average_duration,
+                        queue: false,
+                        time: new Date(),
+                      })
+                    } else {
+                      fire_event({
+                        type: 'status',
+                        stage: 'error',
+                        endpoint: _endpoint,
+                        fn_index,
+                        message: output.error,
+                        queue: false,
+                        time: new Date(),
+                      })
+                    }
+                  })
+                  .catch((e) => {
                     fire_event({
                       type: 'status',
                       stage: 'error',
+                      message: e.message,
                       endpoint: _endpoint,
                       fn_index,
-                      message: output.error,
                       queue: false,
-                      time: new Date()
+                      time: new Date(),
                     })
-                  }
-                })
-                .catch((e) => {
-                  fire_event({
-                    type: 'status',
-                    stage: 'error',
-                    message: e.message,
-                    endpoint: _endpoint,
-                    fn_index,
-                    queue: false,
-                    time: new Date()
                   })
+              } else {
+                fire_event({
+                  type: 'status',
+                  stage: 'pending',
+                  queue: true,
+                  endpoint: _endpoint,
+                  fn_index,
+                  time: new Date(),
                 })
-            } else {
-              fire_event({
-                type: 'status',
-                stage: 'pending',
-                queue: true,
-                endpoint: _endpoint,
-                fn_index,
-                time: new Date()
-              })
 
-              const url = new URL(`${ws_protocol}://${host}${config.path}
+                const url = new URL(`${ws_protocol}://${host}${config.path}
 							/queue/join`)
 
-              if (jwt) {
-                url.searchParams.set('__sign', jwt)
-              }
-
-              websocket = new WebSocket(url)
-
-              websocket.onclose = (evt: any) => {
-                if (!evt.wasClean) {
-                  fire_event({
-                    type: 'status',
-                    stage: 'error',
-                    message: BROKEN_CONNECTION_MSG,
-                    queue: true,
-                    endpoint: _endpoint,
-                    fn_index,
-                    time: new Date()
-                  })
+                if (jwt) {
+                  url.searchParams.set('__sign', jwt)
                 }
-              }
 
-              websocket.onmessage = function (event: any) {
-                const _data = JSON.parse(event.data.toString())
-                const { type, status, data } = handle_message(_data, last_status[fn_index])
+                websocket = new WebSocket(url)
 
-                if (type === 'update' && status && !complete) {
-                  // call 'status' listeners
-                  fire_event({
-                    type: 'status',
-                    endpoint: _endpoint,
-                    fn_index,
-                    time: new Date(),
-                    ...status
-                  })
-                  if (status.stage === 'error') {
-                    websocket.close()
+                websocket.onclose = (evt: any) => {
+                  if (!evt.wasClean) {
+                    fire_event({
+                      type: 'status',
+                      stage: 'error',
+                      message: BROKEN_CONNECTION_MSG,
+                      queue: true,
+                      endpoint: _endpoint,
+                      fn_index,
+                      time: new Date(),
+                    })
                   }
-                } else if (type === 'hash') {
-                  websocket.send(JSON.stringify({ fn_index, session_hash }))
-                  return
-                } else if (type === 'data') {
-                  websocket.send(JSON.stringify({ ...payload, session_hash }))
-                } else if (type === 'complete') {
-                  complete = status || false
-                } else if (type === 'generating') {
-                  fire_event({
-                    type: 'status',
-                    time: new Date(),
-                    ...status,
-                    stage: status?.stage!,
-                    queue: true,
-                    endpoint: _endpoint,
-                    fn_index
-                  })
                 }
-                if (data) {
-                  fire_event({
-                    type: 'data',
-                    time: new Date(),
-                    data: transform_files ? transform_output(data.data, api_info, config.root, config.root_url) : data.data,
-                    endpoint: _endpoint,
-                    fn_index
-                  })
 
-                  if (complete) {
+                websocket.onmessage = function (event: any) {
+                  const _data = JSON.parse(event.data.toString())
+                  const { type, status, data } = handle_message(_data, last_status[fn_index])
+
+                  if (type === 'update' && status && !complete) {
+                    // call 'status' listeners
+                    fire_event({
+                      type: 'status',
+                      endpoint: _endpoint,
+                      fn_index,
+                      time: new Date(),
+                      ...status,
+                    })
+                    if (status.stage === 'error') {
+                      websocket.close()
+                    }
+                  } else if (type === 'hash') {
+                    websocket.send(JSON.stringify({ fn_index, session_hash }))
+                    return
+                  } else if (type === 'data') {
+                    websocket.send(JSON.stringify({ ...payload, session_hash }))
+                  } else if (type === 'complete') {
+                    complete = status || false
+                  } else if (type === 'generating') {
                     fire_event({
                       type: 'status',
                       time: new Date(),
-                      ...complete,
+                      ...status,
                       stage: status?.stage!,
                       queue: true,
                       endpoint: _endpoint,
-                      fn_index
+                      fn_index,
                     })
-                    websocket.close()
+                  }
+                  if (data) {
+                    fire_event({
+                      type: 'data',
+                      time: new Date(),
+                      data: transform_files
+                        ? transform_output(data.data, api_info, config.root, config.root_url)
+                        : data.data,
+                      endpoint: _endpoint,
+                      fn_index,
+                    })
+
+                    if (complete) {
+                      fire_event({
+                        type: 'status',
+                        time: new Date(),
+                        ...complete,
+                        stage: status?.stage!,
+                        queue: true,
+                        endpoint: _endpoint,
+                        fn_index,
+                      })
+                      websocket.close()
+                    }
                   }
                 }
-              }
 
-              // different ws contract for gradio versions older than 3.6.0
-              //@ts-ignore
-              if (semiver(config.version || '2.0.0', '3.6') < 0) {
-                addEventListener('open', () => websocket.send(JSON.stringify({ hash: session_hash })))
+                // different ws contract for gradio versions older than 3.6.0
+                //@ts-ignore
+                if (semiver(config.version || '2.0.0', '3.6') < 0) {
+                  addEventListener('open', () =>
+                    websocket.send(JSON.stringify({ hash: session_hash })),
+                  )
+                }
               }
-            }
-          })
+            },
+          )
 
           function fire_event<K extends EventType>(event: Event<K>) {
             const narrowed_listener_map: ListenerMap<K> = listener_map
@@ -513,14 +552,14 @@ export function api_factory(fetch_implementation: typeof fetch) {
             const _status: Status = {
               stage: 'complete',
               queue: false,
-              time: new Date()
+              time: new Date(),
             }
             complete = _status
             fire_event({
               ..._status,
               type: 'status',
               endpoint: _endpoint,
-              fn_index: fn_index
+              fn_index: fn_index,
             })
 
             if (websocket && websocket.readyState === 0) {
@@ -535,10 +574,12 @@ export function api_factory(fetch_implementation: typeof fetch) {
               await fetch_implementation(`${http_protocol}//${host + config.path}/reset`, {
                 headers: { 'Content-Type': 'application/json' },
                 method: 'POST',
-                body: JSON.stringify({ fn_index, session_hash })
+                body: JSON.stringify({ fn_index, session_hash }),
               })
             } catch (e) {
-              console.warn('The `/reset` endpoint could not be called. Subsequent endpoint results may be unreliable.')
+              console.warn(
+                'The `/reset` endpoint could not be called. Subsequent endpoint results may be unreliable.',
+              )
             }
           }
 
@@ -554,7 +595,7 @@ export function api_factory(fetch_implementation: typeof fetch) {
             on,
             off,
             cancel,
-            destroy
+            destroy,
           }
         }
 
@@ -571,17 +612,20 @@ export function api_factory(fetch_implementation: typeof fetch) {
           let response: Response
           // @ts-ignore
           if (semiver(config.version || '2.0.0', '3.30') < 0) {
-            response = await fetch_implementation('https://gradio-space-api-fetcher-v2.hf.space/api', {
-              method: 'POST',
-              body: JSON.stringify({
-                serialize: false,
-                config: JSON.stringify(config)
-              }),
-              headers
-            })
+            response = await fetch_implementation(
+              'https://gradio-space-api-fetcher-v2.hf.space/api',
+              {
+                method: 'POST',
+                body: JSON.stringify({
+                  serialize: false,
+                  config: JSON.stringify(config),
+                }),
+                headers,
+              },
+            )
           } else {
             response = await fetch_implementation(`${config?.root}/info`, {
-              headers
+              headers,
             })
           }
 
@@ -606,18 +650,35 @@ export function api_factory(fetch_implementation: typeof fetch) {
     })
   }
 
-  async function handle_blob(endpoint: string, data: unknown[], api_info: any, token?: `hf_${string}`): Promise<unknown[]> {
+  async function handle_blob(
+    endpoint: string,
+    data: unknown[],
+    api_info: any,
+    token?: `hf_${string}`,
+  ): Promise<unknown[]> {
     const blob_refs = await walk_and_store_blobs(data, undefined, [], true, api_info)
 
     return Promise.all(
-      blob_refs.map(async ({ path, blob, data, type }: { path: string; blob: Blob; data: string; type: string }) => {
-        if (blob) {
-          const file_url = (await upload_files(endpoint, [blob], token))?.files?.[0]
-          return { path, file_url, type }
-        } else {
-          return { path, base64: data, type }
-        }
-      })
+      blob_refs.map(
+        async ({
+          path,
+          blob,
+          data,
+          type,
+        }: {
+          path: string
+          blob: Blob
+          data: string
+          type: string
+        }) => {
+          if (blob) {
+            const file_url = (await upload_files(endpoint, [blob], token))?.files?.[0]
+            return { path, file_url, type }
+          } else {
+            return { path, base64: data, type }
+          }
+        },
+      ),
     ).then((r) => {
       r.forEach(({ path, file_url, base64, type }) => {
         if (base64) {
@@ -628,7 +689,7 @@ export function api_factory(fetch_implementation: typeof fetch) {
           const o = {
             is_file: true,
             name: `${file_url}`,
-            data: null
+            data: null,
             // orig_name: "file.csv"
           }
           update_object(data, o, path)
@@ -642,7 +703,12 @@ export function api_factory(fetch_implementation: typeof fetch) {
 
 export const { post_data, upload_files, client, handle_blob } = api_factory(fetch)
 
-function transform_output(data: any[], api_info: any, root_url: string, remote_url: string | null = null): unknown[] {
+function transform_output(
+  data: any[],
+  api_info: any,
+  root_url: string,
+  remote_url: string | null = null,
+): unknown[] {
   return data.map((d, i) => {
     if (api_info.returns?.[i]?.component === 'File') {
       return normalise_file(d, root_url, remote_url)
@@ -665,7 +731,7 @@ function normalise_file(file: any, root: any, root_url: any): Array<FileData> | 
   if (typeof file === 'string') {
     return {
       name: 'file_data',
-      data: file
+      data: file,
     }
   } else if (Array.isArray(file)) {
     const normalized_file: Array<FileData | null | Array<FileData>> = []
@@ -726,7 +792,7 @@ function get_type(
   },
   component: string,
   serializer: string,
-  signature_type: 'return' | 'parameter'
+  signature_type: 'return' | 'parameter',
 ) {
   switch (type.type) {
     case 'string':
@@ -772,17 +838,23 @@ function get_description(type: { type: any; description: string }, serializer: s
   }
 }
 
-function transform_api_info(api_info: ApiInfo<ApiData>, config: Config, api_map: Record<string, number>): ApiInfo<JsApiData> {
+function transform_api_info(
+  api_info: ApiInfo<ApiData>,
+  config: Config,
+  api_map: Record<string, number>,
+): ApiInfo<JsApiData> {
   const new_data = {
     named_endpoints: {},
-    unnamed_endpoints: {}
+    unnamed_endpoints: {},
   }
   let key: keyof ApiInfo<ApiData>
   for (key in api_info) {
     const cat = api_info[key]
 
     for (const endpoint in cat) {
-      const dep_index = config.dependencies[endpoint as any] ? endpoint : api_map[endpoint.replace('/', '')]
+      const dep_index = config.dependencies[endpoint as any]
+        ? endpoint
+        : api_map[endpoint.replace('/', '')]
 
       const info = cat[endpoint]
       // @ts-ignore
@@ -800,8 +872,8 @@ function transform_api_info(api_info: ApiInfo<ApiData>, config: Config, api_map:
           label,
           component,
           type: get_type(type, component, serializer, 'parameter'),
-          description: get_description(type, serializer)
-        })
+          description: get_description(type, serializer),
+        }),
       )
       // @ts-ignore
       new_data[key][endpoint].returns = info.returns.map(
@@ -810,8 +882,8 @@ function transform_api_info(api_info: ApiInfo<ApiData>, config: Config, api_map:
           label,
           component,
           type: get_type(type, component, serializer, 'return'),
-          description: get_description(type, serializer)
-        })
+          description: get_description(type, serializer),
+        }),
       )
     }
   }
@@ -823,8 +895,8 @@ async function get_jwt(space: string, token: `hf_${string}`): Promise<string | f
   try {
     const r = await fetch(`https://huggingface.co/api/spaces/${space}/jwt`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     })
 
     const jwt = (await r.json()).token
@@ -844,7 +916,13 @@ function update_object(object: any, newValue: any, stack: any) {
   object[stack.shift()] = newValue
 }
 
-export async function walk_and_store_blobs(param: any, type = undefined, path: any[] = [], root = false, api_info: any = undefined) {
+export async function walk_and_store_blobs(
+  param: any,
+  type = undefined,
+  path: any[] = [],
+  root = false,
+  api_info: any = undefined,
+) {
   if (Array.isArray(param)) {
     let blob_refs: any[] = []
 
@@ -858,11 +936,11 @@ export async function walk_and_store_blobs(param: any, type = undefined, path: a
           root ? api_info?.parameters[i]?.component || undefined : type,
           new_path,
           false,
-          api_info
+          api_info,
         )
 
         blob_refs = blob_refs.concat(array_refs)
-      })
+      }),
     )
 
     return blob_refs
@@ -874,8 +952,8 @@ export async function walk_and_store_blobs(param: any, type = undefined, path: a
         // @ts-ignore
         blob: is_image ? false : new NodeBlob([param]),
         data: is_image ? `${param.toString('base64')}` : false,
-        type
-      }
+        type,
+      },
     ]
   } else if (param instanceof Blob || (typeof window !== 'undefined' && param instanceof File)) {
     if (type === 'Image') {
@@ -899,7 +977,9 @@ export async function walk_and_store_blobs(param: any, type = undefined, path: a
       if (Object.prototype.hasOwnProperty.call(param, key)) {
         const new_path: any[] = path.slice()
         new_path.push(key)
-        blob_refs = blob_refs.concat(await walk_and_store_blobs(param[key], undefined, new_path, false, api_info))
+        blob_refs = blob_refs.concat(
+          await walk_and_store_blobs(param[key], undefined, new_path, false, api_info),
+        )
       }
     }
     return blob_refs
@@ -917,22 +997,34 @@ function image_to_data_uri(blob: Blob) {
 }
 
 function skip_queue(id: number, config: Config) {
-  return !(config?.dependencies?.[id]?.queue === null ? config.enable_queue : config?.dependencies?.[id]?.queue) || false
+  return (
+    !(config?.dependencies?.[id]?.queue === null
+      ? config.enable_queue
+      : config?.dependencies?.[id]?.queue) || false
+  )
 }
 
-async function resolve_config(fetch_implementation: typeof fetch, endpoint?: string, token?: `hf_${string}`): Promise<Config> {
+async function resolve_config(
+  fetch_implementation: typeof fetch,
+  endpoint?: string,
+  token?: `hf_${string}`,
+): Promise<Config> {
   const headers: { Authorization?: string } = {}
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }
-  if (typeof window !== 'undefined' && window.gradio_config && location.origin !== 'http://localhost:9876') {
+  if (
+    typeof window !== 'undefined' &&
+    window.gradio_config &&
+    location.origin !== 'http://localhost:9876'
+  ) {
     const path = window.gradio_config.root
     const config = window.gradio_config
     config.root = endpoint + config.root
     return { ...config, path: path }
   } else if (endpoint) {
     const response = await fetch_implementation(`${endpoint}/config`, {
-      headers
+      headers,
     })
 
     if (response.status === 200) {
@@ -948,8 +1040,15 @@ async function resolve_config(fetch_implementation: typeof fetch, endpoint?: str
   throw new Error('No config or app endpoint found')
 }
 
-async function check_space_status(id: string, type: 'subdomain' | 'space_name', status_callback: SpaceStatusCallback) {
-  const endpoint = type === 'subdomain' ? `https://huggingface.co/api/spaces/by-subdomain/${id}` : `https://huggingface.co/api/spaces/${id}`
+async function check_space_status(
+  id: string,
+  type: 'subdomain' | 'space_name',
+  status_callback: SpaceStatusCallback,
+) {
+  const endpoint =
+    type === 'subdomain'
+      ? `https://huggingface.co/api/spaces/by-subdomain/${id}`
+      : `https://huggingface.co/api/spaces/${id}`
   let response
   let _status
   try {
@@ -964,7 +1063,7 @@ async function check_space_status(id: string, type: 'subdomain' | 'space_name', 
       status: 'error',
       load_status: 'error',
       message: 'Could not get space status',
-      detail: 'NOT_FOUND'
+      detail: 'NOT_FOUND',
     })
     return
   }
@@ -972,7 +1071,7 @@ async function check_space_status(id: string, type: 'subdomain' | 'space_name', 
   if (!response || _status !== 200) return
   const {
     runtime: { stage },
-    id: space_name
+    id: space_name,
   } = response
 
   switch (stage) {
@@ -982,7 +1081,7 @@ async function check_space_status(id: string, type: 'subdomain' | 'space_name', 
         status: 'sleeping',
         load_status: 'pending',
         message: 'Space is asleep. Waking it up...',
-        detail: stage
+        detail: stage,
       })
 
       setTimeout(() => {
@@ -993,9 +1092,10 @@ async function check_space_status(id: string, type: 'subdomain' | 'space_name', 
       status_callback({
         status: 'paused',
         load_status: 'error',
-        message: 'This space has been paused by the author. If you would like to try this demo, consider duplicating the space.',
+        message:
+          'This space has been paused by the author. If you would like to try this demo, consider duplicating the space.',
         detail: stage,
-        discussions_enabled: await discussions_enabled(space_name)
+        discussions_enabled: await discussions_enabled(space_name),
       })
       break
     case 'RUNNING':
@@ -1004,7 +1104,7 @@ async function check_space_status(id: string, type: 'subdomain' | 'space_name', 
         status: 'running',
         load_status: 'complete',
         message: '',
-        detail: stage
+        detail: stage,
       })
       // load_config(source);
       //  launch
@@ -1014,7 +1114,7 @@ async function check_space_status(id: string, type: 'subdomain' | 'space_name', 
         status: 'building',
         load_status: 'pending',
         message: 'Space is building...',
-        detail: stage
+        detail: stage,
       })
 
       setTimeout(() => {
@@ -1027,7 +1127,7 @@ async function check_space_status(id: string, type: 'subdomain' | 'space_name', 
         load_status: 'error',
         message: 'This space is experiencing an issue.',
         detail: stage,
-        discussions_enabled: await discussions_enabled(space_name)
+        discussions_enabled: await discussions_enabled(space_name),
       })
       break
   }
@@ -1035,7 +1135,7 @@ async function check_space_status(id: string, type: 'subdomain' | 'space_name', 
 
 function handle_message(
   data: any,
-  last_status: Status['stage']
+  last_status: Status['stage'],
 ): {
   type: 'hash' | 'data' | 'update' | 'complete' | 'generating' | 'none'
   data?: any
@@ -1055,8 +1155,8 @@ function handle_message(
           message: QUEUE_FULL_MSG,
           stage: 'error',
           code: data.code,
-          success: data.success
-        }
+          success: data.success,
+        },
       }
     case 'estimation':
       return {
@@ -1068,8 +1168,8 @@ function handle_message(
           size: data.queue_size,
           position: data.rank,
           eta: data.rank_eta,
-          success: data.success
-        }
+          success: data.success,
+        },
       }
     case 'progress':
       return {
@@ -1079,8 +1179,8 @@ function handle_message(
           stage: 'pending',
           code: data.code,
           progress_data: data.progress_data,
-          success: data.success
-        }
+          success: data.success,
+        },
       }
     case 'process_generating':
       return {
@@ -1091,9 +1191,9 @@ function handle_message(
           stage: data.success ? 'generating' : 'error',
           code: data.code,
           progress_data: data.progress_data,
-          eta: data.average_duration
+          eta: data.average_duration,
         },
-        data: data.success ? data.output : null
+        data: data.success ? data.output : null,
       }
     case 'process_completed':
       if ('error' in data.output) {
@@ -1104,8 +1204,8 @@ function handle_message(
             message: data.output.error as string,
             stage: 'error',
             code: data.code,
-            success: data.success
-          }
+            success: data.success,
+          },
         }
       } else {
         return {
@@ -1116,9 +1216,9 @@ function handle_message(
             stage: data.success ? 'complete' : 'error',
             code: data.code,
             progress_data: data.progress_data,
-            eta: data.output.average_duration
+            eta: data.output.average_duration,
           },
-          data: data.success ? data.output : null
+          data: data.success ? data.output : null,
         }
       }
 
@@ -1131,8 +1231,8 @@ function handle_message(
           code: data.code,
           size: data.rank,
           position: 0,
-          success: data.success
-        }
+          success: data.success,
+        },
       }
   }
 

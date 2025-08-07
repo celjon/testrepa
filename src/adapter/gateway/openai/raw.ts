@@ -1,192 +1,124 @@
-import { AdapterParams } from '@/adapter/types'
-import { BaseError, InvalidDataError } from '@/domain/errors'
 import { APIError, toFile } from 'openai'
-import { ChatCompletionCreateParamsNonStreaming, ChatCompletionCreateParamsStreaming, ImagesResponse } from 'openai/resources'
+import { ChatCompletion, ChatCompletionMessageParam, ImagesResponse } from 'openai/resources'
+import { TranslationVerbose } from 'openai/resources/audio/translations'
+import { Observable } from 'rxjs'
 import { PassThrough, Readable } from 'stream'
 import * as mm from 'music-metadata'
-import { TranslationVerbose } from 'openai/resources/audio/translations'
 import { logger } from '@/lib/logger'
 import { getErrorString } from '@/lib'
+import { AdapterParams } from '@/adapter/types'
+import { BaseError, InvalidDataError } from '@/domain/errors'
+import { ModelUsage, RawStream, RawStreamChunk } from '../types'
 
 type Params = Pick<AdapterParams, 'openaiBalancer' | 'openaiTranscriptionBalancer'>
 
 export type SendRawStream = (
   params: {
     model: string
-    messages: Array<{
-      role: string
-      content:
-        | string
-        | Array<
-            | {
-                type: 'text'
-                text: string
-              }
-            | {
-                type: 'image_url'
-                image_url: {
-                  url: string
-                }
-              }
-          >
-    }>
-    endUserId: string
+    messages: Array<ChatCompletionMessageParam>
     [key: string]: unknown
   },
-  onEnd: (content: string) => void
+  onEnd: (content: string, usage: ModelUsage | null) => void,
 ) => Promise<{
-  responseBytesStream: Readable
-  breakNotifier: () => void
+  responseStream: RawStream
 }>
 
 export const buildSendRawStream = ({ openaiBalancer }: Params): SendRawStream => {
   return async (params, onEnd) => {
     const openaiProvider = openaiBalancer.next()
-    const request = params as any as ChatCompletionCreateParamsStreaming
 
     try {
       const stream = await openaiProvider.client.chat.completions.create({
-        ...request,
+        ...params,
+        stream: true,
         stream_options: {
-          include_usage: true
-        }
+          include_usage: true,
+        },
       })
 
       let content = ''
-      let finalSent = false
 
-      const streamIterator = stream[Symbol.asyncIterator]()
+      const responseStream = new Observable<RawStreamChunk>((subscriber) => {
+        const processStream = async () => {
+          try {
+            for await (const chunk of stream) {
+              if (chunk.choices && chunk.choices[0]?.delta?.content) {
+                content += chunk.choices[0]?.delta?.content
+              }
 
-      const responseBytesStream = new Readable({
-        async read() {
-          const chunk = await streamIterator.next()
-          if (chunk.done) {
-            this.push('[DONE]')
-            this.emit('end')
-            this.emit('close')
-            return
+              if (chunk.usage) {
+                subscriber.next(chunk)
+                onEnd(content, chunk.usage ?? null)
+              } else {
+                subscriber.next(chunk)
+              }
+            }
+
+            subscriber.complete()
+          } catch (error) {
+            subscriber.error(error)
           }
-
-          if (chunk.value.choices && chunk.value.choices[0]?.delta?.content) {
-            content += chunk.value.choices[0]?.delta?.content
-          }
-
-          this.push(`data: ${JSON.stringify(chunk.value)}\n\n`)
         }
-      })
 
-      responseBytesStream.on('end', () => {
-        if (!finalSent) {
-          finalSent = true
-          onDone()
-        }
-      })
-
-      responseBytesStream.on('error', () => {
-        if (!finalSent) {
-          finalSent = true
-          onDone()
-        }
-      })
-
-      const breakNotifier = async () => {
-        if (!finalSent) {
-          finalSent = true
-          onDone()
-          responseBytesStream.emit('end')
+        processStream()
+        return () => {
           stream.controller.abort()
         }
-      }
+      })
 
-      const onDone = () => {
-        onEnd(content)
-      }
       return {
-        responseBytesStream,
-        breakNotifier
+        responseStream,
       }
-    } catch (e) {
-      if (e instanceof APIError) {
-        logger.error({
-          location: 'openaiGateway.sendRawStream',
-          message: `${e.message}`,
-          openaiKey: e.headers?.['Authorization']?.slice(0, 42)
-        })
-
+    } catch (error) {
+      if (error instanceof APIError) {
         throw new BaseError({
-          httpStatus: e.status,
-          message: e.message,
-          code: e.code || undefined
+          httpStatus: error.status,
+          message: error.message,
+          code: error.code || undefined,
         })
       }
 
-      throw e
+      throw error
     }
   }
 }
 
 export type SendRawSync = (params: {
   model: string
-  endUserId: string
-  messages: Array<{
-    role: string
-    content:
-      | string
-      | Array<
-          | {
-              type: 'text'
-              text: string
-            }
-          | {
-              type: 'image_url'
-              image_url: {
-                url: string
-              }
-            }
-        >
-  }>
+  messages: Array<ChatCompletionMessageParam>
   [key: string]: unknown
 }) => Promise<{
-  response: {
-    choices: {
-      message: {
-        role: 'assistant'
-        content: string | null
-      }
-    }[]
-  }
-  tokens: number
+  response: ChatCompletion
+  usage: ModelUsage | null
 }>
 
 export const buildSendRawSync = ({ openaiBalancer }: Params): SendRawSync => {
   return async (params) => {
     try {
       const openaiProvider = openaiBalancer.next()
-      const request = params as any as ChatCompletionCreateParamsNonStreaming
       const completions = await openaiProvider.client.chat.completions.create({
-        ...request,
-        stream_options: {
-          include_usage: true
-        }
+        ...params,
+        stream: false,
       })
-      const usedTokens = completions.usage ? completions.usage.total_tokens : 0
 
       return {
         response: completions,
-        tokens: usedTokens
+        usage: completions.usage ?? null,
       }
     } catch (e: any) {
       if (e instanceof APIError) {
         logger.error({
           location: 'openaiGateway.sendRawSync',
           message: `${e.message}`,
-          openaiKey: e.headers?.['Authorization']?.slice(0, 42)
+          openaiKey: e.headers?.['Authorization']?.slice(0, 42),
+          model: params.model,
+          userId: params.endUserId,
         })
 
         throw new BaseError({
           httpStatus: e.status,
           message: e.message,
-          code: e.code || undefined
+          code: e.code || undefined,
         })
       }
 
@@ -213,13 +145,13 @@ export const buildImagesGenerate = ({ openaiBalancer }: Params): ImagesGenerate 
         logger.error({
           location: 'openaiGateway.sendImage',
           message: `${e.message}`,
-          openaiKey: e.headers?.['Authorization']?.slice(0, 42)
+          openaiKey: e.headers?.['Authorization']?.slice(0, 42),
         })
 
         throw new BaseError({
           httpStatus: e.status,
           message: e.message,
-          code: e.code || undefined
+          code: e.code || undefined,
         })
       }
 
@@ -246,7 +178,9 @@ export type TranscriptionsCreate = (params: {
   }
 }>
 
-export const buildTranscriptionsCreate = ({ openaiTranscriptionBalancer }: Params): TranscriptionsCreate => {
+export const buildTranscriptionsCreate = ({
+  openaiTranscriptionBalancer,
+}: Params): TranscriptionsCreate => {
   return async (params) => {
     try {
       const openaiProvider = openaiTranscriptionBalancer.next()
@@ -262,7 +196,7 @@ export const buildTranscriptionsCreate = ({ openaiTranscriptionBalancer }: Param
         prompt: params.prompt,
         response_format: params.response_format,
         temperature: params.temperature,
-        timestamp_granularities: params.timestamp_granularities
+        timestamp_granularities: params.timestamp_granularities,
       })
       try {
         const { format } = await mm.parseStream(clone, {}, { duration: true })
@@ -270,17 +204,17 @@ export const buildTranscriptionsCreate = ({ openaiTranscriptionBalancer }: Param
         return {
           response: data,
           audioMetadata: {
-            duration: format.duration ?? 1
-          }
+            duration: format.duration ?? 1,
+          },
         }
       } catch (error) {
         logger.error({
           location: 'openaiGateway.transcriptionsCreate[mm.parseStream]',
-          message: getErrorString(error)
+          message: getErrorString(error),
         })
 
         throw new InvalidDataError({
-          code: 'METADATA_PARSING_ERROR'
+          code: 'METADATA_PARSING_ERROR',
         })
       }
     } catch (e: any) {
@@ -288,13 +222,13 @@ export const buildTranscriptionsCreate = ({ openaiTranscriptionBalancer }: Param
         logger.error({
           location: 'openaiGateway.transcriptionsCreate',
           message: `${e.message}`,
-          openaiKey: e.headers?.['Authorization']?.slice(0, 42)
+          openaiKey: e.headers?.['Authorization']?.slice(0, 42),
         })
 
         throw new BaseError({
           httpStatus: e.status,
           message: e.message,
-          code: e.code || undefined
+          code: e.code || undefined,
         })
       }
 
@@ -317,20 +251,20 @@ export const buildModerationsCreate = ({ openaiBalancer }: Params): ModerationsC
 
       return {
         response: data,
-        tokens: 0
+        tokens: 0,
       }
     } catch (e: any) {
       if (e instanceof APIError) {
         logger.error({
           location: 'openaiGateway.moderationsCreate',
           message: getErrorString(e),
-          openaiKey: e.headers?.['Authorization']?.slice(0, 42)
+          openaiKey: e.headers?.['Authorization']?.slice(0, 42),
         })
 
         throw new BaseError({
           httpStatus: e.status,
           message: e.message,
-          code: e.code || undefined
+          code: e.code || undefined,
         })
       }
 
@@ -354,7 +288,14 @@ export type TranslationsCreate = (params: {
 }>
 
 export const buildTranslationsCreate = ({ openaiBalancer }: Params): TranslationsCreate => {
-  return async ({ file, fileName, model, prompt, responseFormat = 'verbose_json', temperature }) => {
+  return async ({
+    file,
+    fileName,
+    model,
+    prompt,
+    responseFormat = 'verbose_json',
+    temperature,
+  }) => {
     try {
       const openaiProvider = openaiBalancer.next()
 
@@ -366,7 +307,7 @@ export const buildTranslationsCreate = ({ openaiBalancer }: Params): Translation
         file: openaiFile,
         prompt,
         response_format: responseFormat,
-        temperature
+        temperature,
       })
 
       const { format } = await mm.parseStream(stream, {}, { duration: true })
@@ -374,21 +315,21 @@ export const buildTranslationsCreate = ({ openaiBalancer }: Params): Translation
       return {
         response: data,
         audioMetadata: {
-          duration: format.duration
-        }
+          duration: format.duration,
+        },
       }
     } catch (e: any) {
       if (e instanceof APIError) {
         logger.error({
           location: 'openaiGateway.translationsCreate',
           message: getErrorString(e),
-          openaiKey: e.headers?.['Authorization']
+          openaiKey: e.headers?.['Authorization']?.slice(0, 42),
         })
 
         throw new BaseError({
           httpStatus: e.status,
           message: e.message,
-          code: e.code || undefined
+          code: e.code || undefined,
         })
       }
 
@@ -415,20 +356,20 @@ export const buildSpeechCreate = ({ openaiBalancer }: Params): SpeechCreate => {
       const data = await openaiProvider.client.audio.speech.create(params)
 
       return {
-        response: Buffer.from(await data.arrayBuffer())
+        response: Buffer.from(await data.arrayBuffer()),
       }
     } catch (error: any) {
       if (error instanceof APIError) {
         logger.error({
           location: 'openaiGateway.speechCreate',
           message: getErrorString(error),
-          openaiKey: error.headers?.['Authorization']?.slice(0, 42)
+          openaiKey: error.headers?.['Authorization']?.slice(0, 42),
         })
 
         throw new BaseError({
           httpStatus: error.status,
           message: error.message,
-          code: error.code || undefined
+          code: error.code || undefined,
         })
       }
 
@@ -455,20 +396,20 @@ export const buildEmbeddingsCreate = ({ openaiBalancer }: Params): EmbeddingsCre
       const data = await openaiProvider.client.embeddings.create(params)
 
       return {
-        response: data
+        response: data,
       }
     } catch (error: any) {
       if (error instanceof APIError) {
         logger.error({
           location: 'openaiGateway.embeddingsCreate',
           message: getErrorString(error),
-          openaiKey: error.headers?.['Authorization']?.slice(0, 42)
+          openaiKey: error.headers?.['Authorization']?.slice(0, 42),
         })
 
         throw new BaseError({
           httpStatus: error.status,
           message: error.message,
-          code: error.code || undefined
+          code: error.code || undefined,
         })
       }
 

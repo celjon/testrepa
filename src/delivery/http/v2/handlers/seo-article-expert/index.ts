@@ -26,7 +26,7 @@ const buildRegisterRoutes = (methods: SEOArticleExpertMethods, middlewares: Midd
     findBySlugRules,
     createSEOArticleExpertRules,
     updateSEOArticleExpertRules,
-    deleteSEOArticleExpertRules
+    deleteSEOArticleExpertRules,
   } = buildSEOArticleExpertRules(middlewares)
   return (root: Express.Router) => {
     const namespace = Express.Router()
@@ -52,7 +52,11 @@ const buildRegisterRoutes = (methods: SEOArticleExpertMethods, middlewares: Midd
      *             schema:
      *               $ref: '#/components/entities/SEOArticleExpert'
      */
-    namespace.get('/:seoExpertId', getSEOArticleExpertRules, createRouteHandler(methods.getSEOArticleExpert))
+    namespace.get(
+      '/:seoExpertId',
+      getSEOArticleExpertRules,
+      createRouteHandler(methods.getSEOArticleExpert),
+    )
 
     /**
      * @openapi
@@ -100,7 +104,11 @@ const buildRegisterRoutes = (methods: SEOArticleExpertMethods, middlewares: Midd
      *             schema:
      *               $ref: '#/components/entities/SEOArticleExpert'
      */
-    namespace.post('/create', createSEOArticleExpertRules, createRouteHandler(methods.createSEOArticleExpert))
+    namespace.post(
+      '/create',
+      createSEOArticleExpertRules,
+      createRouteHandler(methods.createSEOArticleExpert),
+    )
 
     /**
      * @openapi
@@ -131,7 +139,11 @@ const buildRegisterRoutes = (methods: SEOArticleExpertMethods, middlewares: Midd
      *             schema:
      *               $ref: '#/components/entities/SEOArticleExpert'
      */
-    namespace.patch('/:seoExpertId', updateSEOArticleExpertRules, createRouteHandler(methods.updateSEOArticleExpert))
+    namespace.patch(
+      '/:seoExpertId',
+      updateSEOArticleExpertRules,
+      createRouteHandler(methods.updateSEOArticleExpert),
+    )
 
     /**
      * @openapi
@@ -155,7 +167,11 @@ const buildRegisterRoutes = (methods: SEOArticleExpertMethods, middlewares: Midd
      *             schema:
      *               $ref: '#/components/entities/SEOArticleExpert'
      */
-    namespace.delete('/:seoExpertId', deleteSEOArticleExpertRules, createRouteHandler(methods.deleteSEOArticleExpert))
+    namespace.delete(
+      '/:seoExpertId',
+      deleteSEOArticleExpertRules,
+      createRouteHandler(methods.deleteSEOArticleExpert),
+    )
 
     root.use('/seo-article-expert', namespace)
   }
@@ -175,9 +191,9 @@ export const buildSEOArticleExpertHandler = (params: Params): IHandler => {
         findBySlug,
         createSEOArticleExpert,
         updateSEOArticleExpert,
-        deleteSEOArticleExpert
+        deleteSEOArticleExpert,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

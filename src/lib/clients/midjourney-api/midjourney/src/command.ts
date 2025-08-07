@@ -18,7 +18,7 @@ export const Commands = [
   'show',
   'stealth',
   'shorten',
-  'subscribe'
+  'subscribe',
 ] as const
 export type CommandName = (typeof Commands)[number]
 
@@ -52,7 +52,7 @@ export class Command {
     }
     const url = `${this.config.DiscordBaseUrl}/api/v9/guilds/${serverId}/application-command-index`
     const response = await this.safeFetch(url, {
-      headers: { authorization: this.config.SalaiToken }
+      headers: { authorization: this.config.SalaiToken },
     })
 
     const data = await response.json()
@@ -73,7 +73,7 @@ export class Command {
     }
     const url = `${this.config.DiscordBaseUrl}/api/v9/guilds/${serverId}/application-command-index`
     const response = await this.safeFetch(url, {
-      headers: { authorization: this.config.SalaiToken }
+      headers: { authorization: this.config.SalaiToken },
     })
     const data = await response.json()
     if (data?.application_commands?.[0]) {
@@ -87,8 +87,8 @@ export class Command {
       {
         type: 3,
         name: 'prompt',
-        value: prompt
-      }
+        value: prompt,
+      },
     ])
     return this.data2Paylod(data, nonce)
   }
@@ -98,8 +98,8 @@ export class Command {
       {
         type: 1,
         name: 'remix',
-        options: []
-      }
+        options: [],
+      },
     ])
     return this.data2Paylod(data, nonce)
   }
@@ -109,8 +109,8 @@ export class Command {
       {
         type: 3,
         name: 'prompt',
-        value: prompt
-      }
+        value: prompt,
+      },
     ])
     return this.data2Paylod(data, nonce)
   }
@@ -142,16 +142,16 @@ export class Command {
         {
           type: 11,
           name: 'image',
-          value: image.id
-        }
+          value: image.id,
+        },
       ],
       [
         {
           id: <string>image.id,
           filename: image.filename,
-          uploaded_filename: image.upload_filename
-        }
-      ]
+          uploaded_filename: image.upload_filename,
+        },
+      ],
     )
     return this.data2Paylod(data, nonce)
   }
@@ -165,7 +165,7 @@ export class Command {
       type: command.type,
       options,
       application_command: command,
-      attachments
+      attachments,
     }
     return data
   }
@@ -179,7 +179,7 @@ export class Command {
       channel_id: this.config.ChannelId,
       session_id: this.config.SessionId,
       nonce,
-      data
+      data,
     }
     return payload
   }
@@ -192,7 +192,7 @@ export class Command {
           request,
           callback: (res: Response) => {
             resolve(res)
-          }
+          },
         },
         (error: any, result: any) => {
           if (error) {
@@ -200,12 +200,18 @@ export class Command {
           } else {
             resolve(result)
           }
-        }
+        },
       )
     })
   }
 
-  private async processFetchRequest({ request, callback }: { request: () => Promise<Response>; callback: (res: Response) => void }) {
+  private async processFetchRequest({
+    request,
+    callback,
+  }: {
+    request: () => Promise<Response>
+    callback: (res: Response) => void
+  }) {
     const res = await request()
     callback(res)
     await sleep(1000 * 4)

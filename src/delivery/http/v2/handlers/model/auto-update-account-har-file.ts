@@ -10,7 +10,7 @@ export type AutoUpdateAccountHARFile = (req: AuthRequest, res: Response) => Prom
 export const buildAutoUpdateAccountHARFile = ({ model }: Params): AutoUpdateAccountHARFile => {
   return async (req, res) => {
     const { stream, close } = await model.autoUpdateAccountHARFile({
-      accountId: req.params.id
+      accountId: req.params.id,
     })
     setSSEHeaders(res)
 
@@ -27,7 +27,7 @@ export const buildAutoUpdateAccountHARFile = ({ model }: Params): AutoUpdateAcco
       complete: () => {
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.connection.on('close', () => {

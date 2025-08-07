@@ -7,7 +7,7 @@ export const buildListAll = ({ adapter }: UseCaseParams): ListAll => {
   return async () => {
     const models = await adapter.modelRepository.list({
       orderBy: {
-        order: 'asc'
+        order: 'asc',
       },
       include: {
         icon: true,
@@ -15,8 +15,8 @@ export const buildListAll = ({ adapter }: UseCaseParams): ListAll => {
         functions: true,
         provider: true,
         child_provider: true,
-        providers: true
-      }
+        providers: true,
+      },
     })
 
     return models

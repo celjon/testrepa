@@ -12,7 +12,7 @@ export const buildUpdate = ({ shortcut }: Params): Update => {
       shortcutId: req.params.id,
       name: req.body.name,
       text: req.body.text,
-      autosend: req.body.autosend
+      autosend: req.body.autosend,
     })
 
     return res.status(200).json(data)

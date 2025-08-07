@@ -4,7 +4,7 @@ import { UseCaseParams } from '@/domain/usecase/types'
 import { getPlatformDisabledKey, IModel, ModelFeature, ModelPlatform } from '@/domain/entity/model'
 import { IPlan, IPlanModel } from '@/domain/entity/plan'
 import { filterModels } from './list'
-import { IModelFunction } from '@/domain/entity/modelFunction'
+import { IModelFunction } from '@/domain/entity/model-function'
 
 export type IModelCompact = {
   id: string
@@ -42,7 +42,10 @@ export type IModelCompact = {
 }
 
 // Lists all parent models with their children
-export type ListCompact = (params?: { userId?: string; platform?: ModelPlatform }) => Promise<Array<IModelCompact> | never>
+export type ListCompact = (params?: {
+  userId?: string
+  platform?: ModelPlatform
+}) => Promise<Array<IModelCompact> | never>
 
 export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompact => {
   return async ({ userId, platform } = {}) => {
@@ -53,7 +56,7 @@ export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompa
 
       if (!subscription) {
         throw new NotFoundError({
-          code: 'SUBSCRIPTION_NOT_FOUND'
+          code: 'SUBSCRIPTION_NOT_FOUND',
         })
       }
 
@@ -63,16 +66,16 @@ export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompa
     const plansModels: IPlanModel[] = await adapter.planModelRepository.list({
       where: {
         model: { disabled: false, deleted_at: null },
-        deleted_at: null
+        deleted_at: null,
       },
       orderBy: {
-        plan: { price: 'asc' }
+        plan: { price: 'asc' },
       },
       include: {
         plan: {
-          select: { type: true }
-        }
-      }
+          select: { type: true },
+        },
+      },
     })
 
     const disabledKey = getPlatformDisabledKey(platform ?? Platform.API)
@@ -80,7 +83,7 @@ export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompa
     let models: IModel[] = await adapter.modelRepository.list({
       where: {
         [disabledKey]: false,
-        deleted_at: null
+        deleted_at: null,
       },
       orderBy: [{ popularity_score: 'desc' }, { order: 'asc' }],
       select: {
@@ -98,7 +101,7 @@ export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompa
         children: {
           where: {
             [disabledKey]: false,
-            deleted_at: null
+            deleted_at: null,
           },
           orderBy: [{ popularity_score: 'desc' }, { order: 'asc' }],
           select: {
@@ -112,11 +115,11 @@ export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompa
             used_count: true,
             popularity_score: true,
             icon: true,
-            functions: true
-          }
+            functions: true,
+          },
         },
-        providers: true
-      }
+        providers: true,
+      },
     })
 
     models = filterModels({ models, platform, listChildren: false })
@@ -126,7 +129,7 @@ export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompa
       if (plan) {
         isAllowed = await service.model.isAllowed({
           plan,
-          modelId: model.id
+          modelId: model.id,
         })
       }
 
@@ -143,7 +146,7 @@ export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompa
       return {
         isAllowed,
         allowedPlanType,
-        isDefault
+        isDefault,
       }
     }
 
@@ -186,15 +189,15 @@ export const buildListCompact = ({ adapter, service }: UseCaseParams): ListCompa
                     disabledWeb: child.disabledWeb,
                     is_allowed: isAllowed,
                     allowed_plan_type: allowedPlanType,
-                    is_default: isDefault
+                    is_default: isDefault,
                   }
-                })
+                }),
               )
             )
               .sort((modelA, modelB) => modelB.popularity_score - modelA.popularity_score)
-              .sort((modelA, modelB) => Number(!modelA.is_allowed) - Number(!modelB.is_allowed))
+              .sort((modelA, modelB) => Number(!modelA.is_allowed) - Number(!modelB.is_allowed)),
           }
-        })
+        }),
       )
     )
       .sort((modelA, modelB) => modelB.popularity_score - modelA.popularity_score)

@@ -4,7 +4,13 @@ import { logger } from '@/lib/logger'
 import { Adapter } from '@/domain/types'
 import { IChat } from '@/domain/entity/chat'
 import { ChatService } from '../../chat'
-import { BaseError, ForbiddenError, InternalError, InvalidDataError, NotFoundError } from '@/domain/errors'
+import {
+  BaseError,
+  ForbiddenError,
+  InternalError,
+  InvalidDataError,
+  NotFoundError,
+} from '@/domain/errors'
 import { ISubscription } from '@/domain/entity/subscription'
 import { JobService } from '../../job'
 import { IMessage } from '@/domain/entity/message'
@@ -14,12 +20,12 @@ import { SubscriptionService } from '../../subscription'
 import { UserService } from '../../user'
 import { ModelService } from '../../model'
 import { FileService } from '../../file'
-import { SendTextByProvider } from './sendByProvider'
+import { SendTextByProvider } from './send-by-provider'
 import { MessageStorage } from '../storage/types'
 import { ConstantCostPlugin } from '../plugins/constant-cost'
 import { buildOptimizeContext } from './optimize-context'
 import { buildExtractGeneratedImages, extractGeneratedImageURLs } from './extract-generated-images'
-import { isG4FProvider } from '@/domain/entity/modelProvider'
+import { isG4FProvider } from '@/domain/entity/model-provider'
 
 type Params = Adapter & {
   constantCostPlugin: ConstantCostPlugin
@@ -45,6 +51,7 @@ export type RegenerateText = (params: {
   platform?: Platform
   sentPlatform?: Platform
   locale: string
+  developerKeyId?: string
 }) => Promise<IMessage>
 
 export const buildRegenerateText = ({
@@ -62,13 +69,13 @@ export const buildRegenerateText = ({
   imageGateway,
   messageImageRepository,
   cryptoGateway,
-  fileService
+  fileService,
 }: Params): RegenerateText => {
   const plugins = [
     {
       name: 'constant_cost',
-      execute: constantCostPlugin
-    }
+      execute: constantCostPlugin,
+    },
   ]
 
   const optimizeContext = buildOptimizeContext({ messageStorage, modelService })
@@ -76,7 +83,7 @@ export const buildRegenerateText = ({
     imageGateway,
     cryptoGateway,
     fileService,
-    messageImageRepository
+    messageImageRepository,
   })
 
   return async ({
@@ -90,13 +97,14 @@ export const buildRegenerateText = ({
     maxAllowedSetLength = 5,
     platform,
     sentPlatform,
-    locale
+    locale,
+    developerKeyId,
   }) => {
     const { settings } = chat
 
     if (!settings || !settings.text) {
       throw new NotFoundError({
-        code: 'SETTINGS_NOT_FOUND'
+        code: 'SETTINGS_NOT_FOUND',
       })
     }
 
@@ -105,27 +113,27 @@ export const buildRegenerateText = ({
     const model =
       (await modelRepository.get({
         where: {
-          id: textSettings.model
-        }
+          id: textSettings.model,
+        },
       })) ??
       chat.model ??
       null
 
     if (!model) {
       throw new NotFoundError({
-        code: 'MODEL_NOT_FOUND'
+        code: 'MODEL_NOT_FOUND',
       })
     }
 
     const textJob = await jobService.create({
       name: 'MODEL_GENERATION',
-      chat
+      chat,
     })
 
     if (settings.text.include_context && !userMessage) {
       throw new InvalidDataError({
         code: 'MESSAGE_NOT_FOUND',
-        message: 'User message with prompt for regeneration not received'
+        message: 'User message with prompt for regeneration not received',
       })
     }
 
@@ -137,15 +145,15 @@ export const buildRegenerateText = ({
           chat_id: chat.id,
           messages: {
             connect: {
-              id: oldMessage.id
-            }
+              id: oldMessage.id,
+            },
           },
           last_id: oldMessage.id,
-          choiced: oldMessage.id
+          choiced: oldMessage.id,
         },
         include: {
-          last: true
-        }
+          last: true,
+        },
       })
 
       oldMessage =
@@ -154,22 +162,22 @@ export const buildRegenerateText = ({
           keyEncryptionKey,
           data: {
             where: {
-              id: oldMessage.id
+              id: oldMessage.id,
             },
             data: {
               choiced: false,
-              set_id: set.id
-            }
-          }
+              set_id: set.id,
+            },
+          },
         })) ?? oldMessage
     } else {
       set = await messageSetRepository.get({
         where: {
-          id: oldMessage.set_id!
+          id: oldMessage.set_id!,
         },
         include: {
-          last: true
-        }
+          last: true,
+        },
       })
 
       if (set && set.length >= maxAllowedSetLength) {
@@ -177,8 +185,8 @@ export const buildRegenerateText = ({
           code: 'MESSAGE_SET_LIMIT_REACHED',
           message: 'Message regeneration limit reached',
           data: {
-            maxAllowedSetLength
-          }
+            maxAllowedSetLength,
+          },
         })
       }
     }
@@ -188,7 +196,7 @@ export const buildRegenerateText = ({
     } else
       throw new NotFoundError({
         code: 'LAST_VERSION_NOT_FOUND',
-        message: 'Last message version not found'
+        message: 'Last message version not found',
       })
 
     let textMessage = await messageStorage.create({
@@ -206,26 +214,26 @@ export const buildRegenerateText = ({
           model_id: textSettings.model,
           job_id: textJob.id,
           content: null,
-          set_id: set!.id
-        }
-      }
+          set_id: set!.id,
+        },
+      },
     })
 
     set = await messageSetRepository.update({
       where: {
-        id: set?.id
+        id: set?.id,
       },
       data: {
         choiced: textMessage.id,
         last: {
           connect: {
-            id: textMessage.id
-          }
+            id: textMessage.id,
+          },
         },
         length: {
-          increment: 1
-        }
-      }
+          increment: 1,
+        },
+      },
     })
 
     oldMessage =
@@ -234,17 +242,17 @@ export const buildRegenerateText = ({
         keyEncryptionKey,
         data: {
           where: {
-            id: oldMessage.id
+            id: oldMessage.id,
           },
           data: {
             choiced: false,
             next_version: {
               connect: {
-                id: textMessage.id
-              }
-            }
-          }
-        }
+                id: textMessage.id,
+              },
+            },
+          },
+        },
       })) ?? oldMessage
 
     textMessage =
@@ -253,7 +261,7 @@ export const buildRegenerateText = ({
         keyEncryptionKey,
         data: {
           where: {
-            id: textMessage.id
+            id: textMessage.id,
           },
           include: {
             set: true,
@@ -262,14 +270,14 @@ export const buildRegenerateText = ({
                 icon: true,
                 parent: {
                   include: {
-                    icon: true
-                  }
-                }
-              }
+                    icon: true,
+                  },
+                },
+              },
             },
-            job: true
-          }
-        }
+            job: true,
+          },
+        },
       })) ?? textMessage
 
     chatService.eventStream.emit({
@@ -278,9 +286,9 @@ export const buildRegenerateText = ({
         name: 'MESSAGE_RECREATE',
         data: {
           oldMessage,
-          newMessage: textMessage
-        }
-      }
+          newMessage: textMessage,
+        },
+      },
     })
     ;(async () => {
       try {
@@ -302,7 +310,7 @@ export const buildRegenerateText = ({
             locale,
             subscription,
             job: textJob,
-            assistantMessage: textMessage
+            assistantMessage: textMessage,
           })
           spentCaps += caps
           prompt += promptAddition
@@ -316,7 +324,7 @@ export const buildRegenerateText = ({
           settings,
           include_context: textSettings.include_context,
           userMessage: textMessage,
-          chatId: chat.id
+          chatId: chat.id,
         })
 
         const text$ = await sendTextByProvider({
@@ -326,7 +334,7 @@ export const buildRegenerateText = ({
           settings: textSettings,
           user,
           textMessageId: textMessage.id,
-          planType: subscription.plan?.type ?? null
+          planType: subscription.plan?.type ?? null,
         })
 
         let content = ''
@@ -346,17 +354,17 @@ export const buildRegenerateText = ({
               keyEncryptionKey,
               data: {
                 where: {
-                  id: textMessage.id
+                  id: textMessage.id,
                 },
                 data: {
                   status: MessageStatus.DONE,
                   content,
                   reasoning_content: reasoningContent,
-                  reasoning_time_ms: reasoningTimeMs
-                }
-              }
+                  reasoning_time_ms: reasoningTimeMs,
+                },
+              },
             })
-          }
+          },
         })
 
         chatService.eventStream.emit({
@@ -367,15 +375,15 @@ export const buildRegenerateText = ({
               message: {
                 id: textMessage.id,
                 job_id: textJob.id,
-                job: textJob.job
-              }
-            }
-          }
+                job: textJob.job,
+              },
+            },
+          },
         })
 
         await new Promise<void>((resolve, reject) => {
           text$.subscribe({
-            next: async ({ status, value, reasoningValue, usage, provider }) => {
+            next: async ({ status, value, reasoningValue, usage, provider, g4f_account_id }) => {
               try {
                 if (status === 'pending') {
                   if (provider && isG4FProvider(provider)) {
@@ -389,7 +397,12 @@ export const buildRegenerateText = ({
                   fullContent += value
                   reasoningContent += reasoningValue ?? ''
 
-                  if (hasReasoning && reasoningValue === null && content.length > 0 && reasoningTimeMs === null) {
+                  if (
+                    hasReasoning &&
+                    reasoningValue === null &&
+                    content.length > 0 &&
+                    reasoningTimeMs === null
+                  ) {
                     reasoningTimeMs = performance.now() - start
                   }
 
@@ -402,10 +415,10 @@ export const buildRegenerateText = ({
                           id: textMessage.id,
                           content,
                           reasoning_content: reasoningContent,
-                          reasoning_time_ms: reasoningTimeMs
-                        }
-                      }
-                    }
+                          reasoning_time_ms: reasoningTimeMs,
+                        },
+                      },
+                    },
                   })
                 }
 
@@ -416,12 +429,12 @@ export const buildRegenerateText = ({
                     user,
                     keyEncryptionKey,
                     messageId: textMessage.id,
-                    content: value
+                    content: value,
                   })
 
-                  const caps = await modelService.getCaps({
+                  const caps = await modelService.getCaps.text({
                     model,
-                    usage
+                    usage,
                   })
                   spentCaps += caps
 
@@ -432,8 +445,11 @@ export const buildRegenerateText = ({
                       userId: user.id,
                       enterpriseId: employee?.enterprise_id,
                       platform,
-                      model_id: model.id
-                    }
+                      model_id: model.id,
+                      provider_id: provider?.id ?? undefined,
+                      g4f_account_id,
+                      developerKeyId,
+                    },
                   })
                   const { transaction } = writeOffResult
 
@@ -442,13 +458,13 @@ export const buildRegenerateText = ({
                   chat =
                     (await chatRepository.update({
                       where: {
-                        id: chat.id
+                        id: chat.id,
                       },
                       data: {
                         total_caps: {
-                          increment: spentCaps
-                        }
-                      }
+                          increment: spentCaps,
+                        },
+                      },
                     })) ?? chat
 
                   textMessage =
@@ -457,7 +473,7 @@ export const buildRegenerateText = ({
                       keyEncryptionKey,
                       data: {
                         where: {
-                          id: textMessage.id
+                          id: textMessage.id,
                         },
                         data: {
                           status: MessageStatus.DONE,
@@ -466,7 +482,7 @@ export const buildRegenerateText = ({
                           content,
                           full_content: fullContent,
                           reasoning_content: reasoningContent,
-                          reasoning_time_ms: reasoningTimeMs
+                          reasoning_time_ms: reasoningTimeMs,
                         },
                         include: {
                           set: true,
@@ -476,14 +492,14 @@ export const buildRegenerateText = ({
                               icon: true,
                               parent: {
                                 include: {
-                                  icon: true
-                                }
-                              }
-                            }
+                                  icon: true,
+                                },
+                              },
+                            },
                           },
-                          job: true
-                        }
-                      }
+                          job: true,
+                        },
+                      },
                     })) ?? textMessage
 
                   chatService.eventStream.emit({
@@ -492,41 +508,43 @@ export const buildRegenerateText = ({
                       name: 'UPDATE',
                       data: {
                         chat: {
-                          total_caps: chat.total_caps
-                        }
-                      }
-                    }
+                          total_caps: chat.total_caps,
+                        },
+                      },
+                    },
                   })
                   chatService.eventStream.emit({
                     chat,
                     event: {
                       name: 'MESSAGE_UPDATE',
                       data: {
-                        message: textMessage
-                      }
-                    }
+                        message: textMessage,
+                      },
+                    },
                   })
                   chatService.eventStream.emit({
                     chat,
                     event: {
                       name: 'TRANSACTION_CREATE',
                       data: {
-                        transaction
-                      }
-                    }
+                        transaction,
+                      },
+                    },
                   })
 
                   chatService.eventStream.emit({
                     chat,
                     event: {
-                      name: userService.hasEnterpriseActualSubscription(user) ? 'ENTERPRISE_SUBSCRIPTION_UPDATE' : 'SUBSCRIPTION_UPDATE',
+                      name: userService.hasEnterpriseActualSubscription(user)
+                        ? 'ENTERPRISE_SUBSCRIPTION_UPDATE'
+                        : 'SUBSCRIPTION_UPDATE',
                       data: {
                         subscription: {
                           id: subscription.id,
-                          balance: subscription.balance
-                        }
-                      }
-                    }
+                          balance: subscription.balance,
+                        },
+                      },
+                    },
                   })
 
                   resolve()
@@ -535,14 +553,18 @@ export const buildRegenerateText = ({
                 reject(e)
               }
             },
-            error: reject
+            error: reject,
           })
         })
       } catch (error) {
         let err = error
-        if (!(err instanceof BaseError) || err instanceof InternalError || err.code?.startsWith('G4F_')) {
+        if (
+          !(err instanceof BaseError) ||
+          err instanceof InternalError ||
+          err.code?.startsWith('G4F_')
+        ) {
           err = new InternalError({
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
           })
           logger.error({
             location: 'regenerateText',
@@ -550,7 +572,8 @@ export const buildRegenerateText = ({
             userId: user.id,
             email: user.email ?? user.tg_id,
             chatId: chat.id,
-            messageId: textMessage.id
+            messageId: textMessage.id,
+            modelId: model.id,
           })
         }
         const errorJob = await textJob.setError(err)
@@ -564,10 +587,10 @@ export const buildRegenerateText = ({
                 id: textMessage.id,
                 job_id: errorJob.id,
                 job: errorJob,
-                content: null
-              }
-            }
-          }
+                content: null,
+              },
+            },
+          },
         })
       }
     })()

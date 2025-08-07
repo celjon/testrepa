@@ -6,13 +6,13 @@ enum PaymentMethod {
   TINKOFF = 'TINKOFF',
   KASPI = 'KASPI',
   STRIPE = 'STRIPE',
-  CRYPTO = 'CRYPTO'
+  CRYPTO = 'CRYPTO',
 }
 
 const paymentMethodsMap = {
   [Region.RU]: [PaymentMethod.TINKOFF],
   [Region.KZ]: [PaymentMethod.KASPI, PaymentMethod.STRIPE],
-  [Region.OTHER]: [PaymentMethod.STRIPE, PaymentMethod.CRYPTO]
+  [Region.GLOBAL]: [PaymentMethod.STRIPE, PaymentMethod.CRYPTO],
 }
 
 export type GetPaymentMethods = (data: { userId: string; ip: string }) => Promise<
@@ -26,12 +26,12 @@ export type GetPaymentMethods = (data: { userId: string; ip: string }) => Promis
 export const buildGetPaymentMethods = ({ adapter, service }: UseCaseParams): GetPaymentMethods => {
   return async ({ userId, ip }) => {
     const user = await adapter.userRepository.get({
-      where: { id: userId }
+      where: { id: userId },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -42,19 +42,19 @@ export const buildGetPaymentMethods = ({ adapter, service }: UseCaseParams): Get
 
       await adapter.userRepository.update({
         where: { id: userId },
-        data: { region: paymentRegion }
+        data: { region: paymentRegion },
       })
     }
 
     if (paymentMethodsMap[paymentRegion]) {
       return {
         region: paymentRegion,
-        paymentMethods: paymentMethodsMap[paymentRegion]
+        paymentMethods: paymentMethodsMap[paymentRegion],
       }
     }
 
     throw new InvalidDataError({
-      code: 'UNKNOWN_REGION'
+      code: 'UNKNOWN_REGION',
     })
   }
 }

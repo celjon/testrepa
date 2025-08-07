@@ -7,15 +7,15 @@ type Params = Pick<AdapterParams, 'db'>
 const productFilters = {
   [Product.DASHBOARD]: {
     platforms: [Platform.DASHBOARD],
-    modelFeatures: []
+    modelFeatures: [],
   },
   [Product.TELEGRAM]: {
     platforms: [Platform.TELEGRAM],
-    modelFeatures: []
+    modelFeatures: [],
   },
   [Product.EASY_WRITER]: {
     platforms: [Platform.EASY_WRITER],
-    modelFeatures: []
+    modelFeatures: [],
   },
   [Product.PROXY_API]: {
     platforms: [
@@ -26,45 +26,49 @@ const productFilters = {
       Platform.API_TRANSLATIONS,
       Platform.API_SPEECH,
       Platform.API_MODERATIONS,
-      Platform.API_EMBEDDINGS
+      Platform.API_EMBEDDINGS,
     ],
-    modelFeatures: []
+    modelFeatures: [],
   },
   [Product.BOTHUB_API]: {
     platforms: [Platform.BOTHUB_API],
-    modelFeatures: []
+    modelFeatures: [],
   },
   [Product.WEB_TRANSCRIPTION]: {
     platforms: [Platform.BOTHUB_API, Platform.WEB, Platform.MAIN, Platform.DASHBOARD],
-    modelFeatures: ['AUDIO_TO_TEXT']
+    modelFeatures: ['AUDIO_TO_TEXT'],
   },
   [Product.WEB_IMAGE_GENERATION]: {
     platforms: [Platform.BOTHUB_API, Platform.WEB, Platform.MAIN, Platform.DASHBOARD],
-    modelFeatures: ['TEXT_TO_IMAGE', 'TEXT_TO_IMAGE_LLM']
+    modelFeatures: ['TEXT_TO_IMAGE', 'TEXT_TO_IMAGE_LLM'],
   },
   [Product.TG_TRANSCRIPTION]: {
     platforms: [Platform.TELEGRAM],
-    modelFeatures: ['AUDIO_TO_TEXT']
+    modelFeatures: ['AUDIO_TO_TEXT'],
   },
   [Product.TG_IMAGE_GENERATION]: {
     platforms: [Platform.TELEGRAM],
-    modelFeatures: ['TEXT_TO_IMAGE', 'TEXT_TO_IMAGE_LLM']
+    modelFeatures: ['TEXT_TO_IMAGE', 'TEXT_TO_IMAGE_LLM'],
   },
   [Product.MIDJOURNEY]: {
     platforms: [Platform.WEB, Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM],
-    modelFeatures: []
+    modelFeatures: [],
   },
   [Product.WEB_SEARCH]: {
     platforms: [Platform.WEB, Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM],
-    modelFeatures: ['TEXT_TO_TEXT']
+    modelFeatures: ['TEXT_TO_TEXT'],
   },
   [Product.VIDEO_GENERATION]: {
     platforms: [Platform.WEB, Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM],
-    modelFeatures: ['TEXT_TO_VIDEO', 'IMAGE_TO_VIDEO']
-  }
+    modelFeatures: ['TEXT_TO_VIDEO', 'IMAGE_TO_VIDEO'],
+  },
 }
 
-export type GetProductUsage = (p: { dateFrom: string; dateTo: string; product: Product }) => Promise<ProductUsage>
+export type GetProductUsage = (p: {
+  dateFrom: string
+  dateTo: string
+  product: Exclude<Product, Product.GPT4FREE | Product.GPT4FREE_EXTENDED>
+}) => Promise<ProductUsage>
 
 export const buildGetProductUsage = ({ db }: Params): GetProductUsage => {
   return async ({ dateTo, dateFrom, product }) => {
@@ -170,29 +174,29 @@ export const buildGetProductUsage = ({ db }: Params): GetProductUsage => {
       usage: {
         free: {
           caps: usage.free_caps,
-          requests: usage.free_requests
+          requests: usage.free_requests,
         },
         basic: {
           caps: usage.basic_caps,
-          requests: usage.basic_requests
+          requests: usage.basic_requests,
         },
         premium: {
           caps: usage.premium_caps,
-          requests: usage.premium_requests
+          requests: usage.premium_requests,
         },
         deluxe: {
           caps: usage.deluxe_caps,
-          requests: usage.deluxe_requests
+          requests: usage.deluxe_requests,
         },
         elite: {
           caps: usage.elite_caps,
-          requests: usage.elite_requests
+          requests: usage.elite_requests,
         },
         totalPaid: {
           caps: usage.total_paid_caps,
-          requests: usage.total_paid_requests
-        }
-      }
+          requests: usage.total_paid_requests,
+        },
+      },
     }))
   }
 }

@@ -42,9 +42,9 @@ export const buildWebhookHandler = (params: Params): IHandler => {
         yoomoney,
         hashbon,
         tinkoff,
-        stripe: buildStripe(params)
+        stripe: buildStripe(params),
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

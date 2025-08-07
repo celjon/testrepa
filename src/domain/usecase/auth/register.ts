@@ -38,21 +38,21 @@ export const buildRegister = ({ adapter, service }: UseCaseParams): Register => 
     autoVerified = false,
     ip,
     yandexMetricClientId,
-    yandexMetricYclid
+    yandexMetricYclid,
   }) => {
     const existingUser = await adapter.userRepository.get({
       where: {
         email: {
           equals: email,
-          mode: 'insensitive'
-        }
-      }
+          mode: 'insensitive',
+        },
+      },
     })
 
     const hasVerifiedEmail = existingUser?.email && existingUser.emailVerified
     if ((existingUser !== null && !existingUser.inactive) || hasVerifiedEmail) {
       throw new ForbiddenError({
-        code: 'CREDENTIALS_TAKEN'
+        code: 'CREDENTIALS_TAKEN',
       })
     }
 
@@ -63,11 +63,11 @@ export const buildRegister = ({ adapter, service }: UseCaseParams): Register => 
     if (fingerprint) {
       anonymousUser = await adapter.userRepository.get({
         where: {
-          anonymousDeviceFingerprint: fingerprint
+          anonymousDeviceFingerprint: fingerprint,
         },
         include: {
-          subscription: true
-        }
+          subscription: true,
+        },
       })
     } else {
       anonymousUser = null
@@ -87,10 +87,10 @@ export const buildRegister = ({ adapter, service }: UseCaseParams): Register => 
           yandexMetricYclid,
           emailVerified: autoVerified,
           inactive: autoVerified ? false : true,
-          region
+          region,
         },
         invitedBy,
-        anonymousUser
+        anonymousUser,
       ))
 
     if (!createdUser) {
@@ -102,24 +102,24 @@ export const buildRegister = ({ adapter, service }: UseCaseParams): Register => 
         to: email,
         user: {
           email: email,
-          password: password
+          password: password,
         },
-        locale: metadata?.locale
+        locale: metadata?.locale,
       }),
 
       service.auth.sendVerificationCode({
         userId: createdUser.id,
         email: email,
-        locale: metadata?.locale
+        locale: metadata?.locale,
       }),
 
       adapter.actionRepository.create({
         data: {
           type: actions.REGISTRATION,
           user_id: createdUser.id,
-          platform: Platform.WEB
-        }
-      })
+          platform: Platform.WEB,
+        },
+      }),
     ])
 
     if (existingUser) {
@@ -131,13 +131,13 @@ export const buildRegister = ({ adapter, service }: UseCaseParams): Register => 
           password: hash,
           receiveEmails,
           hadSubscriptedForEmails: receiveEmails,
-          region
-        }
+          region,
+        },
       })
     }
 
     return {
-      user: createdUser
+      user: createdUser,
     }
   }
 }

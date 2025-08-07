@@ -10,10 +10,14 @@ export const logger = winston.createLogger({
     new winston.transports.DailyRotateFile({
       filename: '%DATE%.log',
       dirname: 'logs',
-      maxFiles: '7d'
-    })
+      maxFiles: '7d',
+    }),
   ],
-  format: winston.format.combine(winston.format.timestamp(), winston.format.colorize(), winston.format.simple())
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.colorize(),
+    winston.format.simple(),
+  ),
 })
 
 export const log = (...params: any[]) => console.log(chalk.blue.bold('[Bothub Server]'), ...params)
@@ -24,6 +28,6 @@ export const logMemoryUsage = (label: string) => {
     message: label,
     heapUsed: `${Math.round(used.heapUsed / 1024 / 1024)} MB`, // Your app data
     heapTotal: `${Math.round(used.heapTotal / 1024 / 1024)} MB`, // V8 reserved
-    rss: `${Math.round(used.rss / 1024 / 1024)} MB` // Total process size
+    rss: `${Math.round(used.rss / 1024 / 1024)} MB`, // Total process size
   })
 }

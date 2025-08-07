@@ -8,8 +8,9 @@ export type SubscriptionUseCase = {
 }
 export const buildSubscriptionUseCase = (params: UseCaseParams): SubscriptionUseCase => {
   const manage = buildManage(params)
+  const syncHardLimits = buildSyncHardLimits(params)
   return {
     manage,
-    syncHardLimits: buildSyncHardLimits(params)
+    syncHardLimits,
   }
 }

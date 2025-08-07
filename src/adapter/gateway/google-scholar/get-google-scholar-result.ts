@@ -12,7 +12,7 @@ export type SearchParams = {
 export type GetGoogleScholarResultsWithPDF = (
   params: SearchParams,
   countPDF: number,
-  skip?: number
+  skip?: number,
 ) => Promise<{
   results: {
     title: string
@@ -24,8 +24,13 @@ export type GetGoogleScholarResultsWithPDF = (
 }>
 type Params = Pick<AdapterParams, 'serpApi'>
 
-export const buildGetGoogleScholarResultsWithPDF = ({ serpApi }: Params): GetGoogleScholarResultsWithPDF => {
-  return async ({ query, numResults = 10, skip = 0, location, country, language }: SearchParams, countPDF = 10) => {
+export const buildGetGoogleScholarResultsWithPDF = ({
+  serpApi,
+}: Params): GetGoogleScholarResultsWithPDF => {
+  return async (
+    { query, numResults = 10, skip = 0, location, country, language }: SearchParams,
+    countPDF = 10,
+  ) => {
     let resultsWithLinks: {
       title: string
       snippet: string
@@ -40,7 +45,7 @@ export const buildGetGoogleScholarResultsWithPDF = ({ serpApi }: Params): GetGoo
         skip,
         location,
         country,
-        language
+        language,
       })
 
       for (const item of page) {
@@ -48,7 +53,9 @@ export const buildGetGoogleScholarResultsWithPDF = ({ serpApi }: Params): GetGoo
           continue
         }
         const pdfLinks =
-          item.resources?.filter((resource) => resource.file_format === 'PDF' && !seenLinks.has(resource.link)).map((r) => r.link) ?? []
+          item.resources
+            ?.filter((resource) => resource.file_format === 'PDF' && !seenLinks.has(resource.link))
+            .map((r) => r.link) ?? []
 
         if (pdfLinks.length) {
           pdfLinks.forEach((link) => seenLinks.add(link))
@@ -56,7 +63,7 @@ export const buildGetGoogleScholarResultsWithPDF = ({ serpApi }: Params): GetGoo
             title: item.title,
             snippet: item.snippet,
             summary: item.publication_info.summary,
-            resources: pdfLinks
+            resources: pdfLinks,
           })
 
           if (resultsWithLinks.length >= countPDF) break
@@ -68,7 +75,7 @@ export const buildGetGoogleScholarResultsWithPDF = ({ serpApi }: Params): GetGoo
     }
     return {
       results: resultsWithLinks,
-      skipped: skip
+      skipped: skip,
     }
   }
 }

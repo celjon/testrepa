@@ -21,7 +21,7 @@ process.on('uncaughtException', function (err) {
   logger.error({
     location: 'uncaughtException',
     message: `${getErrorString(err)}`,
-    stack: err.stack
+    stack: err.stack,
   })
 })
 
@@ -36,16 +36,16 @@ process.on('unhandledRejection', (reason, promise) => {
       config: {
         method: reason.config?.method,
         url: reason.config?.url,
-        data: reason.config?.data
+        data: reason.config?.data,
       },
-      promise
+      promise,
     })
   } else {
     logger.error({
       location: 'unhandledRejection',
       message: `${getErrorString(reason)}`,
       reason,
-      promise
+      promise,
     })
   }
 })
@@ -61,15 +61,15 @@ const entry = async () => {
     user: cfg.redis.user,
     password: cfg.redis.password,
     host: cfg.redis.host,
-    port: cfg.redis.port
+    port: cfg.redis.port,
   }
 
   const queues = initializeQueues({
-    redis: redisConfig
+    redis: redisConfig,
   })
 
   const stripe = client.stripe.newClient({
-    secretKey: cfg.stripe.secret_key
+    secretKey: cfg.stripe.secret_key,
   })
 
   const db = client.prismaClient.newClient({
@@ -77,28 +77,42 @@ const entry = async () => {
     password: cfg.postgres.password,
     host: cfg.postgres.host,
     port: cfg.postgres.port,
-    db: cfg.postgres.db
+    db: cfg.postgres.db,
+  })
+  const clickhouse = client.clickhouseClient.newClient({
+    user: cfg.clickhouse.user,
+    protocol: cfg.clickhouse.protocol,
+    password: cfg.clickhouse.password,
+    url: cfg.clickhouse.url,
+    port: cfg.clickhouse.port,
+    db: cfg.clickhouse.db,
   })
 
   const openaiBalancer = client.openAiClientBalancer.buildBalancer(cfg.model_providers.openai.keys)
-  const openaiModerationBalancer = client.openAiClientBalancer.buildBalancer(cfg.model_providers.openai.moderation.keys)
-  const openaiDalleBalancer = client.openAiClientBalancer.buildBalancer(cfg.model_providers.openai.dalle.keys)
-  const openaiTranscriptionBalancer = client.openAiClientBalancer.buildBalancer(cfg.model_providers.openai.transcription.keys)
+  const openaiModerationBalancer = client.openAiClientBalancer.buildBalancer(
+    cfg.model_providers.openai.moderation.keys,
+  )
+  const openaiDalleBalancer = client.openAiClientBalancer.buildBalancer(
+    cfg.model_providers.openai.dalle.keys,
+  )
+  const openaiTranscriptionBalancer = client.openAiClientBalancer.buildBalancer(
+    cfg.model_providers.openai.transcription.keys,
+  )
 
   const minio = client.minioClient.newClient({
     host: cfg.minio.host,
     accessKey: cfg.minio.access_key,
     secretKey: cfg.minio.secret_key,
-    port: cfg.minio.port || undefined
+    port: cfg.minio.port || undefined,
   })
 
   const openRouter = client.openRouterClient.newClient({
-    apiUrl: cfg.model_providers.openrouter.api_url
+    apiUrl: cfg.model_providers.openrouter.api_url,
   })
 
   const openRouterBalancer = client.openrouterClientBalancer.buildBalancer({
     apiUrl: cfg.model_providers.openrouter.api_url,
-    keys: cfg.model_providers.openrouter.keys
+    keys: cfg.model_providers.openrouter.keys,
   })
 
   const [redis, oauth] = await Promise.all([
@@ -106,26 +120,33 @@ const entry = async () => {
     client.oauthClient.newClient({
       google: {
         clientId: cfg.google.oauth.client_id,
-        clientSecret: cfg.google.oauth.client_secret
+        clientSecret: cfg.google.oauth.client_secret,
       },
       vk: {
-        clientId: cfg.vk.oauth.client_id
+        clientId: cfg.vk.oauth.client_id,
       },
       yandex: {
         clientId: cfg.yandex.oauth.client_id,
-        clientSecret: cfg.yandex.oauth.client_secret
+        clientSecret: cfg.yandex.oauth.client_secret,
       },
       telegram: {
-        clientId: cfg.telegram.oauth.bot_token
-      }
-    })
+        clientId: cfg.telegram.oauth.bot_token,
+      },
+      apple: {
+        clientId: cfg.apple.oauth.client_id,
+        appId: cfg.apple.oauth.app_id,
+        teamId: cfg.apple.oauth.team_id,
+        keyId: cfg.apple.oauth.key_id,
+        privateKey: cfg.apple.oauth.private_key,
+      },
+    }),
   ])
 
   const midjourneyBalancer = client.midjourneyClientBalancer.buildBalancer()
 
   const yoomoney = client.yoomoneyClient.newClient({
     secretKey: cfg.yoomoney.secret_key,
-    shopId: cfg.yoomoney.shop_id
+    shopId: cfg.yoomoney.shop_id,
   })
 
   const tinkoff = client.tinkoffClient.newClient({
@@ -133,67 +154,81 @@ const entry = async () => {
     terminalKey: cfg.tinkoff.terminal_key,
     payment: {
       successRedirect: cfg.frontend.address,
-      webhook: cfg.http.webhook_real_address + 'webhook/tinkoff'
-    }
+      webhook: cfg.http.webhook_real_address + 'webhook/tinkoff',
+    },
   })
 
   const hashbon = client.hashbonClient.newClient({
     secretKey: cfg.hashbon.secret_key,
-    shopId: cfg.hashbon.shop_id
+    shopId: cfg.hashbon.shop_id,
   })
 
   const mail = client.mailClient.newClient({
     host: cfg.mail.host,
     port: cfg.mail.port,
     user: cfg.mail.user,
-    password: cfg.mail.password
+    password: cfg.mail.password,
   })
 
   const tgBot = client.tgBotApiClient.newClient({
     webhookUrl: cfg.telegram.bot.hook_url,
-    secretKey: cfg.telegram.bot.secret_key
+    pythonWebHookUrl: cfg.telegram.bot_python?.hook_url,
+    secretKey: cfg.telegram.bot.secret_key,
   })
   const tgNotificationBot = client.tgBotClient.newClient({
     botToken: cfg.tg_notification_bot.bot_token,
     chatId: cfg.tg_notification_bot.chat_id,
     replyToMessageId: cfg.tg_notification_bot.reply_to_message_id,
-    defaultMessageThreadId: cfg.tg_notification_bot.default_message_thread_id
+    defaultMessageThreadId: cfg.tg_notification_bot.default_message_thread_id,
   })
 
   const g4f = client.g4fClient.newClient({
     apiUrl: cfg.model_providers.g4f.api_url,
-    harManagerUrl: cfg.model_providers.g4f.har_manager_url
+    harManagerUrl: cfg.model_providers.g4f.har_manager_url,
   })
   const jinaApi = client.jinaClient.newClient({
     apiUrl: cfg.jina.url,
-    apiKey: cfg.jina.key
+    apiKey: cfg.jina.key,
   })
   const serpApi = client.serpClient.newClient({
     apiUrl: cfg.serp.url,
-    apiKey: cfg.serp.key
+    apiKey: cfg.serp.key,
   })
 
   const replicate = client.replicateClient.newClient({
-    apiKey: cfg.model_providers.replicate.key
+    apiKey: Object.keys(cfg.model_providers.replicate.keys)[0] ?? '',
+  })
+  const replicateBalancer = client.replicateClientBalancer.buildBalancer({
+    keys: cfg.model_providers.replicate.keys,
   })
   const runway = client.runwayClient.newClient({
-    apiKey: cfg.model_providers.runway.key
+    apiKey: cfg.model_providers.runway.key,
   })
   const youtube = client.youtubeClient.newClient()
   const exaAI = client.exaAIClient.newClient({
-    apiKey: cfg.exaAI.key
+    apiKey: cfg.exaAI.key,
   })
   const assemblyAI = client.assemblyAiClient.newClient({
-    apiKey: cfg.assemblyAI.key
+    apiKey: cfg.model_providers.assemblyAI.key,
   })
   const yandexMetric = client.yandexMetricClient.newClient()
   const currencyToRubRate = client.currencyToRubRate.newClient()
   const dataAnalysisService = client.dataAnalysisService.newClient({
-    api_url: cfg.data_analysis_service.api_url
+    api_url: cfg.data_analysis_service.api_url,
+  })
+  const googleGenAI = client.googleGenAI.newClient({
+    project: cfg.model_providers.googleGenAI.project,
+    location: cfg.model_providers.googleGenAI.location,
+    keyFileJson: cfg.model_providers.googleGenAI.keyFileJson,
+  })
+  const ai302 = client.ai302.newClient({
+    key: cfg.model_providers.ai302.key,
+    api_url: cfg.model_providers.ai302.api_url,
   })
 
   const ad = adapter.buildAdapter({
     db,
+    clickhouse,
     openaiBalancer,
     openaiModerationBalancer,
     openaiTranscriptionBalancer,
@@ -217,19 +252,22 @@ const entry = async () => {
     g4f,
     serpApi,
     replicate,
+    replicateBalancer,
     runway,
     exaAI,
     assemblyAI,
     yandexMetric,
     currencyToRubRate,
-    dataAnalysisService
+    dataAnalysisService,
+    googleGenAI,
+    ai302,
   })
 
   const svc = service.buildService(ad)
 
   const uc = usecase.buildUseCase({
     service: svc,
-    adapter: ad
+    adapter: ad,
   })
 
   const mw = { middlewares: middlewares.buildMiddlewares(ad) }
@@ -244,7 +282,12 @@ const entry = async () => {
     })
   }
 
-  await Promise.all([svc.chat.eventStream.init(), svc.job.init(), ad.healthCheckGateway.init()])
+  await Promise.all([
+    svc.chat.eventStream.init(),
+    svc.message.eventStream.init(),
+    svc.job.init(),
+    ad.healthCheckGateway.init(),
+  ])
 
   if (cluster.isPrimary) {
     const serverPort = cfg.http.port
@@ -253,7 +296,7 @@ const entry = async () => {
     log(
       `Server started ${chalk.blue(`[Port: ${serverPort}]`)} ${devMode ? chalk.red('[Dev Mode]') : chalk.green('[Prod Mode]')}\n` +
         `\tAPI URL: ${chalk.gray.underline(`http://${serverHost}:${serverPort}/api/v2`)}\n` +
-        `\tSwagger URL: ${chalk.gray.underline(`http://${serverHost}:${serverPort}/api/v2/swagger`)} (OpenAPI: ${chalk.gray.underline(`http://${serverHost}:${serverPort}/api/v2/swagger.json`)} )\n`
+        `\tSwagger URL: ${chalk.gray.underline(`http://${serverHost}:${serverPort}/api/v2/swagger`)} (OpenAPI: ${chalk.gray.underline(`http://${serverHost}:${serverPort}/api/v2/swagger.json`)} )\n`,
     )
   }
 
@@ -262,12 +305,16 @@ const entry = async () => {
       minioClient: minio.client,
       ...uc,
       ...ad,
-      ...mw
+      ...mw,
     })
 
     CRON.start()
 
-    queue.start({ ...uc, ...ad, ...mw, minioClient: minio.client }, queues.queues, queues.createWorker)
+    queue.start(
+      { ...uc, ...ad, ...mw, minioClient: minio.client },
+      queues.queues,
+      queues.createWorker,
+    )
 
     if (!devMode) {
       return

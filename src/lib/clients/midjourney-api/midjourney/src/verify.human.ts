@@ -16,7 +16,7 @@ export class VerifyHuman {
     console.log('verify----start', imageUri, categories)
     const imageCates = await this.inference.imageClassification({
       data: await (await this.config.fetch(imageUri)).blob(),
-      model: 'google/vit-base-patch16-224'
+      model: 'google/vit-base-patch16-224',
     })
     console.log('verify----response', { imageCates })
     for (const imageCate of imageCates) {

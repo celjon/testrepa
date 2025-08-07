@@ -12,7 +12,7 @@ export const buildList = ({ message }: Params): List => {
       keyEncryptionKey: req.user?.keyEncryptionKey,
       chatId: req.query.chatId as any as string,
       page: Number(req.query.page),
-      quantity: Number(req.query.quantity)
+      quantity: Number(req.query.quantity),
     })
 
     res.status(200).json(data)

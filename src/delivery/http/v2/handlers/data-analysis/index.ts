@@ -4,7 +4,11 @@ import { Middlewares } from '../../middlewares'
 import { createRouteHandler } from '../../routeHandler'
 import { IHandler } from '../types'
 import { buildDataAnalysisRules } from './rules'
-import { buildClusterizeExcel, buildClusterizeExcelMiddleware, ClusterizeExcel } from './clusterize-excel'
+import {
+  buildClusterizeExcel,
+  buildClusterizeExcelMiddleware,
+  ClusterizeExcel,
+} from './clusterize-excel'
 
 type Params = Pick<DeliveryParams, 'dataAnalysis' | 'middlewares'>
 
@@ -110,7 +114,12 @@ const buildRegisterRoutes = (methods: DataAnalysisMethods, middlewares: Middlewa
      *       '500':
      *         description: Internal server error
      */
-    namespace.post('/clusterize-excel', clusterizeExcelMiddleware, clusterizeExcelRules, createRouteHandler(methods.clusterizeExcel))
+    namespace.post(
+      '/clusterize-excel',
+      clusterizeExcelMiddleware,
+      clusterizeExcelRules,
+      createRouteHandler(methods.clusterizeExcel),
+    )
 
     root.use('/data-analysis', namespace)
   }
@@ -120,9 +129,9 @@ export const buildDataAnalysisHandler = (params: Params): IHandler => {
   return {
     registerRoutes: buildRegisterRoutes(
       {
-        clusterizeExcel: buildClusterizeExcel(params)
+        clusterizeExcel: buildClusterizeExcel(params),
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

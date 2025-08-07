@@ -1,4 +1,4 @@
-import { IModelCustom } from '@/domain/entity/modelCustom'
+import { IModelCustom } from '@/domain/entity/model-custom'
 import { UseCaseParams } from '@/domain/usecase/types'
 import { FileType, ModelCustomAction } from '@prisma/client'
 
@@ -38,35 +38,35 @@ export const buildUpdateCustom =
     messageColor,
     discount,
     order,
-    disabled
+    disabled,
   }) => {
     if (order) {
       const modelCustom = await adapter.modelCustomRepository.get({
         where: {
-          id: customId
-        }
+          id: customId,
+        },
       })
       const orderModelCustom = await adapter.modelCustomRepository.get({
         where: {
-          order
-        }
+          order,
+        },
       })
 
       if (modelCustom && orderModelCustom) {
         await adapter.modelCustomRepository.update({
           where: {
-            id: orderModelCustom.id
+            id: orderModelCustom.id,
           },
           data: {
-            order: modelCustom.order
-          }
+            order: modelCustom.order,
+          },
         })
       }
     }
 
     const modelCustom = await adapter.modelCustomRepository.update({
       where: {
-        id: customId
+        id: customId,
       },
       data: {
         action,
@@ -80,75 +80,75 @@ export const buildUpdateCustom =
               create: {
                 type: FileType.IMAGE,
                 name: icon.originalname,
-                path: icon.path
-              }
-            }
+                path: icon.path,
+              },
+            },
           }),
         ...(!icon && {
           icon: {
-            disconnect: true
-          }
+            disconnect: true,
+          },
         }),
         ...(providerId && {
           provider: {
             connect: {
-              id: providerId
-            }
-          }
+              id: providerId,
+            },
+          },
         }),
         ...(!providerId && {
           provider: {
-            disconnect: true
-          }
+            disconnect: true,
+          },
         }),
         ...(childProviderId && {
           child_provider: {
             connect: {
-              id: childProviderId
-            }
-          }
+              id: childProviderId,
+            },
+          },
         }),
         ...(!childProviderId && {
           child_provider: {
-            disconnect: true
-          }
+            disconnect: true,
+          },
         }),
-        message_color: messageColor ?? null
+        message_color: messageColor ?? null,
       },
       ...(order && {
         data: {
-          order
-        }
+          order,
+        },
       }),
       ...(typeof disabled === 'boolean' && {
         data: {
-          disabled
-        }
-      })
+          disabled,
+        },
+      }),
     })
 
     if (order) {
       const modelCustomization = await adapter.modelCustomRepository.list({
         orderBy: {
-          order: 'asc'
+          order: 'asc',
         },
         select: {
           id: true,
-          order: true
-        }
+          order: true,
+        },
       })
 
       await Promise.all(
         modelCustomization.map(({ id }, index) =>
           adapter.modelCustomRepository.update({
             where: {
-              id
+              id,
             },
             data: {
-              order: index + 1
-            }
-          })
-        )
+              order: index + 1,
+            },
+          }),
+        ),
       )
     }
 

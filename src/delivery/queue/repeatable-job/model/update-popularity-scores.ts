@@ -14,12 +14,12 @@ export const buildUpdatePopularityScores = ({ model }: Params): UpdatePopularity
 
       logger.info({
         location: 'updatePopularityScores',
-        message: `Updated ${modelsUpdated} models, deleted ${bucketsDeleted} model usage buckets. [${(performance.now() - startedAt).toFixed(2)}ms]`
+        message: `Updated ${modelsUpdated} models, deleted ${bucketsDeleted} model usage buckets. [${(performance.now() - startedAt).toFixed(2)}ms]`,
       })
     } catch (error) {
       logger.error({
         location: 'updatePopularityScores',
-        message: JSON.stringify(error)
+        message: JSON.stringify(error),
       })
     }
   }

@@ -4,7 +4,10 @@ import { IMessage } from '@/domain/entity/message'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Get = (data: Prisma.MessageFindFirstArgs, tx?: unknown) => Promise<IMessage | null | never>
+export type Get = (
+  data: Prisma.MessageFindFirstArgs,
+  tx?: unknown,
+) => Promise<IMessage | null | never>
 
 export const buildGet = ({ db }: Params): Get => {
   return async (data, tx) => {

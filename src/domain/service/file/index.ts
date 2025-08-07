@@ -13,6 +13,6 @@ export const buildFileService = (params: Adapter): FileService => {
 
   return {
     write,
-    decrypt
+    decrypt,
   }
 }

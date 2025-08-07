@@ -9,8 +9,14 @@ import { config } from '@/config'
 
 const getMaxSizeInBytes = (req: any, fileType: string): number => {
   const { modelId } = req.body || {}
-  
-  const { max_image_file_size, max_video_file_size, max_text_file_size, max_assemblyai_file_size, max_runway_file_size } = config.upload_constraints
+
+  const {
+    max_image_file_size,
+    max_video_file_size,
+    max_text_file_size,
+    max_assemblyai_file_size,
+    max_runway_file_size,
+  } = config.upload_constraints
 
   if (/jpeg|jpg|png/i.test(fileType)) {
     return modelId?.match(/^gen/) ? max_runway_file_size : max_image_file_size
@@ -24,20 +30,20 @@ const getMaxSizeInBytes = (req: any, fileType: string): number => {
 export const buildSendMiddleware = ({ fileUpload }: Middlewares) => {
   const webFilesMiddleware = fileUpload({
     saveFiles: false,
-    getMaxSizeInBytes
+    getMaxSizeInBytes,
   }).fields([
     {
       name: 'files',
-      maxCount: 100
+      maxCount: 100,
     },
     {
       name: 'audio',
-      maxCount: 1
+      maxCount: 1,
     },
     {
       name: 'video',
-      maxCount: 1
-    }
+      maxCount: 1,
+    },
   ])
 
   const telegramFilesMiddleware = fileUpload({ saveFiles: false, getMaxSizeInBytes }).any()
@@ -67,7 +73,9 @@ export const buildSend =
     if (!req.files) {
       files = []
     } else if (Array.isArray(req.files)) {
-      files = req.files
+      voiceFile = req.files.find((f) => f.fieldname === 'audio') ?? null
+      videoFile = req.files.find((f) => f.fieldname === 'video') ?? null
+      files = req.files.filter((f) => f.fieldname !== 'audio' && f.fieldname !== 'video')
     } else {
       files = req.files.files ?? []
       voiceFile = req.files.audio?.[0] ?? null
@@ -84,7 +92,8 @@ export const buildSend =
       videoFile,
       platform: convertSentPlatform(req.query?.platform ?? req.body?.platform),
       locale: getLocale(req.headers['accept-language']),
-      stream: req.body.stream ?? true
+      stream: req.body.stream ?? true,
+      developerKeyId: req.user.developerKeyId,
     })
 
     return res.status(201).send(job)

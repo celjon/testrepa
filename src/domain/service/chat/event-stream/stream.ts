@@ -31,7 +31,7 @@ export const buildStream =
           if (!subject.observed) {
             delete eventStreamMap[chat.id]
           }
-        }
+        },
       }
       eventStreamMap[chat.id] = eventStream
     }

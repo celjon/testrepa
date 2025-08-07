@@ -13,21 +13,21 @@ export const buildDisable = ({ adapter, service }: UseCaseParams): Disable => {
   return async ({ userId, modelId, platform = Platform.API }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user || user.role !== Role.ADMIN) {
       throw new ForbiddenError({
-        message: "You don't have permission"
+        message: "You don't have permission",
       })
     }
 
     const jobs = [
       await service.model.disable(modelId, platform),
       await service.plan.unsetDefaultModelGlobally({
-        modelId
-      })
+        modelId,
+      }),
     ]
 
     const [model] = await Promise.all(jobs)

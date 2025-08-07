@@ -4,7 +4,9 @@ import { ISEOArticleCategory } from '@/domain/entity/seo-article-category'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Delete = (data: Prisma.SEOArticleCategoryDeleteArgs) => Promise<ISEOArticleCategory | never>
+export type Delete = (
+  data: Prisma.SEOArticleCategoryDeleteArgs,
+) => Promise<ISEOArticleCategory | never>
 
 export const buildDelete = ({ db }: Params): Delete => {
   return async (data) => {

@@ -1,9 +1,10 @@
 import { concatMap, Observable } from 'rxjs'
 import { Platform } from '@prisma/client'
+import { config } from '@/config'
 import { IModel } from '@/domain/entity/model'
 import { ISubscription } from '@/domain/entity/subscription'
 import { IEmployee } from '@/domain/entity/employee'
-import { IChatTextSettings } from '@/domain/entity/chatSettings'
+import { IChatTextSettings } from '@/domain/entity/chat-settings'
 import { UseCaseParams } from '../types'
 
 export type HandleResponseStream = (params: {
@@ -16,6 +17,7 @@ export type HandleResponseStream = (params: {
     system_prompt: string
   }
   isAdmin?: boolean
+  developerKeyId?: string
 }) => Promise<{
   responseStream$: Observable<{
     status: 'pending' | 'done'
@@ -27,16 +29,18 @@ export type HandleResponseStream = (params: {
 }>
 
 export const buildHandleResponseStream = ({ service }: UseCaseParams): HandleResponseStream => {
-  return async ({ userId, model, subscription, employee, settings, isAdmin }) => {
+  return async ({ userId, model, subscription, employee, settings, isAdmin, developerKeyId }) => {
+    await service.enterprise.checkMonthLimit({ userId })
+
     const textStream$ = await service.message.text.sendByProvider({
       providerId: null,
       user: {
-        id: userId
+        id: userId,
       },
       model,
       messages: [],
       settings,
-      planType: subscription?.plan?.type ?? null
+      planType: subscription?.plan?.type ?? null,
     })
 
     let prompt_tokens = 0
@@ -44,12 +48,12 @@ export const buildHandleResponseStream = ({ service }: UseCaseParams): HandleRes
     let generationCompleted = false
 
     const onGenerationEnd = async () => {
-      const caps = await service.model.getCaps({
+      const caps = await service.model.getCaps.text({
         model: model,
         usage: {
           prompt_tokens,
-          completion_tokens
-        }
+          completion_tokens,
+        },
       })
       let writeOff = { subscription: { balance: 0n } }
       if (!isAdmin && subscription) {
@@ -60,14 +64,16 @@ export const buildHandleResponseStream = ({ service }: UseCaseParams): HandleRes
             userId: userId,
             enterpriseId: employee?.enterprise_id,
             platform: Platform.EASY_WRITER,
-            model_id: model.id
-          }
+            model_id: model.id,
+            provider_id: config.model_providers.openrouter.id,
+            developerKeyId,
+          },
         })
       }
 
       return {
         spentCaps: caps,
-        currentCaps: isAdmin ? 0n : writeOff.subscription.balance
+        currentCaps: isAdmin ? 0n : writeOff.subscription.balance,
       }
     }
 
@@ -78,7 +84,7 @@ export const buildHandleResponseStream = ({ service }: UseCaseParams): HandleRes
             status,
             contentDelta: value,
             spentCaps: null,
-            caps: null
+            caps: null,
           }
         }
 
@@ -91,7 +97,7 @@ export const buildHandleResponseStream = ({ service }: UseCaseParams): HandleRes
               status,
               contentDelta: '',
               spentCaps: null,
-              caps: null
+              caps: null,
             }
           }
           generationCompleted = true
@@ -102,7 +108,7 @@ export const buildHandleResponseStream = ({ service }: UseCaseParams): HandleRes
             status,
             contentDelta: '',
             spentCaps: spentCaps,
-            caps: currentCaps
+            caps: currentCaps,
           }
         }
 
@@ -110,9 +116,9 @@ export const buildHandleResponseStream = ({ service }: UseCaseParams): HandleRes
           status,
           contentDelta: '',
           spentCaps: null,
-          caps: null
+          caps: null,
         }
-      })
+      }),
     )
 
     return {
@@ -127,7 +133,7 @@ export const buildHandleResponseStream = ({ service }: UseCaseParams): HandleRes
 
         // calculate spent caps for stopped completion
         await onGenerationEnd()
-      }
+      },
     }
   }
 }

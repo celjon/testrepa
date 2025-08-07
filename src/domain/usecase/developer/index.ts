@@ -25,6 +25,6 @@ export const buildDeveloperUseCase = (params: UseCaseParams): DeveloperUseCase =
     getKeys,
     updateKey,
     deleteKey,
-    deleteManyKeys
+    deleteManyKeys,
   }
 }

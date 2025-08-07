@@ -12,12 +12,12 @@ export const buildUpdateYandexMetric = ({ adapter }: UseCaseParams): UpdateYande
   return async ({ userId, yandexMetricClientId, yandexMetricYclid }) => {
     const user = await adapter.userRepository.update({
       where: { id: userId },
-      data: { yandexMetricClientId, yandexMetricYclid }
+      data: { yandexMetricClientId, yandexMetricYclid },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 

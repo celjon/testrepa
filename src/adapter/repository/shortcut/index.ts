@@ -4,7 +4,7 @@ import { buildDelete, Delete } from './delete'
 import { buildGet, Get } from './get'
 import { buildList, List } from './list'
 import { buildUpdate, Update } from './update'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 
 type Params = Pick<AdapterParams, 'db'>
 
@@ -30,6 +30,6 @@ export const buildShortcutRepository = (params: Params): ShortcutRepository => {
     delete: deleteShortcut,
     list,
     get,
-    updateMany
+    updateMany,
   }
 }

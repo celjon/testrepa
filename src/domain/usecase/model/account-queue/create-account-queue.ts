@@ -1,4 +1,4 @@
-import { IModelAccountQueue } from '@/domain/entity/modelAccountQueue'
+import { IModelAccountQueue } from '@/domain/entity/model-account-queue'
 import { UseCaseParams } from '@/domain/usecase/types'
 import { ModelAccountQueueType } from '@prisma/client'
 
@@ -23,11 +23,11 @@ export const buildCreateAccountQueue =
         ...(providerId && {
           provider: {
             connect: {
-              id: providerId
-            }
-          }
+              id: providerId,
+            },
+          },
         }),
-        disabled
+        disabled,
       },
       include: {
         provider: {
@@ -36,12 +36,12 @@ export const buildCreateAccountQueue =
               select: {
                 id: true,
                 label: true,
-                name: true
-              }
-            }
-          }
-        }
-      }
+                name: true,
+              },
+            },
+          },
+        },
+      },
     })
 
     return modelAccountQueue

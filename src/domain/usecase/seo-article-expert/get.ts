@@ -8,12 +8,12 @@ export const buildGet = ({ adapter }: UseCaseParams): Get => {
   return async ({ id }) => {
     const seoArticleExpert = await adapter.seoArticleExpertRepository.get({
       where: { id },
-      include: { experience: true }
+      include: { experience: true },
     })
 
     if (!seoArticleExpert) {
       throw new NotFoundError({
-        code: 'EXPERT_NOT_FOUND'
+        code: 'EXPERT_NOT_FOUND',
       })
     }
 

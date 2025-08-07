@@ -1,5 +1,5 @@
 import { AdapterParams } from '@/adapter/types'
-import { IModelAccount } from '@/domain/entity/modelAccount'
+import { IModelAccount } from '@/domain/entity/model-account'
 import { Prisma } from '@prisma/client'
 
 type Params = Pick<AdapterParams, 'db'>

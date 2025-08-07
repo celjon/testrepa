@@ -1,4 +1,4 @@
-import { IPresetCategory } from '@/domain/entity/presetCategory'
+import { IPresetCategory } from '@/domain/entity/preset-category'
 import { UseCaseParams } from '@/domain/usecase/types'
 
 export type GetCategories = (params: { locale?: string }) => Promise<IPresetCategory[]>
@@ -8,8 +8,8 @@ export const buildGetCategories =
   async ({ locale }) => {
     const categories = await adapter.presetCategoryRepository.list({
       where: {
-        locale
-      }
+        locale,
+      },
     })
 
     return categories

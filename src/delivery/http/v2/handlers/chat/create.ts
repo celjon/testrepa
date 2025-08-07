@@ -14,7 +14,7 @@ export const buildCreateChat = ({ chat }: Params): CreateChat => {
       modelId: req.body.modelId,
       highlight: req.body.highlight,
       platform: req.body.platform?.toUpperCase(),
-      order: req.body.order
+      order: req.body.order,
     })
 
     return res.status(200).json(data)

@@ -9,7 +9,7 @@ export type CheckAccountQueue = (req: AuthRequest, res: Response) => Promise<Res
 export const buildCheckAccountQueue = ({ model }: Params): CheckAccountQueue => {
   return async (req, res) => {
     const result = await model.checkAccountQueue({
-      accountQueueId: req.params.id
+      accountQueueId: req.params.id,
     })
 
     return res.status(200).json(result)

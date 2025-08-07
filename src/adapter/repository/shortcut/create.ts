@@ -4,7 +4,9 @@ import { Prisma } from '@prisma/client'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type ShortcurRepositoryCreate = (data: Prisma.ShortcutCreateArgs) => Promise<IShortcut | never>
+export type ShortcurRepositoryCreate = (
+  data: Prisma.ShortcutCreateArgs,
+) => Promise<IShortcut | never>
 export const buildCreate = ({ db }: Params): ShortcurRepositoryCreate => {
   return async (data) => {
     const chat = (await db.client.shortcut.create(data)) as IShortcut

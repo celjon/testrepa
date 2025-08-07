@@ -4,33 +4,33 @@ import chalk from 'chalk'
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL
-    }
+      url: process.env.DATABASE_URL,
+    },
   },
   log: [
     {
       emit: 'event',
-      level: 'query'
+      level: 'query',
     },
     {
       emit: 'stdout',
-      level: 'error'
+      level: 'error',
     },
     {
       emit: 'stdout',
-      level: 'info'
+      level: 'info',
     },
     {
       emit: 'stdout',
-      level: 'warn'
-    }
-  ]
+      level: 'warn',
+    },
+  ],
 })
 
 prisma.$on('query', (error) => {
   console.log(
     chalk.blue.bold('[Bothub Server]'),
-    `Query: ${error.query}.\n\tParams: ${error.params}.\n\tDuration: ${chalk.blue(`${error.duration}ms`)}.`
+    `Query: ${error.query}.\n\tParams: ${error.params}.\n\tDuration: ${chalk.blue(`${error.duration}ms`)}.`,
   )
 })
 
@@ -38,8 +38,8 @@ async function main() {
   await prisma.$transaction(async () => {
     await prisma.chat.updateMany({
       data: {
-        model_id: 'gpt'
-      }
+        model_id: 'gpt',
+      },
     })
 
     const chatsSettings = await prisma.chatSettings.findMany()
@@ -47,7 +47,7 @@ async function main() {
     for (const chatSettings of chatsSettings) {
       await prisma.chatSettings.update({
         where: {
-          id: chatSettings.id
+          id: chatSettings.id,
         },
         data: {
           text: {
@@ -61,10 +61,10 @@ async function main() {
               frequency_penalty: 0,
               max_tokens: 256,
               include_context: true,
-              created_at: new Date()
-            }
-          }
-        }
+              created_at: new Date(),
+            },
+          },
+        },
       })
     }
   })

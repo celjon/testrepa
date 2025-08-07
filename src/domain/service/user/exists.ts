@@ -6,8 +6,8 @@ export const buildExists = ({ userRepository }: Adapter): Exists => {
   return async (us) => {
     const user = await userRepository.get({
       where: {
-        ...us
-      }
+        ...us,
+      },
     })
 
     return !!user

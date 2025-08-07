@@ -1,4 +1,4 @@
-import { IDeveloperKey } from '@/domain/entity/developerKey'
+import { IDeveloperKey } from '@/domain/entity/developer-key'
 import { UseCaseParams } from '../types'
 
 export type GetKeys = (data: { userId: string }) => Promise<Array<IDeveloperKey>> | never
@@ -8,8 +8,8 @@ export const buildGetKeys = ({ adapter }: UseCaseParams): GetKeys => {
     const developerKeys = await adapter.developerKeyRepository.list({
       where: {
         user_id: userId,
-        deleted: false
-      }
+        deleted: false,
+      },
     })
 
     return developerKeys

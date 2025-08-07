@@ -5,8 +5,8 @@ import { Adapter } from '@/domain/types'
 import { NotFoundError } from '@/domain/errors'
 import { IModel } from '@/domain/entity/model'
 import { ModelService } from '@/domain/service/model'
-import { buildSendWithFallback } from './sendWithFallback'
-import { buildGenerateSearchQueries } from './generateSearchQueries'
+import { buildSendWithFallback } from './send-with-fallback'
+import { buildGenerateSearchQueries } from './generate-search-queries'
 import { ISearchResult } from '@/domain/entity/message'
 
 const CAPS_PER_DOLLAR = 500_000
@@ -22,7 +22,7 @@ const summarizeModelsOrder = [
   'nova-lite-v1',
   'ministral-8b',
   'gpt-4o-mini',
-  'deepseek-chat' // small context length
+  'deepseek-chat', // small context length
 ]
 
 type QueryResult = {
@@ -37,7 +37,10 @@ type QueryResult = {
   }[]
 }
 
-export type BuildPerformWebSearchParams = Pick<Adapter, 'openrouterGateway' | 'modelRepository' | 'webSearchGateway'> & {
+export type BuildPerformWebSearchParams = Pick<
+  Adapter,
+  'openrouterGateway' | 'modelRepository' | 'webSearchGateway'
+> & {
   modelService: ModelService
 }
 
@@ -63,40 +66,48 @@ export const buildPerformWebSearch = ({
   modelRepository,
   openrouterGateway,
   modelService,
-  webSearchGateway
+  webSearchGateway,
 }: BuildPerformWebSearchParams): PerformWebSearch => {
   const generateQueries = buildGenerateSearchQueries({
     openrouterGateway,
-    modelService
+    modelService,
   })
 
   const sendWithFallback = buildSendWithFallback({
     openrouterGateway,
-    modelService
+    modelService,
   })
 
-  return async ({ userId, model, prompt, messages, locale, onQueriesGenerated, onResultsLoaded }) => {
+  return async ({
+    userId,
+    model,
+    prompt,
+    messages,
+    locale,
+    onQueriesGenerated,
+    onResultsLoaded,
+  }) => {
     let spentCaps = 0
     const currentDate = new Date().toISOString()
 
     let [queryModels, summarizeModels] = await Promise.all([
       modelRepository.list({
-        where: { id: { in: queryGenModelsOrder } }
+        where: { id: { in: queryGenModelsOrder } },
       }),
       modelRepository.list({
         where: {
           id: {
-            in: summarizeModelsOrder
-          }
-        }
-      })
+            in: summarizeModelsOrder,
+          },
+        },
+      }),
     ])
     queryModels = sortModels(queryModels, queryGenModelsOrder)
     summarizeModels = sortModels(summarizeModels, summarizeModelsOrder)
 
     if (!queryModels || summarizeModels.length === 0) {
       throw new NotFoundError({
-        code: 'MODEL_NOT_FOUND'
+        code: 'MODEL_NOT_FOUND',
       })
     }
 
@@ -106,7 +117,7 @@ export const buildPerformWebSearch = ({
       prompt,
       messages: messages.slice(0, -1),
       currentDate,
-      locale
+      locale,
     })
     spentCaps += caps
 
@@ -115,7 +126,7 @@ export const buildPerformWebSearch = ({
         promptAddition:
           "\n\nWeb search was not performed. Web Search Plugin thinks that it is possible to answer the user's question using chat history.",
         systemPromptAddition: getSystemPromptAddition(currentDate),
-        caps: spentCaps
+        caps: spentCaps,
       }
     }
 
@@ -131,7 +142,7 @@ export const buildPerformWebSearch = ({
           query,
           numResults,
           results: [],
-          error: ''
+          error: '',
         }
         queryResults.push(queryResult)
 
@@ -142,19 +153,20 @@ export const buildPerformWebSearch = ({
             snippet: string | null
             content: string
           }[] = []
+
           if (type === 'website') {
             const url = query
             const signal = new AbortController()
             const urlContent = await withTimeout(
               webSearchGateway.getMarkdownContent({
                 url,
-                signal
+                signal,
               }),
-              config.timeouts.url_reader
+              config.timeouts.url_reader,
             ).catch((e) => {
               logger.error({
                 location: 'aitools.websearch.performWebSearch',
-                message: `Failed to load content for ${url}: ${getErrorString(e)}`
+                message: `Failed to load content for ${url}: ${getErrorString(e)}`,
               })
               signal.abort()
               return null
@@ -167,19 +179,21 @@ export const buildPerformWebSearch = ({
               url,
               title: urlContent.title ?? '',
               snippet: urlContent.description ?? '',
-              content: urlContent.content
+              content: urlContent.content,
             })
           } else {
             const searchStart = performance.now()
 
             const result = await webSearchGateway.searchWithContents({
               query: `${query} -locale:${locale}`,
-              numResults: clamp(numResults, 1, 10)
+              numResults: clamp(numResults, 1, 10),
             })
             searchResults = result.results
             spentCaps += CAPS_PER_DOLLAR * result.costDollars
 
-            logger.debug(`Search with ${clamp(numResults, 1, 10)} results took ${(performance.now() - searchStart).toFixed(2)}ms`)
+            logger.debug(
+              `Search with ${result.results.length} results took ${(performance.now() - searchStart).toFixed(2)}ms`,
+            )
           }
 
           await Promise.all(
@@ -189,7 +203,7 @@ export const buildPerformWebSearch = ({
                   url: url,
                   title: title ?? '',
                   snippet: snippet ?? '',
-                  content
+                  content,
                 })
                 return
               }
@@ -199,7 +213,7 @@ export const buildPerformWebSearch = ({
                   url: url,
                   title: title ?? '',
                   snippet: snippet ?? '',
-                  content
+                  content,
                 })
                 return
               }
@@ -235,16 +249,16 @@ export const buildPerformWebSearch = ({
 
               const summarizationResult = await sendWithFallback({
                 settings: {
-                  system_prompt: summarizeSystemPrompt
+                  system_prompt: summarizeSystemPrompt,
                 },
                 messages: [
                   {
                     role: 'user',
-                    content: `WEBSITE CONTENT:\n${content}`
-                  } as const
+                    content: `WEBSITE CONTENT:\n${content}`,
+                  } as const,
                 ],
                 endUserId: userId,
-                fallbacks: summarizeModels
+                fallbacks: summarizeModels,
               }).catch(() => {
                 return null
               })
@@ -254,37 +268,39 @@ export const buildPerformWebSearch = ({
                   url: url,
                   title: title ?? '',
                   snippet: snippet ?? '',
-                  content
+                  content,
                 })
                 return
               }
 
-              logger.debug(`Summarization took ${(performance.now() - summarizeStart).toFixed(2)}ms`)
+              logger.debug(
+                `Summarization took ${(performance.now() - summarizeStart).toFixed(2)}ms`,
+              )
 
               spentCaps += summarizationResult.caps
               queryResult.results.push({
                 url: url,
                 title: title ?? '',
                 snippet: snippet ?? '',
-                content: summarizationResult.result.message.content
+                content: summarizationResult.result.message.content,
               })
-            })
+            }),
           )
         } catch (e) {
           logger.error({
             location: 'aitools.websearch.performWebSearch',
-            message: `Failed to search for query ${query}: ${getErrorString(e)}`
+            message: `Failed to search for query ${query}: ${getErrorString(e)}`,
           })
 
           queryResult.error = `(unable to perform search: ${String(e)})`
         }
-      })
+      }),
     )
 
     const { formattedResults, sources } = await formatSearchResults({
       modelService,
       model,
-      searchResults: queryResults
+      searchResults: queryResults,
     })
 
     if (onResultsLoaded) {
@@ -301,7 +317,7 @@ export const buildPerformWebSearch = ({
             ${formattedResults}
             </web-search-results>
           `,
-      systemPromptAddition: getSystemPromptAddition(currentDate)
+      systemPromptAddition: getSystemPromptAddition(currentDate),
     }
   }
 }
@@ -310,7 +326,7 @@ export const buildPerformWebSearch = ({
 export const formatSearchResults = async ({
   modelService,
   model,
-  searchResults
+  searchResults,
 }: {
   modelService: ModelService
   model: IModel
@@ -324,8 +340,8 @@ export const formatSearchResults = async ({
         ...queryResult.results.map(({ url, title, content }) => ({
           url,
           title,
-          snippet: `${content.slice(0, 400).trim()}...`
-        }))
+          snippet: `${content.slice(0, 400).trim()}...`,
+        })),
       )
       return acc
     }, [] as ISearchResult[])
@@ -350,9 +366,9 @@ export const formatSearchResults = async ({
       messages: [
         {
           role: 'user',
-          content: formattedResults
-        }
-      ]
+          content: formattedResults,
+        },
+      ],
     })
 
     if (tokens < model.context_length) {
@@ -374,7 +390,7 @@ export const formatSearchResults = async ({
 
   return {
     formattedResults,
-    sources: getSources()
+    sources: getSources(),
   }
 }
 

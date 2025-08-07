@@ -9,19 +9,22 @@ type Params = Pick<DeliveryParams, 'seoArticleCategory' | 'article'>
 
 export type FindCategoryOeArticleBySlug = (req: AuthRequest, res: Response) => Promise<void>
 
-export const buildFindCategoryOrArticleBySlug = ({ seoArticleCategory, article }: Params): FindCategoryOeArticleBySlug => {
+export const buildFindCategoryOrArticleBySlug = ({
+  seoArticleCategory,
+  article,
+}: Params): FindCategoryOeArticleBySlug => {
   return async (req, res) => {
     let result: ISEOArticleCategory | IArticle | null = await seoArticleCategory.findBySlug({
-      slug: req.params.slug as string
+      slug: req.params.slug,
     })
     if (!result) {
       result = await article.findBySlug({
-        slug: req.params.slug as string
+        slug: req.params.slug,
       })
     }
     if (!result) {
       throw new NotFoundError({
-        code: 'CATEGORY_OR_ARTICLE_NOT_FOUND'
+        code: 'CATEGORY_OR_ARTICLE_NOT_FOUND',
       })
     }
 

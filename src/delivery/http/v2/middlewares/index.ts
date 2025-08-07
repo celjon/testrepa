@@ -1,11 +1,14 @@
 import { Adapter } from '@/domain/types'
-import { AuthRequiredMiddleware, buildAuthRequired } from './authRequired'
-import { allowedIpsMiddleware, buildAllowedIps } from './allowedIps'
-import { buildErrorHandler, ErrorHandlerMiddleware } from './errorHandler'
-import { buildFileUploadMiddleware, FileUploadMiddleware } from './fileUpload'
+import { buildAuthRequired, AuthRequiredMiddleware } from './auth-required'
+import { buildAllowedIps, allowedIpsMiddleware } from './allowed-ips'
+import { buildErrorHandler, ErrorHandlerMiddleware } from './error-handler'
+import { buildFileUploadMiddleware, FileUploadMiddleware } from './file-upload'
 import { buildLoggerMiddleware, LoggerMiddleware } from './logger'
-import { buildValidateSchema, ValidateSchemaMiddleware } from './validateSchema'
-import { BlockForbiddenCountriesMiddleware, buildBlockForbiddenCountries } from './blockForbiddenCountries'
+import { buildValidateSchema, ValidateSchemaMiddleware } from './validate-schema'
+import {
+  buildBlockForbiddenCountries,
+  BlockForbiddenCountriesMiddleware,
+} from './block-forbidden-countries'
 
 type Params = Adapter
 
@@ -35,6 +38,6 @@ export const buildMiddlewares = (params: Params): Middlewares => {
     errorHandler,
     fileUpload,
     logger,
-    validateSchema
+    validateSchema,
   }
 }

@@ -7,6 +7,6 @@ export type DataAnalysisUseCase = {
 
 export const buildDataAnalysisUseCase = (params: UseCaseParams): DataAnalysisUseCase => {
   return {
-    clusterizeExcel: buildClusterizeExcel(params)
+    clusterizeExcel: buildClusterizeExcel(params),
   }
 }

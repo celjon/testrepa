@@ -3,7 +3,11 @@ import { ITransaction } from '@/domain/entity/transaction'
 import { TransactionProvider, TransactionStatus, TransactionType } from '@prisma/client'
 import { ForbiddenError, InternalError } from '@/domain/errors'
 
-export type Withdraw = (data: { userId: string; id: string; details: string }) => Promise<ITransaction | never>
+export type Withdraw = (data: {
+  userId: string
+  id: string
+  details: string
+}) => Promise<ITransaction | never>
 
 export const buildWithdraw = ({ adapter }: UseCaseParams): Withdraw => {
   return async ({ userId, id, details }) => {
@@ -11,29 +15,34 @@ export const buildWithdraw = ({ adapter }: UseCaseParams): Withdraw => {
       where: {
         owner_id: userId,
         id,
-        disabled: false
+        disabled: false,
       },
       include: {
         participants: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
         template: {
           include: {
-            plan: true
-          }
+            plan: true,
+          },
         },
         transactions: {
           where: {
             status: TransactionStatus.PENDING,
-            type: TransactionType.WITHDRAW
-          }
-        }
-      }
+            type: TransactionType.WITHDRAW,
+          },
+        },
+      },
     })
 
-    if (!referral || !referral.transactions || referral.transactions.length > 0 || !referral.template) {
+    if (
+      !referral ||
+      !referral.transactions ||
+      referral.transactions.length > 0 ||
+      !referral.template
+    ) {
       throw new ForbiddenError()
     }
 
@@ -45,8 +54,8 @@ export const buildWithdraw = ({ adapter }: UseCaseParams): Withdraw => {
         provider: TransactionProvider.BOTHUB,
         currency: referral.template.currency,
         amount: referral.balance,
-        type: TransactionType.WITHDRAW
-      }
+        type: TransactionType.WITHDRAW,
+      },
     })) as ITransaction
 
     if (!transaction) {

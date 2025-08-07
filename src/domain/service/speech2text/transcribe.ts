@@ -37,26 +37,26 @@ export const buildTranscribe =
         file: mediaFileReadable,
         fileName: mediaFile!.originalname,
         temperature,
-        prompt
+        prompt,
       })
-      formattedText = await format({ content: data.response.text }) ?? data.response.text
+      formattedText = (await format({ content: data.response.text })) ?? data.response.text
       if (data.audioMetadata.duration) {
         duration = data.audioMetadata.duration
       }
-    } else if(model_id.match(/^assembly/)) {
+    } else if (model_id.match(/^assembly/)) {
       const transcript = await assemblyAiGateway.transcribe({
-        speech_model: model_id.split('-').pop() === 'nano' ? 'nano' : 'best' ,
+        speech_model: model_id.split('-').pop() === 'nano' ? 'nano' : 'best',
         audio: mediaFile?.buffer!,
         format_text,
         punctuate: true,
         speaker_labels,
         language_detection: true,
-        auto_chapters: format_text
+        auto_chapters: format_text,
       })
-      if(!transcript.text) {
+      if (!transcript.text) {
         throw new InvalidDataError({
           message: 'Audio is empty or invalid',
-          code: 'TRANSCRIPTION_ERROR'
+          code: 'TRANSCRIPTION_ERROR',
         })
       }
       const paragraphs = await assemblyAiGateway.getTranscribeParagraphs(transcript.id)
@@ -85,6 +85,6 @@ export const buildTranscribe =
     }
     return {
       result: formattedText,
-      duration
+      duration,
     }
   }

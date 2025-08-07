@@ -15,8 +15,8 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
     const usersShortcut = await adapter.shortcutRepository.get({
       where: {
         id: shortcutId,
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     if (!usersShortcut) {
@@ -25,13 +25,13 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
 
     const shortcut = await adapter.shortcutRepository.update({
       where: {
-        id: shortcutId
+        id: shortcutId,
       },
       data: {
         text,
         name,
-        autosend
-      }
+        autosend,
+      },
     })
 
     if (!shortcut) {

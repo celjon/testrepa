@@ -13,6 +13,6 @@ export const buildJobUseCase = (params: UseCaseParams) => {
 
   return {
     get,
-    stop
+    stop,
   }
 }

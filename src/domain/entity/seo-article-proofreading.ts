@@ -1,7 +1,10 @@
 import { Field, ID, ObjectType } from 'type-graphql'
 import { ArticleGraphQLObject, IArticle } from '@/domain/entity/article'
 import { SEOArticleProofreading } from '@prisma/client'
-import { SEOArticleExpertGraphQLObject, ISEOArticleExpert } from '@/domain/entity/seo-article-expert'
+import {
+  SEOArticleExpertGraphQLObject,
+  ISEOArticleExpert,
+} from '@/domain/entity/seo-article-expert'
 
 export interface ISEOArticleProofreading extends SEOArticleProofreading {}
 

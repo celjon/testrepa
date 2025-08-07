@@ -11,6 +11,6 @@ export const buildVideoRepository = (params: Params): VideoRepository => {
   const create = buildCreate(params)
 
   return {
-    create
+    create,
   }
 }

@@ -1,3 +1,4 @@
+import { config } from '@/config'
 import { translations } from './translations'
 
 export type Translation = {
@@ -51,6 +52,10 @@ export type Translation = {
     body1: string
     body2: string
     body3: string
+    codeText: string
+    promptText: string
+    forWhoText: string
+    messageText: string
     bottomText1: string
     bottomText2: string
     auth: string
@@ -77,8 +82,10 @@ export type Translation = {
 
 export type Locale = 'en' | 'es' | 'fr' | 'pt' | 'ru'
 
-export const getTranlation = <K extends keyof Translation>(section: K, locale?: string) => {
-  switch (locale) {
+export const getTranslation = <K extends keyof Translation>(section: K, locale?: string) => {
+  const targetLocale = getTargetLocale(locale)
+
+  switch (targetLocale) {
     case 'en':
       return withFallback(translations.en[section], section)
 
@@ -96,10 +103,25 @@ export const getTranlation = <K extends keyof Translation>(section: K, locale?: 
   }
 }
 
-const withFallback = <S extends keyof Translation>(value: Translation[keyof Translation] | undefined, section: S): Translation[S] => {
+const withFallback = <S extends keyof Translation>(
+  value: Translation[keyof Translation] | undefined,
+  section: S,
+): Translation[S] => {
   if (value) {
     return value as Translation[S]
   }
 
   return translations.en[section] || translations.ru[section]
+}
+
+export const getTargetLocale = (locale?: string) => {
+  if (locale === 'kz') {
+    return 'ru'
+  }
+
+  if (locale) {
+    return locale
+  }
+
+  return config.frontend.default_locale
 }

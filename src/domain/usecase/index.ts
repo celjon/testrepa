@@ -1,34 +1,43 @@
-import { AuthUseCase, buildAuthUseCase } from '@/domain/usecase/auth'
-import { buildChatUseCase, ChatUseCase } from '@/domain/usecase/chat'
-import { buildGroupUseCase, GroupUseCase } from '@/domain/usecase/group'
-import { buildMessageUseCase, MessageUseCase } from '@/domain/usecase/message'
-import { buildUserUseCase, UserUseCase } from '@/domain/usecase/user'
-import { buildPresetUseCase, PresetUseCase } from '@/domain/usecase/preset'
-import { buildPlanUseCase, PlanUseCase } from '@/domain/usecase/plan'
-import { UseCaseParams } from '@/domain/usecase/types'
-import { buildWebhookUseCase, WebhookUseCase } from '@/domain/usecase/webhook'
-import { buildModelUseCase, ModelUseCase } from '@/domain/usecase/model'
-import { buildSubscriptionUseCase, SubscriptionUseCase } from '@/domain/usecase/subscription'
-import { buildTransactionUseCase, TransactionUseCase } from '@/domain/usecase/transaction'
+import { AuthUseCase, buildAuthUseCase } from './auth'
+import { buildChatUseCase, ChatUseCase } from './chat'
+import { buildGroupUseCase, GroupUseCase } from './group'
+import { buildMessageUseCase, MessageUseCase } from './message'
+import { buildUserUseCase, UserUseCase } from './user'
+import { buildPresetUseCase, PresetUseCase } from './preset'
+import { buildPlanUseCase, PlanUseCase } from './plan'
+import { UseCaseParams } from './types'
+import { buildWebhookUseCase, WebhookUseCase } from './webhook'
+import { buildModelUseCase, ModelUseCase } from './model'
+import { buildSubscriptionUseCase, SubscriptionUseCase } from './subscription'
+import { buildTransactionUseCase, TransactionUseCase } from './transaction'
 import { buildDeveloperUseCase, DeveloperUseCase } from './developer'
 import { buildShortcutUseCase, ShortcutUseCase } from './shortcut'
-import { buildEnterpriseUseCase, EnterpriseUseCase } from '@/domain/usecase/enterprise'
-import { buildReferralTemplateUseCase, ReferralTemplateUseCase } from './referralTemplate'
+import { buildEnterpriseUseCase, EnterpriseUseCase } from './enterprise'
+import { buildReferralTemplateUseCase, ReferralTemplateUseCase } from './referral-template'
 import { buildReferralUseCase, ReferralUseCase } from './referral'
 import { buildOpenaiUseCase, OpenaiUseCase } from './openai'
 import { buildStatisticsUseCase, StatisticsUseCase } from './statistics'
 import { buildJobUseCase, JobUseCase } from './job'
 import { buildMidjourneyUseCase, MidjourneyUseCase } from './midjourney'
-import { ArticleUseCase, buildArticleUseCase } from './article'
+import { buildArticleUseCase, ArticleUseCase } from './article'
 import { buildGeoUseCase, GeoUseCase } from './geo'
 import { buildFileUseCase, FileUseCase } from './file'
 import { buildDataAnalysisUseCase, DataAnalysisUseCase } from './data-analysis'
-import { buildSEOArticleCategoryUseCase, SEOArticleCategoryUseCase } from '@/domain/usecase/seo-article-category'
-import { buildSEOArticleTopicUseCase, SEOArticleTopicUseCase } from '@/domain/usecase/seo-article-topic'
-import { buildSEOArticleProofreadingUseCase, SEOArticleProofreadingUseCase } from '@/domain/usecase/seo-article-proofreading'
-import { buildSEOArticleExpertUseCase, SEOArticleExpertUseCase } from '@/domain/usecase/seo-article-expert'
-import { buildSEOArticleExpertJobHistoryUseCase, SEOArticleExpertJobHistoryUseCase } from '@/domain/usecase/seo-article-expert-job-history'
-import { AIToolsUseCase, buildAIToolsUseCase } from './ai-tools'
+import { buildSEOArticleCategoryUseCase, SEOArticleCategoryUseCase } from './seo-article-category'
+import { buildSEOArticleTopicUseCase, SEOArticleTopicUseCase } from './seo-article-topic'
+import {
+  buildSEOArticleProofreadingUseCase,
+  SEOArticleProofreadingUseCase,
+} from './seo-article-proofreading'
+import { buildSEOArticleExpertUseCase, SEOArticleExpertUseCase } from './seo-article-expert'
+import {
+  buildSEOArticleExpertJobHistoryUseCase,
+  SEOArticleExpertJobHistoryUseCase,
+} from './seo-article-expert-job-history'
+import { buildAIToolsUseCase, AIToolsUseCase } from './ai-tools'
+import { buildIntentUseCase, IntentUseCase } from './intent'
+import { buildGiftCertificateUseCase, GiftCertificateUseCase } from './gift-certificate'
+import { buildExchangeRateUseCase, ExchangeRateUseCase } from './exchange-rate'
 
 export type UseCase = {
   auth: AuthUseCase
@@ -61,6 +70,9 @@ export type UseCase = {
   file: FileUseCase
   dataAnalysis: DataAnalysisUseCase
   aiTools: AIToolsUseCase
+  intent: IntentUseCase
+  giftCertificate: GiftCertificateUseCase
+  exchangeRate: ExchangeRateUseCase
 }
 
 export const buildUseCase = (params: UseCaseParams): UseCase => {
@@ -93,6 +105,9 @@ export const buildUseCase = (params: UseCaseParams): UseCase => {
   const geo = buildGeoUseCase(params)
   const file = buildFileUseCase(params)
   const dataAnalysis = buildDataAnalysisUseCase(params)
+  const intent = buildIntentUseCase(params)
+  const giftCertificate = buildGiftCertificateUseCase(params)
+  const exchangeRate = buildExchangeRateUseCase(params)
 
   return {
     auth,
@@ -124,6 +139,9 @@ export const buildUseCase = (params: UseCaseParams): UseCase => {
     geo,
     file,
     dataAnalysis,
-    aiTools: buildAIToolsUseCase(params)
+    intent,
+    giftCertificate,
+    exchangeRate,
+    aiTools: buildAIToolsUseCase(params),
   }
 }

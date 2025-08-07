@@ -8,18 +8,18 @@ import { BaseError, InternalError, NotFoundError } from '@/domain/errors'
 import { ISubscription } from '@/domain/entity/subscription'
 import { IMessage } from '@/domain/entity/message'
 import { IUser } from '@/domain/entity/user'
-import { isG4FProvider } from '@/domain/entity/modelProvider'
+import { isG4FProvider } from '@/domain/entity/model-provider'
 import { SubscriptionService } from '../../subscription'
 import { JobService } from '../../job'
 import { UserService } from '../../user'
 import { ModelService } from '../../model'
-import { SendTextByProvider } from './sendByProvider'
+import { SendTextByProvider } from './send-by-provider'
 import { UploadFiles } from '../upload/files'
 import { RawFile } from '@/domain/entity/file'
 import { UploadVoice } from '../upload/voice'
-import { GeneratePrompt } from '../generatePrompt'
+import { GeneratePrompt } from '../generate-prompt'
 import { MessageStorage } from '../storage/types'
-import { PerformWebSearch } from '../plugins/web-search/performWebSearch'
+import { PerformWebSearch } from '../plugins/web-search/perform-web-search'
 import { UploadVideo } from '../upload/video'
 import { GeneralSystemPromptPlugin } from '../plugins/general-system-prompt'
 import { ConstantCostPlugin } from '../plugins/constant-cost'
@@ -61,6 +61,8 @@ export type SendText = (params: {
   locale: string
   onEnd?: (params: { userMessage: IMessage; assistantMessage: IMessage | null }) => unknown
   stream: boolean
+  developerKeyId?: string
+  prefix?: string
 }) => Promise<IMessage>
 
 export const buildSendText = ({
@@ -83,21 +85,21 @@ export const buildSendText = ({
   cryptoGateway,
   imageGateway,
   messageImageRepository,
-  fileService
+  fileService,
 }: Params): SendText => {
   const plugins = [
     {
       name: 'constant_cost',
-      execute: constantCostPlugin
+      execute: constantCostPlugin,
     },
     {
       name: 'general_system_prompt',
-      execute: generalSystemPromptPlugin
+      execute: generalSystemPromptPlugin,
     },
     {
       name: 'web_search',
-      execute: performWebSearch
-    }
+      execute: performWebSearch,
+    },
   ] as const
 
   const optimizeContext = buildOptimizeContext({ messageStorage, modelService })
@@ -105,7 +107,7 @@ export const buildSendText = ({
     imageGateway,
     cryptoGateway,
     fileService,
-    messageImageRepository
+    messageImageRepository,
   })
 
   return async ({
@@ -122,11 +124,13 @@ export const buildSendText = ({
     platform,
     sentPlatform,
     onEnd,
-    stream
+    stream,
+    developerKeyId,
+    prefix,
   }) => {
     if (!chat.model) {
       throw new InternalError({
-        code: 'PARENT_MODEL_NOT_FOUND'
+        code: 'PARENT_MODEL_NOT_FOUND',
       })
     }
 
@@ -134,7 +138,7 @@ export const buildSendText = ({
 
     if (!settings || !settings.text) {
       throw new NotFoundError({
-        code: 'SETTINGS_NOT_FOUND'
+        code: 'SETTINGS_NOT_FOUND',
       })
     }
 
@@ -142,21 +146,20 @@ export const buildSendText = ({
     const model =
       (await modelRepository.get({
         where: {
-          id: textSettings.model
-        }
+          id: textSettings.model,
+        },
       })) ??
       chat.model ??
       null
 
     if (!model) {
       throw new NotFoundError({
-        code: 'CHILD_MODEL_NOT_FOUND'
+        code: 'CHILD_MODEL_NOT_FOUND',
       })
     }
-
     const textJob = await jobService.create({
       name: 'MODEL_GENERATION',
-      chat
+      chat,
     })
 
     let textMessage = await messageStorage.create({
@@ -170,7 +173,7 @@ export const buildSendText = ({
           user_id: user.id,
           model_id: textSettings.model,
           job_id: textJob.id,
-          content: null
+          content: null,
         },
         include: {
           model: {
@@ -178,14 +181,14 @@ export const buildSendText = ({
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
-          job: true
-        }
-      }
+          job: true,
+        },
+      },
     })
 
     chatService.eventStream.emit({
@@ -193,24 +196,28 @@ export const buildSendText = ({
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: textMessage
-        }
-      }
+          message: textMessage,
+        },
+      },
     })
 
     const updateTextMessage = async () => {
       try {
-        const [{ userMessageImages, userMessageAttachmentsFiles }, { userMessageVoice }, { userMessageVideo }] = await Promise.all([
+        const [
+          { userMessageImages, userMessageAttachmentsFiles },
+          { userMessageVoice },
+          { userMessageVideo },
+        ] = await Promise.all([
           uploadFiles({ files, user, keyEncryptionKey }),
           uploadVoice({ voiceFile, user, keyEncryptionKey }),
-          uploadVideo({ videoFile, user, keyEncryptionKey })
+          uploadVideo({ videoFile, user, keyEncryptionKey }),
         ])
 
         let dek = null
         if (user.encryptedDEK && user.useEncryption && keyEncryptionKey) {
           dek = await cryptoGateway.decryptDEK({
             edek: user.encryptedDEK,
-            kek: keyEncryptionKey
+            kek: keyEncryptionKey,
           })
         }
 
@@ -220,7 +227,7 @@ export const buildSendText = ({
           video: userMessageVideo,
           files: userMessageAttachmentsFiles,
           analyzeURLs: textSettings.analyze_urls,
-          dek
+          dek,
         })
 
         let spentCaps = promptCaps
@@ -241,7 +248,7 @@ export const buildSendText = ({
             locale,
             subscription,
             job: textJob,
-            assistantMessage: textMessage
+            assistantMessage: textMessage,
           })
           spentCaps += caps
           if (name === 'web_search') {
@@ -259,27 +266,27 @@ export const buildSendText = ({
             keyEncryptionKey,
             data: {
               where: {
-                id: userMessage.id
+                id: userMessage.id,
               },
               data: {
                 full_content: prompt,
                 images: {
-                  connect: userMessageImages.map(({ id }) => ({ id }))
+                  connect: userMessageImages.map(({ id }) => ({ id })),
                 },
                 attachments: {
                   createMany: {
                     data: userMessageAttachmentsFiles.map((userMessageAttachmentFile) => ({
-                      file_id: userMessageAttachmentFile.id
-                    }))
-                  }
+                      file_id: userMessageAttachmentFile.id,
+                    })),
+                  },
                 },
                 ...(userMessageVoice && {
-                  voice_id: userMessageVoice.id
+                  voice_id: userMessageVoice.id,
                 }),
                 ...(userMessageVideo && {
-                  video_id: userMessageVideo.id
+                  video_id: userMessageVideo.id,
                 }),
-                platform
+                platform,
               },
               include: {
                 user: true,
@@ -287,26 +294,26 @@ export const buildSendText = ({
                   include: {
                     original: true,
                     preview: true,
-                    buttons: true
-                  }
+                    buttons: true,
+                  },
                 },
                 attachments: {
                   include: {
-                    file: true
-                  }
+                    file: true,
+                  },
                 },
                 voice: {
                   include: {
-                    file: true
-                  }
+                    file: true,
+                  },
                 },
                 video: {
                   include: {
-                    file: true
-                  }
-                }
-              }
-            }
+                    file: true,
+                  },
+                },
+              },
+            },
           })) ?? userMessage
 
         chatService.eventStream.emit({
@@ -314,9 +321,9 @@ export const buildSendText = ({
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: userMessage
-            }
-          }
+              message: userMessage,
+            },
+          },
         })
 
         const messages = await optimizeContext({
@@ -326,7 +333,19 @@ export const buildSendText = ({
           settings,
           include_context: textSettings.include_context,
           userMessage,
-          chatId: chat.id
+          chatId: chat.id,
+        })
+
+        //estimate
+        await subscriptionService.checkBalance({
+          subscription,
+          estimate: await modelService.estimate.text({
+            model,
+            textSettings,
+            spentCaps,
+            messages,
+            prompt,
+          }),
         })
 
         const text$ = await sendTextByProvider({
@@ -336,17 +355,16 @@ export const buildSendText = ({
           settings: textSettings,
           user,
           textMessageId: textMessage.id,
-          planType: subscription.plan?.type ?? null
+          planType: subscription.plan?.type ?? null,
         })
         const { stream } = text$
 
-        let content = ''
-        let fullContent = ''
+        let content = prefix ?? ''
+        let fullContent = prefix ?? ''
         let reasoningContent = ''
         const start = performance.now()
         let reasoningTimeMs: number | null = null
         const hasReasoning = model.features?.some((feature) => feature === 'CHAIN_OF_THOUGHT')
-
         await textJob.start({
           stop: async () => {
             if (stream) {
@@ -359,13 +377,13 @@ export const buildSendText = ({
                   keyEncryptionKey,
                   data: {
                     where: {
-                      id: textMessage.id
+                      id: textMessage.id,
                     },
                     data: {
                       status: MessageStatus.DONE,
                       content,
                       reasoning_content: reasoningContent,
-                      reasoning_time_ms: reasoningTimeMs
+                      reasoning_time_ms: reasoningTimeMs,
                     },
                     include: {
                       transaction: true,
@@ -374,14 +392,14 @@ export const buildSendText = ({
                           icon: true,
                           parent: {
                             include: {
-                              icon: true
-                            }
-                          }
-                        }
+                              icon: true,
+                            },
+                          },
+                        },
                       },
-                      job: true
-                    }
-                  }
+                      job: true,
+                    },
+                  },
                 })) ?? textMessage
 
               chatService.eventStream.emit({
@@ -389,13 +407,29 @@ export const buildSendText = ({
                 event: {
                   name: 'MESSAGE_UPDATE',
                   data: {
-                    message: stoppedMessage
-                  }
-                }
+                    message: stoppedMessage,
+                  },
+                },
               })
             }
-          }
+          },
         })
+        if (prefix) {
+          chatService.eventStream.emit({
+            chat,
+            event: {
+              name: 'MESSAGE_UPDATE',
+              data: {
+                message: {
+                  id: textMessage.id,
+                  content: prefix,
+                  reasoning_content: '',
+                  reasoning_time_ms: null,
+                },
+              },
+            },
+          })
+        }
 
         chatService.eventStream.emit({
           chat,
@@ -405,15 +439,14 @@ export const buildSendText = ({
               message: {
                 id: textMessage.id,
                 job_id: textJob.id,
-                job: textJob.job
-              }
-            }
-          }
+                job: textJob.job,
+              },
+            },
+          },
         })
-
         await new Promise<void>((resolve, reject) => {
           text$.subscribe({
-            next: async ({ status, value, reasoningValue, usage, provider }) => {
+            next: async ({ status, value, reasoningValue, usage, provider, g4f_account_id }) => {
               try {
                 if (status === 'pending') {
                   if (provider && isG4FProvider(provider)) {
@@ -427,7 +460,12 @@ export const buildSendText = ({
                   fullContent += value
                   reasoningContent += reasoningValue ?? ''
 
-                  if (hasReasoning && reasoningValue === null && content.length > 0 && reasoningTimeMs === null) {
+                  if (
+                    hasReasoning &&
+                    reasoningValue === null &&
+                    content.length > 0 &&
+                    reasoningTimeMs === null
+                  ) {
                     reasoningTimeMs = performance.now() - start
                   }
 
@@ -440,10 +478,10 @@ export const buildSendText = ({
                           id: textMessage.id,
                           content,
                           reasoning_content: reasoningContent,
-                          reasoning_time_ms: reasoningTimeMs
-                        }
-                      }
-                    }
+                          reasoning_time_ms: reasoningTimeMs,
+                        },
+                      },
+                    },
                   })
                 }
 
@@ -454,15 +492,14 @@ export const buildSendText = ({
                     user,
                     keyEncryptionKey,
                     messageId: textMessage.id,
-                    content: value
+                    content: value,
                   })
 
-                  const caps = await modelService.getCaps({
+                  const caps = await modelService.getCaps.text({
                     model,
-                    usage
+                    usage,
                   })
                   spentCaps += caps
-
                   const writeOffResult = await subscriptionService.writeOffWithLimitNotification({
                     subscription,
                     amount: spentCaps,
@@ -471,10 +508,13 @@ export const buildSendText = ({
                       enterpriseId: employee?.enterprise_id,
                       platform,
                       model_id: model.id,
+                      provider_id: provider?.id ?? undefined,
+                      g4f_account_id,
                       expense_details: {
-                        web_search: webSearchCaps
-                      }
-                    }
+                        web_search: webSearchCaps,
+                      },
+                      developerKeyId,
+                    },
                   })
                   const { transaction } = writeOffResult
 
@@ -483,13 +523,13 @@ export const buildSendText = ({
                   chat =
                     (await chatRepository.update({
                       where: {
-                        id: chat.id
+                        id: chat.id,
                       },
                       data: {
                         total_caps: {
-                          increment: spentCaps
-                        }
-                      }
+                          increment: spentCaps,
+                        },
+                      },
                     })) ?? chat
 
                   textMessage =
@@ -498,7 +538,7 @@ export const buildSendText = ({
                       keyEncryptionKey,
                       data: {
                         where: {
-                          id: textMessage.id
+                          id: textMessage.id,
                         },
                         data: {
                           status: MessageStatus.DONE,
@@ -507,7 +547,7 @@ export const buildSendText = ({
                           content,
                           full_content: fullContent,
                           reasoning_content: reasoningContent,
-                          reasoning_time_ms: reasoningTimeMs
+                          reasoning_time_ms: reasoningTimeMs,
                         },
                         include: {
                           transaction: true,
@@ -516,25 +556,25 @@ export const buildSendText = ({
                               icon: true,
                               parent: {
                                 include: {
-                                  icon: true
-                                }
-                              }
-                            }
+                                  icon: true,
+                                },
+                              },
+                            },
                           },
                           images: {
                             include: {
                               original: true,
                               preview: true,
-                              buttons: true
-                            }
+                              buttons: true,
+                            },
                           },
                           buttons: true,
                           all_buttons: {
-                            distinct: ['action']
+                            distinct: ['action'],
                           },
-                          job: true
-                        }
-                      }
+                          job: true,
+                        },
+                      },
                     })) ?? textMessage
 
                   chatService.eventStream.emit({
@@ -543,46 +583,48 @@ export const buildSendText = ({
                       name: 'UPDATE',
                       data: {
                         chat: {
-                          total_caps: chat.total_caps
-                        }
-                      }
-                    }
+                          total_caps: chat.total_caps,
+                        },
+                      },
+                    },
                   })
                   chatService.eventStream.emit({
                     chat,
                     event: {
                       name: 'MESSAGE_UPDATE',
                       data: {
-                        message: textMessage
-                      }
-                    }
+                        message: textMessage,
+                      },
+                    },
                   })
                   chatService.eventStream.emit({
                     chat,
                     event: {
                       name: 'TRANSACTION_CREATE',
                       data: {
-                        transaction
-                      }
-                    }
+                        transaction,
+                      },
+                    },
                   })
 
                   chatService.eventStream.emit({
                     chat,
                     event: {
-                      name: userService.hasEnterpriseActualSubscription(user) ? 'ENTERPRISE_SUBSCRIPTION_UPDATE' : 'SUBSCRIPTION_UPDATE',
+                      name: userService.hasEnterpriseActualSubscription(user)
+                        ? 'ENTERPRISE_SUBSCRIPTION_UPDATE'
+                        : 'SUBSCRIPTION_UPDATE',
                       data: {
                         subscription: {
                           id: subscription.id,
-                          balance: subscription.balance
-                        }
-                      }
-                    }
+                          balance: subscription.balance,
+                        },
+                      },
+                    },
                   })
 
                   onEnd?.({
                     userMessage,
-                    assistantMessage: textMessage
+                    assistantMessage: textMessage,
                   })
 
                   resolve()
@@ -591,14 +633,18 @@ export const buildSendText = ({
                 reject(e)
               }
             },
-            error: reject
+            error: reject,
           })
         })
       } catch (error) {
         let err = error
-        if (!(err instanceof BaseError) || err instanceof InternalError || err.code?.startsWith('G4F_')) {
+        if (
+          !(err instanceof BaseError) ||
+          err instanceof InternalError ||
+          err.code?.startsWith('G4F_')
+        ) {
           err = new InternalError({
-            code: 'INTERNAL_ERROR'
+            code: 'INTERNAL_ERROR',
           })
           logger.error({
             location: 'sendText',
@@ -606,7 +652,8 @@ export const buildSendText = ({
             userId: user.id,
             email: user.email ?? user.tg_id,
             chatId: chat.id,
-            messageId: textMessage.id
+            messageId: textMessage.id,
+            modelId: model.id,
           })
         }
 
@@ -621,15 +668,15 @@ export const buildSendText = ({
                 id: textMessage.id,
                 job_id: errorJob.id,
                 job: errorJob,
-                content: null
-              }
-            }
-          }
+                content: null,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: textMessage
+          assistantMessage: textMessage,
         })
 
         throw err

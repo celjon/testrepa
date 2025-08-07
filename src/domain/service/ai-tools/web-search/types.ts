@@ -8,9 +8,9 @@ export const searchQueriesSchema = z.object({
       type: z.union([z.literal('search'), z.literal('website')]),
       query: z.string(),
       numResults: z.number(),
-      rationale: z.string()
-    })
-  )
+      rationale: z.string(),
+    }),
+  ),
 })
 
 export const searchQueriesResponseFormat = zodResponseFormat(searchQueriesSchema, 'SearchQueries')

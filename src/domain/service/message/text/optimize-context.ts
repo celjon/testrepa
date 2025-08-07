@@ -1,5 +1,5 @@
 import { MessageStatus } from '@prisma/client'
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 import { IMessage } from '@/domain/entity/message'
 import { IUser } from '@/domain/entity/user'
 import { IModel } from '@/domain/entity/model'
@@ -35,23 +35,23 @@ export const buildOptimizeContext =
             status: MessageStatus.DONE,
             chat_id: chatId,
             content: {
-              not: null
+              not: null,
             },
             disabled: false,
-            choiced: true
+            choiced: true,
           },
           orderBy: {
-            created_at: 'asc'
+            created_at: 'asc',
           },
           include: {
             images: {
               include: {
                 original: true,
-                preview: true
-              }
-            }
-          }
-        }
+                preview: true,
+              },
+            },
+          },
+        },
       })
     } else {
       messages = [userMessage]
@@ -59,12 +59,12 @@ export const buildOptimizeContext =
 
     const messagesTokens = await modelService.tokenize({
       model,
-      messages
+      messages,
     })
 
     const settingsTokens = await modelService.tokenize({
       model,
-      settings
+      settings,
     })
 
     if (messagesTokens + settingsTokens > model.context_length) {
@@ -74,7 +74,7 @@ export const buildOptimizeContext =
       for (const message of messages.reverse()) {
         const messageTokens = await modelService.tokenize({
           model,
-          messages: [message]
+          messages: [message],
         })
 
         if (newTotalTokens + messageTokens > model.context_length) {

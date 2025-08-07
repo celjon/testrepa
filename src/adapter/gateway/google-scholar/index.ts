@@ -1,7 +1,7 @@
 import { AdapterParams } from '@/adapter/types'
 import {
   buildGetGoogleScholarResultsWithPDF,
-  GetGoogleScholarResultsWithPDF
+  GetGoogleScholarResultsWithPDF,
 } from '@/adapter/gateway/google-scholar/get-google-scholar-result'
 
 export type GoogleScholarGateway = {

@@ -11,7 +11,7 @@ export const options: Options = {
     openapi: '3.0.0',
     info: {
       title: 'Bothub API',
-      version: '2.0.0'
+      version: '2.0.0',
     },
     servers: [{ url: '/api/v2' }],
     components: {
@@ -19,15 +19,15 @@ export const options: Options = {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT'
-        }
-      }
-    }
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
   apis: [
     path.join(rootFolder, `delivery/http/v2/handlers/**/*.${schemaFileExtension}`),
-    path.join(rootFolder, `domain/entity/**/*.${schemaFileExtension}`)
-  ]
+    path.join(rootFolder, `domain/entity/**/*.${schemaFileExtension}`),
+  ],
 }
 
 export const buildSwagger = () => {

@@ -1,4 +1,6 @@
 import { FileType, MessageStatus, Platform } from '@prisma/client'
+import { config } from '@/config'
+import { getErrorString } from '@/lib'
 import { logger } from '@/lib/logger'
 import { Adapter } from '@/domain/types'
 import { BanedUserError, NotFoundError } from '@/domain/errors'
@@ -35,6 +37,7 @@ export type SendSpeech = (params: {
   sentPlatform?: Platform
   onEnd?: (params: { userMessage: IMessage; assistantMessage: IMessage | null }) => unknown
   stream: boolean
+  developerKeyId?: string
 }) => Promise<IMessage>
 
 export const buildSendSpeech = ({
@@ -50,13 +53,24 @@ export const buildSendSpeech = ({
   jobService,
   cryptoGateway,
   fileService,
-  assemblyAiGateway
+  assemblyAiGateway,
 }: Params): SendSpeech => {
-  return async ({ userMessage, chat, user, employee, keyEncryptionKey, subscription, platform, onEnd, stream }) => {
+  return async ({
+    userMessage,
+    chat,
+    user,
+    employee,
+    keyEncryptionKey,
+    subscription,
+    platform,
+    onEnd,
+    stream,
+    developerKeyId,
+  }) => {
     const { settings } = chat
     if (!settings || !settings.speech) {
       throw new NotFoundError({
-        code: 'SETTINGS_NOT_FOUND'
+        code: 'SETTINGS_NOT_FOUND',
       })
     }
 
@@ -65,37 +79,39 @@ export const buildSendSpeech = ({
 
     const model = await modelRepository.get({
       where: {
-        id: settings.speech.model
-      }
+        id: settings.speech.model,
+      },
     })
 
     if (!model) {
       throw new NotFoundError({
-        code: 'MODEL_NOT_FOUND'
+        code: 'MODEL_NOT_FOUND',
       })
     }
 
     let caps: number
 
     if (userMessage.content?.length) {
-      caps = await modelService.getCaps({
+      caps = await modelService.getCaps.textToSpeech({
         model,
-        settings,
         params: {
-          input: userMessage.content
-        }
+          input: userMessage.content,
+        },
       })
     } else {
       throw new BanedUserError({
         code: 'EMPTY_PROMPT',
         message: 'Prompt is too short',
-        httpStatus: 400
+        httpStatus: 400,
       })
     }
 
+    //estimate
+    await subscriptionService.checkBalance({ subscription, estimate: caps })
+
     const speechJob = await jobService.create({
       name: 'MODEL_GENERATION',
-      chat
+      chat,
     })
 
     let speechMessage = await messageStorage.create({
@@ -109,7 +125,7 @@ export const buildSendSpeech = ({
           user_id: user.id,
           model_id: model.id,
           job_id: speechJob.id,
-          created_at: new Date(userMessage.created_at.getTime() + 1)
+          created_at: new Date(userMessage.created_at.getTime() + 1),
         },
         include: {
           model: {
@@ -117,14 +133,14 @@ export const buildSendSpeech = ({
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
-          job: true
-        }
-      }
+          job: true,
+        },
+      },
     })
 
     chatService.eventStream.emit({
@@ -132,9 +148,9 @@ export const buildSendSpeech = ({
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: speechMessage
-        }
-      }
+          message: speechMessage,
+        },
+      },
     })
 
     await speechJob.start()
@@ -147,24 +163,24 @@ export const buildSendSpeech = ({
           message: {
             id: speechMessage.id,
             job_id: speechJob.id,
-            job: speechJob.job
-          }
-        }
-      }
+            job: speechJob.job,
+          },
+        },
+      },
     })
 
     const updateSpeechMessage = async () => {
       try {
         const { buffer } = await speechGateway.send({
           input: userMessage.content!,
-          settings: speechSettings
+          settings: speechSettings,
         })
 
         let dek = null
         if (user.encryptedDEK && user.useEncryption && keyEncryptionKey) {
           dek = await cryptoGateway.decryptDEK({
             edek: user.encryptedDEK as Buffer,
-            kek: keyEncryptionKey
+            kek: keyEncryptionKey,
           })
         }
 
@@ -173,7 +189,7 @@ export const buildSendSpeech = ({
         if (dek) {
           messageContent = await cryptoGateway.encrypt({
             dek,
-            data: userMessage.content!
+            data: userMessage.content!,
           })
           isEncrypted = true
         }
@@ -182,28 +198,31 @@ export const buildSendSpeech = ({
           name,
           path,
           url,
-          isEncrypted: isEncryptedFile
+          isEncrypted: isEncryptedFile,
         } = await fileService.write({
           buffer: buffer,
           ext: '.wav',
-          dek
+          dek,
         })
 
         const { duration, waveData } = await mediaGateway.getData({
           assemblyAiGateway,
-          file: { buffer: buffer, size: 0, originalname: 'audio.wav', mimetype: '' }
+          file: { buffer: buffer, size: 0, originalname: 'audio.wav', mimetype: '' },
         })
 
-        const { transaction, subscription: newSubscription } = await subscriptionService.writeOffWithLimitNotification({
-          subscription,
-          amount: caps,
-          meta: {
-            userId: user.id,
-            enterpriseId: employee?.enterprise_id,
-            platform,
-            model_id: model.id
-          }
-        })
+        const { transaction, subscription: newSubscription } =
+          await subscriptionService.writeOffWithLimitNotification({
+            subscription,
+            amount: caps,
+            meta: {
+              userId: user.id,
+              enterpriseId: employee?.enterprise_id,
+              platform,
+              model_id: model.id,
+              provider_id: config.model_providers.openai.id,
+              developerKeyId,
+            },
+          })
 
         subscription = newSubscription
 
@@ -213,7 +232,7 @@ export const buildSendSpeech = ({
             keyEncryptionKey,
             data: {
               where: {
-                id: speechMessage.id
+                id: speechMessage.id,
               },
               data: {
                 voice: {
@@ -224,19 +243,19 @@ export const buildSendSpeech = ({
                         name,
                         path,
                         url,
-                        isEncrypted: isEncryptedFile
-                      }
+                        isEncrypted: isEncryptedFile,
+                      },
                     },
                     content: messageContent!,
                     isEncrypted,
                     wave_data: waveData,
-                    duration_seconds: duration
-                  }
+                    duration_seconds: duration,
+                  },
                 },
                 transaction: {
                   connect: {
-                    id: transaction.id
-                  }
+                    id: transaction.id,
+                  },
                 },
                 buttons: {
                   create: {
@@ -245,13 +264,13 @@ export const buildSendSpeech = ({
                     disabled: false,
                     message: {
                       connect: {
-                        id: speechMessage.id
-                      }
-                    }
-                  }
+                        id: speechMessage.id,
+                      },
+                    },
+                  },
                 },
                 status: MessageStatus.DONE,
-                platform
+                platform,
               },
               include: {
                 model: {
@@ -259,20 +278,20 @@ export const buildSendSpeech = ({
                     icon: true,
                     parent: {
                       include: {
-                        icon: true
-                      }
-                    }
-                  }
+                        icon: true,
+                      },
+                    },
+                  },
                 },
                 transaction: true,
                 voice: {
                   include: {
-                    file: true
-                  }
+                    file: true,
+                  },
                 },
-                buttons: true
-              }
-            }
+                buttons: true,
+              },
+            },
           })) ?? speechMessage
 
         chat =
@@ -280,9 +299,9 @@ export const buildSendSpeech = ({
             where: { id: chat.id },
             data: {
               total_caps: {
-                increment: caps
-              }
-            }
+                increment: caps,
+              },
+            },
           })) ?? chat
 
         chatService.eventStream.emit({
@@ -291,10 +310,10 @@ export const buildSendSpeech = ({
             name: 'UPDATE',
             data: {
               chat: {
-                total_caps: chat.total_caps
-              }
-            }
-          }
+                total_caps: chat.total_caps,
+              },
+            },
+          },
         })
 
         chatService.eventStream.emit({
@@ -302,9 +321,9 @@ export const buildSendSpeech = ({
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: speechMessage
-            }
-          }
+              message: speechMessage,
+            },
+          },
         })
 
         chatService.eventStream.emit({
@@ -312,37 +331,40 @@ export const buildSendSpeech = ({
           event: {
             name: 'TRANSACTION_CREATE',
             data: {
-              transaction
-            }
-          }
+              transaction,
+            },
+          },
         })
 
         chatService.eventStream.emit({
           chat,
           event: {
-            name: userService.hasEnterpriseActualSubscription(user) ? 'ENTERPRISE_SUBSCRIPTION_UPDATE' : 'SUBSCRIPTION_UPDATE',
+            name: userService.hasEnterpriseActualSubscription(user)
+              ? 'ENTERPRISE_SUBSCRIPTION_UPDATE'
+              : 'SUBSCRIPTION_UPDATE',
             data: {
               subscription: {
                 id: subscription.id,
-                balance: subscription.balance
-              }
-            }
-          }
+                balance: subscription.balance,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: speechMessage
+          assistantMessage: speechMessage,
         })
       } catch (error) {
         await speechJob.setError(error)
 
-        logger.log({
-          level: 'error',
-          message: `sendSpeech ${JSON.stringify(error)}`,
+        logger.error({
+          location: 'sendSpeech',
+          message: getErrorString(error),
           userId: user.id,
           email: user.email ?? user.tg_id,
-          chatId: chat.id
+          chatId: chat.id,
+          modelId: model.id,
         })
 
         chatService.eventStream.emit({
@@ -353,15 +375,15 @@ export const buildSendSpeech = ({
               message: {
                 id: speechMessage.id,
                 job_id: speechJob.id,
-                job: speechJob.job
-              }
-            }
-          }
+                job: speechJob.job,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: speechMessage
+          assistantMessage: speechMessage,
         })
 
         throw error

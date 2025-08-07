@@ -9,8 +9,8 @@ export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
     const usersShortcut = await adapter.shortcutRepository.get({
       where: {
         id: shortcutId,
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
 
     if (!usersShortcut) {
@@ -19,8 +19,8 @@ export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
 
     const shortcut = await adapter.shortcutRepository.delete({
       where: {
-        id: shortcutId
-      }
+        id: shortcutId,
+      },
     })
 
     if (!shortcut) {

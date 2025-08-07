@@ -8,13 +8,13 @@ export const buildGet = ({ adapter, service }: UseCaseParams): Get => {
   return async ({ userId, chatId }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -22,7 +22,7 @@ export const buildGet = ({ adapter, service }: UseCaseParams): Get => {
 
     if (!subscription || !subscription.plan) {
       throw new NotFoundError({
-        code: 'SUBSCRIPTION_NOT_FOUND'
+        code: 'SUBSCRIPTION_NOT_FOUND',
       })
     }
 
@@ -32,13 +32,13 @@ export const buildGet = ({ adapter, service }: UseCaseParams): Get => {
       where: {
         id: chatId,
         user_id: userId,
-        deleted: false
+        deleted: false,
       },
       include: {
         model: true,
         model_function: true,
-        group: true
-      }
+        group: true,
+      },
     })
 
     if (!chat) {
@@ -48,11 +48,11 @@ export const buildGet = ({ adapter, service }: UseCaseParams): Get => {
       !chat.model ||
       !(await service.model.isAllowed({
         plan,
-        modelId: chat.model.id
+        modelId: chat.model.id,
       }))
     ) {
       const defaultModel = await service.model.getDefault({
-        plan
+        plan,
       })
 
       if (!defaultModel) {
@@ -61,11 +61,11 @@ export const buildGet = ({ adapter, service }: UseCaseParams): Get => {
 
       await adapter.chatRepository.update({
         where: {
-          id: chatId
+          id: chatId,
         },
         data: {
-          model_id: defaultModel.id
-        }
+          model_id: defaultModel.id,
+        },
       })
 
       chat.model = defaultModel

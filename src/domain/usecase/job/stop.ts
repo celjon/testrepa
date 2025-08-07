@@ -9,16 +9,16 @@ export const buildStop =
   async ({ jobId, userId }) => {
     const job = await adapter.jobRepository.get({
       where: {
-        id: jobId
+        id: jobId,
       },
       include: {
-        chat: true
-      }
+        chat: true,
+      },
     })
 
     if (!job || !job.chat || job.chat.user_id !== userId) {
       throw new NotFoundError({
-        code: 'JOB_NOT_FOUND'
+        code: 'JOB_NOT_FOUND',
       })
     }
 

@@ -19,6 +19,6 @@ export const buildMessageSetRepository = (params: Params): MessageSetRepository 
   return {
     update,
     create,
-    get
+    get,
   }
 }

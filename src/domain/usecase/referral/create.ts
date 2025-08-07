@@ -3,31 +3,35 @@ import { IReferral } from '@/domain/entity/referral'
 import { nanoid } from 'nanoid'
 import { ForbiddenError, NotFoundError } from '@/domain/errors'
 
-export type Create = (data: { userId: string; templateId: string; name?: string }) => Promise<IReferral | never>
+export type Create = (data: {
+  userId: string
+  templateId: string
+  name?: string
+}) => Promise<IReferral | never>
 
 export const buildCreate = ({ adapter }: UseCaseParams): Create => {
   return async ({ userId, templateId, name }) => {
     const template = await adapter.referralTemplateRepository.get({
       where: {
-        id: templateId
-      }
+        id: templateId,
+      },
     })
 
     if (!template) {
       throw new NotFoundError({
-        code: 'TEMPLATE_NOT_FOUND'
+        code: 'TEMPLATE_NOT_FOUND',
       })
     }
 
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (template.private === true && user?.role !== 'ADMIN') {
       throw new ForbiddenError({
-        code: 'TEMPLATE_IS_PRIVATE'
+        code: 'TEMPLATE_IS_PRIVATE',
       })
     }
 
@@ -36,20 +40,20 @@ export const buildCreate = ({ adapter }: UseCaseParams): Create => {
         owner_id: userId,
         template_id: templateId,
         code: nanoid(),
-        name
+        name,
       },
       include: {
         participants: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
         template: {
           include: {
-            plan: true
-          }
-        }
-      }
+            plan: true,
+          },
+        },
+      },
     })
 
     return referral

@@ -10,7 +10,7 @@ export const buildList = ({ referralTemplate }: Params): List => {
     const template = await referralTemplate.list({
       page: req.query.page as any,
       search: req.query.search as string,
-      locale: req.query.locale as string
+      locale: req.query.locale as string,
     })
     return res.status(200).json(template)
   }

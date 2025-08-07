@@ -9,7 +9,7 @@ export type DeleteSEOArticleTopic = (req: AuthRequest, res: Response) => Promise
 export const buildDeleteSEOArticleTopic = ({ seoArticleTopic }: Params): DeleteSEOArticleTopic => {
   return async (req, res) => {
     const result = await seoArticleTopic.deleteSEOArticleTopic({
-      id: req.params.seoArticleTopicId
+      id: req.params.seoArticleTopicId,
     })
 
     res.status(200).json(result)

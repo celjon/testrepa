@@ -14,6 +14,6 @@ export const buildOldEmailRepository = (params: Params): OldEmailRepository => {
 
   return {
     get,
-    create
+    create,
   }
 }

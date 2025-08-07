@@ -15,8 +15,8 @@ export const buildLoggerMiddleware = (): LoggerMiddleware => {
     logger.info({
       message: `[HTTP Request] ${req.method} ${url} from ${req.ip}`,
       meta: {
-        date: new Date()
-      }
+        date: new Date(),
+      },
     })
 
     res.on('close', () => {
@@ -24,8 +24,8 @@ export const buildLoggerMiddleware = (): LoggerMiddleware => {
         level: 'info',
         message: `[HTTP Response] ${req.method} ${url} ${res.statusCode}`,
         meta: {
-          date: new Date()
-        }
+          date: new Date(),
+        },
       })
     })
 

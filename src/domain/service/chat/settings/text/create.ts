@@ -11,6 +11,6 @@ export const buildCreate =
 
     return {
       model,
-      max_tokens: maxTokens
+      max_tokens: maxTokens,
     }
   }

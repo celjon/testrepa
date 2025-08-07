@@ -7,11 +7,11 @@ export const buildDeleteMany = ({ adapter }: UseCaseParams): DeleteMany => {
   return async ({ ids }) => {
     if (ids.length === 0) {
       throw new NotFoundError({
-        code: 'NO_IDS_PROVIDED'
+        code: 'NO_IDS_PROVIDED',
       })
     }
     const deletedCount = await adapter.articleRepository.deleteMany({
-      where: { id: { in: ids } }
+      where: { id: { in: ids } },
     })
 
     return deletedCount

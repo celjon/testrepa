@@ -16,7 +16,8 @@ export const buildGeneratePlan = ({ article }: Params): GeneratePlan => {
       subject: req.body.subject,
       creativity: Number(req.body.creativity),
       locale: getLocale(req.headers['accept-language']),
-      model_id: req.body.model_id
+      model_id: req.body.model_id,
+      developerKeyId: req.user.developerKeyId,
     })
 
     setSSEHeaders(res)
@@ -34,13 +35,13 @@ export const buildGeneratePlan = ({ article }: Params): GeneratePlan => {
         res.write(`data: ${JSON.stringify(error)}\n\n`)
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.on('error', () => {
       logger.warn({
         location: 'article.generatePlan',
-        message: 'Unexpected sse connection error'
+        message: 'Unexpected sse connection error',
       })
     })
 

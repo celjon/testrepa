@@ -2,7 +2,7 @@ import { AdapterParams } from '@/adapter/types'
 import { buildCreatePreset, CreatePreset } from './create'
 import { buildGetPreset, GetPreset } from './get'
 import { buildListPresets, ListPresets } from './list'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 import { buildCount, Count } from './count'
 import { buildDelete, Delete } from './delete'
 import { buildUpdate, Update } from './update'
@@ -39,6 +39,6 @@ export const buildPresetRepository = (params: Params): PresetRepository => {
     count,
     delete: deletePreset,
     update,
-    upsert
+    upsert,
   }
 }

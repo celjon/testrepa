@@ -31,6 +31,6 @@ export const buildPlanUseCase = (params: UseCaseParams): PlanUseCase => {
     removeModel,
     update,
     setDefaultModel,
-    unsetDefaultModel
+    unsetDefaultModel,
   }
 }

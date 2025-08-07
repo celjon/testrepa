@@ -20,6 +20,6 @@ export const buildPaymentGateway = (params: Params): PaymentGateway => {
     yoomoney,
     crypto,
     tinkoff,
-    stripe: buildStripe(params)
+    stripe: buildStripe(params),
   }
 }

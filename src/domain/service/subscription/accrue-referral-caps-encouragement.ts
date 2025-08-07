@@ -1,33 +1,42 @@
-import { Currency, PlanType, TransactionProvider, TransactionStatus, TransactionType } from '@prisma/client'
+import {
+  Currency,
+  PlanType,
+  TransactionProvider,
+  TransactionStatus,
+  TransactionType,
+} from '@prisma/client'
 import { Adapter } from '@/domain/types'
 import { ISubscription } from '@/domain/entity/subscription'
 import { InvalidDataError } from '@/domain/errors'
+import { uniqueUuid } from 'docx'
 
-type Params = Pick<Adapter, 'referralRepository' | 'subscriptionRepository' | 'transactionRepository'>
+type Params = Pick<
+  Adapter,
+  'referralRepository' | 'subscriptionRepository' | 'transactionRepository'
+>
 
 export type AccrueReferralCapsEncouragement = (
   params: {
     participantSubscription: ISubscription
     spent_caps: number
   },
-  tx?: unknown
+  tx?: unknown,
 ) => Promise<void>
 
 export const buildAccrueReferralCapsEncouragement = ({
   referralRepository,
   subscriptionRepository,
-  transactionRepository
+  transactionRepository,
 }: Params): AccrueReferralCapsEncouragement => {
   return async ({ participantSubscription, spent_caps }, tx) => {
     if (spent_caps < 0) {
       throw new InvalidDataError({
-        code: 'NEGATIVE_AMOUNT'
+        code: 'NEGATIVE_AMOUNT',
       })
     }
     if (spent_caps === 0) {
       return
     }
-
     if (!participantSubscription.user_id || !participantSubscription.plan) {
       return
     }
@@ -39,8 +48,8 @@ export const buildAccrueReferralCapsEncouragement = ({
       {
         where: {
           participants: {
-            some: { user_id: participantSubscription.user_id }
-          }
+            some: { user_id: participantSubscription.user_id },
+          },
         },
         include: {
           owner: {
@@ -51,54 +60,67 @@ export const buildAccrueReferralCapsEncouragement = ({
                 include: {
                   enterprise: {
                     include: {
-                      subscription: { include: { plan: true } }
-                    }
-                  }
-                }
-              }
-            }
+                      subscription: { include: { plan: true } },
+                    },
+                  },
+                },
+              },
+            },
           },
-          template: true
-        }
+          template: true,
+        },
       },
-      tx
+      tx,
     )
 
-    if (!referral || !referral.owner || !referral.owner.subscription || !referral.owner.subscription.plan || !referral.template) {
+    if (
+      !referral ||
+      !referral.owner ||
+      !referral.owner.subscription ||
+      !referral.owner.subscription.plan ||
+      !referral.template
+    ) {
       return
     }
 
-    const employee = referral.owner?.employees && referral.owner.employees.length > 0 ? referral.owner.employees[0] : null
+    const employee =
+      referral.owner?.employees && referral.owner.employees.length > 0
+        ? referral.owner.employees[0]
+        : null
 
     const memberOfCommonPoolEnterprise = !!employee?.enterprise?.common_pool
     const enterpriseSubscription = employee?.enterprise?.subscription
 
     const referralOwnerSubscription =
-      memberOfCommonPoolEnterprise && enterpriseSubscription ? enterpriseSubscription : referral.owner.subscription
-
-    const encouragement = Math.trunc((spent_caps * referral.template.caps_encouragement_percentage) / 100)
+      memberOfCommonPoolEnterprise && enterpriseSubscription
+        ? enterpriseSubscription
+        : referral.owner.subscription
+    const encouragement = Math.trunc(
+      (spent_caps * referral.template.caps_encouragement_percentage) / 100,
+    )
 
     if (BigInt(encouragement) === 0n) {
       return
     }
-
+    const id = uniqueUuid()
     await Promise.all([
       subscriptionRepository.update(
         {
           where: {
-            id: referralOwnerSubscription.id
+            id: referralOwnerSubscription.id,
           },
           data: {
             balance: {
-              increment: encouragement
-            }
-          }
+              increment: encouragement,
+            },
+          },
         },
-        tx
+        tx,
       ),
       transactionRepository.create(
         {
           data: {
+            id,
             user_id: referralOwnerSubscription.user_id,
             amount: encouragement,
             type: TransactionType.REFERRAL_REWARD,
@@ -106,11 +128,25 @@ export const buildAccrueReferralCapsEncouragement = ({
             status: TransactionStatus.SUCCEDED,
             provider: TransactionProvider.BOTHUB,
             from_user_id: participantSubscription.user_id,
-            referral_id: referral.id
-          }
+            referral_id: referral.id,
+          },
         },
-        tx
-      )
+        tx,
+      ),
+
+      transactionRepository.chCreate({
+        data: {
+          id,
+          amount: encouragement,
+          type: TransactionType.REFERRAL_REWARD,
+          user_id: referralOwnerSubscription.user_id!,
+          platform: null,
+          plan_id: referralOwnerSubscription.plan_id,
+          enterprise_id: '',
+          from_user_id: participantSubscription.user_id,
+          referral_id: referral.id,
+        },
+      }),
     ])
   }
 }

@@ -4,7 +4,9 @@ import { ISEOArticleExpertJobHistory } from '@/domain/entity/seo-article-expert-
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Create = (data: Prisma.SEOArticleExpertJobHistoryCreateArgs) => Promise<ISEOArticleExpertJobHistory | never>
+export type Create = (
+  data: Prisma.SEOArticleExpertJobHistoryCreateArgs,
+) => Promise<ISEOArticleExpertJobHistory | never>
 
 export const buildCreate = ({ db }: Params): Create => {
   return async (data) => {

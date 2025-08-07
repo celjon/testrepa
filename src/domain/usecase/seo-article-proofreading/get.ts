@@ -7,12 +7,12 @@ export type Get = (params: { id: string }) => Promise<ISEOArticleProofreading>
 export const buildGet = ({ adapter }: UseCaseParams): Get => {
   return async ({ id }) => {
     const seoArticleProofreading = await adapter.seoArticleProofreadingRepository.get({
-      where: { id }
+      where: { id },
     })
 
     if (!seoArticleProofreading) {
       throw new NotFoundError({
-        code: 'PROOFREADING_NOT_FOUND'
+        code: 'PROOFREADING_NOT_FOUND',
       })
     }
 

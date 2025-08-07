@@ -12,16 +12,16 @@ export const buildFindBySlug = ({ adapter }: UseCaseParams): FindBySlug => {
         proofreadings: { include: { expert: true } },
         topics: {
           include: {
-            category: true
-          }
+            category: true,
+          },
         },
-        model: true
-      }
+        model: true,
+      },
     })
 
     if (!article) {
       throw new NotFoundError({
-        code: 'ARTICLE_NOT_FOUND'
+        code: 'ARTICLE_NOT_FOUND',
       })
     }
 

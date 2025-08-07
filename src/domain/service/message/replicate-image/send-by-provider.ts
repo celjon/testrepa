@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger'
+import { getErrorString } from '@/lib'
 import { Adapter } from '../../../types'
 import { ChatService } from '../../chat'
 import { JobService } from '../../job'
@@ -5,11 +7,10 @@ import { IMessage } from '@/domain/entity/message'
 import { SubscriptionService } from '../../subscription'
 import { UserService } from '../../user'
 import { ModelService } from '../../model'
-import { IChatReplicateImageSettings } from '@/domain/entity/chatSettings'
-import { isReplicateProvider } from '@/domain/entity/modelProvider'
+import { IChatReplicateImageSettings } from '@/domain/entity/chat-settings'
+import { isReplicateProvider } from '@/domain/entity/model-provider'
 import { ForbiddenError, NotFoundError } from '@/domain/errors'
 import { IModel } from '@/domain/entity/model'
-import { logger } from '@/lib/logger'
 
 type Params = Adapter & {
   chatService: ChatService
@@ -33,16 +34,20 @@ export type SendReplicateImageByProvider = (params: {
   endUserId: string
 }) => Promise<Image[]>
 
-export const buildSendReplicateImageByProvider = ({ replicateGateway, modelProviderRepository, modelService }: Params) => {
+export const buildSendReplicateImageByProvider = ({
+  replicateGateway,
+  modelProviderRepository,
+  modelService,
+}: Params) => {
   const sendByProvider: SendReplicateImageByProvider = async ({ providerId, model, ...params }) => {
     if (!providerId) {
       const defaultProvider = await modelService.getDefaultProvider({
-        model
+        model,
       })
 
       if (!defaultProvider) {
         throw new NotFoundError({
-          code: 'DEFAULT_MODEL_PROVIDER_NOT_FOUND'
+          code: 'DEFAULT_MODEL_PROVIDER_NOT_FOUND',
         })
       }
 
@@ -54,16 +59,16 @@ export const buildSendReplicateImageByProvider = ({ replicateGateway, modelProvi
         id: providerId,
         disabled: { not: true },
         models: {
-          some: { id: model.id }
-        }
+          some: { id: model.id },
+        },
       },
-      orderBy: { order: 'asc' }
+      orderBy: { order: 'asc' },
     })
 
     if (!provider) {
       throw new NotFoundError({
         code: 'MODEL_PROVIDER_NOT_FOUND',
-        message: `Model provider not found for model ${model.id}`
+        message: `Model provider not found for model ${model.id}`,
       })
     }
 
@@ -73,26 +78,34 @@ export const buildSendReplicateImageByProvider = ({ replicateGateway, modelProvi
       if (isReplicateProvider(provider)) {
         images = await replicateGateway.sendImage({
           ...params,
-          model
+          model,
         })
       } else {
         throw new ForbiddenError({
           code: 'MODEL_PROVIDER_NOT_SUPPORTED',
-          message: `Model provider ${provider.id} is not supported`
+          message: `Model provider ${provider.id} is not supported`,
         })
       }
     } catch (error) {
-      logger.error('SendReplicateImageByProvider', error)
+      logger.error({
+        location: 'sendReplicateImageByProvider',
+        message: getErrorString(error),
+        userId: params.endUserId,
+      })
 
       if (provider.fallback_id) {
         try {
           return await sendByProvider({
             providerId: provider.fallback_id,
             model,
-            ...params
+            ...params,
           })
         } catch (e) {
-          logger.error('sendByFallbackProviderOrThrow[replicate-image]', e)
+          logger.error({
+            location: 'sendByFallbackProviderOrThrow[replicate-image]',
+            message: getErrorString(e),
+            userId: params.endUserId,
+          })
 
           throw error
         }

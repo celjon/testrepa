@@ -12,34 +12,38 @@ export const buildDeleteAccountQueue =
       include: {
         accounts: {
           include: {
-            g4f_har_file: true
-          }
-        }
-      }
+            g4f_har_file: true,
+          },
+        },
+      },
     })
 
     if (!modelAccountQueue || !modelAccountQueue.accounts) {
       throw new NotFoundError({
-        code: 'MODEL_ACCOUNT_QUEUE_NOT_FOUND'
+        code: 'MODEL_ACCOUNT_QUEUE_NOT_FOUND',
       })
     }
 
     await Promise.all([
       adapter.modelAccountQueueRepository.deleteMany({
-        where: { id }
+        where: { id },
       }),
       modelAccountQueue.accounts.map(async (modelAccount) => {
-        if (modelAccount.g4f_har_file && modelAccount.g4f_har_file.name && modelAccount.g4f_api_url) {
+        if (
+          modelAccount.g4f_har_file &&
+          modelAccount.g4f_har_file.name &&
+          modelAccount.g4f_api_url
+        ) {
           await adapter.g4fGateway.deleteHarFile({
             name: modelAccount.g4f_har_file.name,
             apiUrl: modelAccount.g4f_api_url,
-            harManagerUrl: cfg.model_providers.g4f.har_manager_url
+            harManagerUrl: cfg.model_providers.g4f.har_manager_url,
           })
         }
 
         await adapter.modelAccountRepository.deleteMany({
-          where: { id }
+          where: { id },
         })
-      })
+      }),
     ])
   }

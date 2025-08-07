@@ -1,10 +1,10 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildSendImage, SendImage } from './sendImage'
-import { buildGetModels, GetModels } from './getModels'
-import { buildGetProviders, GetProviders } from './getProviders'
-import { buildSendVideo, SendVideo } from './sendVideo'
+import { buildSendImage, SendImage } from './send-image'
+import { buildGetModels, GetModels } from './get-models'
+import { buildGetProviders, GetProviders } from './get-providers'
+import { buildSendVideo, SendVideo } from './send-video'
 
-type Params = Pick<AdapterParams, 'replicate'>
+type Params = Pick<AdapterParams, 'replicate' | 'replicateBalancer'>
 
 export type ReplicateGateway = {
   sendImage: SendImage
@@ -23,6 +23,6 @@ export const buildReplicateGateway = (params: Params): ReplicateGateway => {
     sendImage,
     sendVideo,
     getModels,
-    getProviders
+    getProviders,
   }
 }

@@ -17,10 +17,11 @@ export const buildUpdateEnterprise = ({ enterprise }: Params): UpdateEnterprise 
       plan: req.body.plan_id,
       id: req.params.id,
       userId: req.user?.id,
-      hard_limit: req.body.hard_limit,
+      credit_limit: req.body.credit_limit,
       soft_limit: req.body.soft_limit,
       system_limit: req.body.system_limit,
-      payment_plan: req.body.payment_plan
+      payment_plan: req.body.payment_plan,
+      developerKeyId: req.user.developerKeyId,
     })
 
     return res.status(200).json(data)

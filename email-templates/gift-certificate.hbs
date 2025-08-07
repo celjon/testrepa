@@ -1,0 +1,82 @@
+{{> gift-card }}
+
+<style>
+.row-title {
+  display: inline-block;
+  width: 100px;
+}
+
+.row-value {
+  display: block;
+  font-weight: bold;
+}
+
+.badge-container-text {
+  font-size: 16px;
+  font-weight: 400;
+  text-align: center;
+}
+
+.mb-1 {
+  margin-bottom: 2px;
+}
+
+.badge {
+  width: fit-content;
+  padding: 6px 14px;
+  border-radius: 16px;
+  background-color: #121825;
+  border: 1px solid #313E62;
+  font-size: 18px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.center-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.center-cell {
+  text-align: center;
+}
+</style>
+
+<div class="my-9">
+  <div class="container tac">
+    <h1 class="h1 color-white mb-3">{{ t.title }}</h1>
+    <p class="text-md color-white mb-6">{{ t.body1 }} <span class="color-secondary">{{ amount }}</span> {{ t.body2 }} <span class="color-secondary">BotHub.chat</span> {{ t.body3 }}</p>
+    
+    <table class="center-table color-white mb-2">
+      <tr>
+        <td class="center-cell">
+          <p class="badge-container-text" style="margin-bottom: 2px;">{{ t.codeText }}</p>
+          <p class="badge">{{ code }}</p>
+        </td>
+      </tr>
+    </table>
+    
+    <p><span class="color-secondary"> {{ t.promptText }} </span><a class="color-secondary" href="{{config.frontendAddress}}{{config.locale}}/profile/gift-certificate">BotHub.chat</a></p>
+    
+    <table class="center-table color-white mt-4">
+      <tr>
+        <td class="center-cell">
+          <p class="badge-container-text mb-1">{{ t.forWhoText }}</p>
+          <p class="badge mb-2">{{ recipient_name }}</p>
+          {{#if message}}
+          <p class="badge-container-text mb-1">{{ t.messageText }}</p>
+          <p class="badge mb-6">{{ message }}</p>
+          {{/if}}
+        </td>
+      </tr>
+    </table>
+    
+    <h2 class="h2 color-white mb-3">{{ t.bottomText1 }}</h2>
+    <p class="text-md color-white">{{ t.bottomText2 }}</p>
+    <div class="my-4"><a href="{{config.frontendAddress}}{{config.locale}}/profile" class="button">{{ t.auth }}</a></div>
+  </div>
+</div>
+
+{{#if_eq config.locale 'ru'}}
+<hr />
+{{/if_eq}}

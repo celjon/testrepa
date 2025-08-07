@@ -1,12 +1,22 @@
 import { AdapterParams } from '@/adapter/types'
 import { logger } from '@/lib/logger'
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 import { BaseError } from '@/domain/errors'
 import { APIError } from 'openai'
-import { ChatCompletionMessageToolCall, ChatCompletionTool, ChatCompletionToolChoiceOption } from 'openai/resources'
+import {
+  ChatCompletionMessageToolCall,
+  ChatCompletionTool,
+  ChatCompletionToolChoiceOption,
+} from 'openai/resources'
 import { ModelUsage } from '../types'
 
-const allowedSettings = ['temperature', 'presence_penalty', 'max_tokens', 'top_p', 'frequency_penalty']
+const allowedSettings = [
+  'temperature',
+  'presence_penalty',
+  'max_tokens',
+  'top_p',
+  'frequency_penalty',
+]
 
 type Message = {
   role: string
@@ -72,41 +82,41 @@ export const buildSync = (params: Params): Sync => {
         messages: [
           {
             role: 'system',
-            content: settings.system_prompt ?? ''
+            content: settings.system_prompt ?? '',
           },
           ...messages.map((message) => ({
             content: message.content ?? '',
-            role: message.role as 'user'
-          }))
+            role: message.role as 'user',
+          })),
         ],
         ...clearedSettings,
-        user: endUserId
+        user: endUserId,
       })
 
       const result = completion.choices[0].message
       const message: Message = {
         role: result.role,
-        content: result.content ?? ''
+        content: result.content ?? '',
       }
 
       return {
         message,
         response: message,
         tool_calls: result.tool_calls,
-        usage: completion.usage ?? null
+        usage: completion.usage ?? null,
       }
     } catch (error) {
       if (error instanceof APIError) {
         logger.error({
           location: 'gptGateway.sync ',
           message: `${error.message}`,
-          openaiKey: error.headers?.['Authorization']?.slice(0, 42)
+          openaiKey: error.headers?.['Authorization']?.slice(0, 42),
         })
 
         throw new BaseError({
           httpStatus: error.status,
           message: error.message,
-          code: error.code ?? undefined
+          code: error.code ?? undefined,
         })
       }
 

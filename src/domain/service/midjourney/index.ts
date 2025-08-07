@@ -11,6 +11,6 @@ export const buildMidjourneyService = (params: Params): MidjourneyService => {
   const moderate = buildModerate(params)
 
   return {
-    moderate
+    moderate,
   }
 }

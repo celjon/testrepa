@@ -8,7 +8,10 @@ import { buildGetSEOArticleProofreading, GetSEOArticleProofreading } from './get
 import { buildUpdateSEOArticleProofreading, UpdateSEOArticleProofreading } from './update'
 import { buildCreateSEOArticleProofreading, CreateSEOArticleProofreading } from './create'
 import { buildDeleteSEOArticleProofreading, DeleteSEOArticleProofreading } from './delete'
-import { buildCreateManySEOArticleProofreading, CreateManySEOArticleProofreading } from './create-many'
+import {
+  buildCreateManySEOArticleProofreading,
+  CreateManySEOArticleProofreading,
+} from './create-many'
 
 type Params = Pick<DeliveryParams, 'seoArticleProofreading' | 'middlewares'>
 
@@ -26,7 +29,7 @@ const buildRegisterRoutes = (methods: SEOArticleProofreadingMethods, middlewares
     createSEOArticleProofreadingRules,
     createManySEOArticleProofreadingRules,
     updateSEOArticleProofreadingRules,
-    deleteSEOArticleProofreadingRules
+    deleteSEOArticleProofreadingRules,
   } = buildSEOArticleProofreadingRules(middlewares)
   return (root: Express.Router) => {
     const namespace = Express.Router()
@@ -52,7 +55,11 @@ const buildRegisterRoutes = (methods: SEOArticleProofreadingMethods, middlewares
      *             schema:
      *               $ref: '#/components/entities/SEOArticleProofreading'
      */
-    namespace.get('/:seoArticleProofreadingId', getSEOArticleProofreadingRules, createRouteHandler(methods.getSEOArticleProofreading))
+    namespace.get(
+      '/:seoArticleProofreadingId',
+      getSEOArticleProofreadingRules,
+      createRouteHandler(methods.getSEOArticleProofreading),
+    )
 
     /**
      * @openapi
@@ -79,7 +86,11 @@ const buildRegisterRoutes = (methods: SEOArticleProofreadingMethods, middlewares
      *             schema:
      *               $ref: '#/components/entities/SEOArticleProofreading'
      */
-    namespace.post('/create', createSEOArticleProofreadingRules, createRouteHandler(methods.createSEOArticleProofreading))
+    namespace.post(
+      '/create',
+      createSEOArticleProofreadingRules,
+      createRouteHandler(methods.createSEOArticleProofreading),
+    )
 
     /**
      * @openapi
@@ -106,7 +117,11 @@ const buildRegisterRoutes = (methods: SEOArticleProofreadingMethods, middlewares
      *             schema:
      *               type: string
      */
-    namespace.post('/create-many', createManySEOArticleProofreadingRules, createRouteHandler(methods.createManySEOArticleProofreading))
+    namespace.post(
+      '/create-many',
+      createManySEOArticleProofreadingRules,
+      createRouteHandler(methods.createManySEOArticleProofreading),
+    )
 
     /**
      * @openapi
@@ -140,7 +155,7 @@ const buildRegisterRoutes = (methods: SEOArticleProofreadingMethods, middlewares
     namespace.patch(
       '/:seoArticleProofreadingId',
       updateSEOArticleProofreadingRules,
-      createRouteHandler(methods.updateSEOArticleProofreading)
+      createRouteHandler(methods.updateSEOArticleProofreading),
     )
 
     /**
@@ -168,7 +183,7 @@ const buildRegisterRoutes = (methods: SEOArticleProofreadingMethods, middlewares
     namespace.delete(
       '/:seoArticleProofreadingId',
       deleteSEOArticleProofreadingRules,
-      createRouteHandler(methods.deleteSEOArticleProofreading)
+      createRouteHandler(methods.deleteSEOArticleProofreading),
     )
 
     root.use('/seo-article-proofreading', namespace)
@@ -189,9 +204,9 @@ export const buildSEOArticleProofreadingHandler = (params: Params): IHandler => 
         createSEOArticleProofreading,
         createManySEOArticleProofreading,
         updateSEOArticleProofreading,
-        deleteSEOArticleProofreading
+        deleteSEOArticleProofreading,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

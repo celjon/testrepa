@@ -8,8 +8,8 @@ export const buildListWithdraw = ({ adapter }: UseCaseParams): ListWithdraw => {
   return async ({ userId }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (user?.role !== Role.ADMIN) {
@@ -20,11 +20,11 @@ export const buildListWithdraw = ({ adapter }: UseCaseParams): ListWithdraw => {
       where: {
         type: TransactionType.WITHDRAW,
         status: TransactionStatus.PENDING,
-        deleted: false
+        deleted: false,
       },
       orderBy: {
-        created_at: 'desc'
-      }
+        created_at: 'desc',
+      },
     })
 
     return transactions

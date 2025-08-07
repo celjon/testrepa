@@ -16,7 +16,7 @@ export const buildCreateEnterprise = ({ enterprise }: Params): CreateEnterprise 
       tokens: req.body?.tokens,
       plan: req.body?.plan_id,
       ownerId: req.body?.owner_id,
-      userId: req.user?.id
+      userId: req.user?.id,
     })
 
     return res.status(200).json(data)

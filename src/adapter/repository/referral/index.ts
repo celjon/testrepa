@@ -4,13 +4,15 @@ import { buildDelete, Delete } from './delete'
 import { buildGet, Get } from './get'
 import { buildList, List } from './list'
 import { buildUpdate, Update } from './update'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
+import { buildListWithStats, ListWithStats } from './list-with.stats'
 
 type Params = Pick<AdapterParams, 'db'>
 
 export type ReferralRepository = {
   create: Create
   list: List
+  listWithStats: ListWithStats
   delete: Delete
   get: Get
   update: Update
@@ -26,9 +28,10 @@ export const buildReferralRepository = (params: Params): ReferralRepository => {
   return {
     create,
     list,
+    listWithStats: buildListWithStats(params),
     delete: d,
     get,
     update,
-    updateMany
+    updateMany,
   }
 }

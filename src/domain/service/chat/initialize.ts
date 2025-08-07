@@ -3,7 +3,7 @@ import { ChatPlatform, IChat } from '@/domain/entity/chat'
 import { IModel } from '@/domain/entity/model'
 import { IPlan } from '@/domain/entity/plan'
 import { NotFoundError } from '@/domain/errors'
-import { IChatSettings } from '@/domain/entity/chatSettings'
+import { IChatSettings } from '@/domain/entity/chat-settings'
 import { Adapter } from '../../types'
 import { ModelService } from '../model'
 import { SettingsService } from './settings'
@@ -31,17 +31,27 @@ export const buildInitialize = ({
   modelRepository,
   modelFunctionRepository,
   settingsService,
-  modelService
+  modelService,
 }: Params): Initialize => {
-  return async ({ groupId, plan, userId, name, highlight, modelId, initial = false, platform, order }) => {
+  return async ({
+    groupId,
+    plan,
+    userId,
+    name,
+    highlight,
+    modelId,
+    initial = false,
+    platform,
+    order,
+  }) => {
     let model: IModel | null
 
     if (modelId) {
       model = await modelRepository.get({
         where: {
           id: modelId,
-          parent_id: null
-        }
+          parent_id: null,
+        },
       })
 
       if (!model) {
@@ -51,27 +61,30 @@ export const buildInitialize = ({
       model = await modelService.getDefault({ plan })
 
       if (!model) {
-        throw new NotFoundError({ code: 'DEFAULT_MODEL_NOT_FOUND', message: 'Default model not found while initializing new chat' })
+        throw new NotFoundError({
+          code: 'DEFAULT_MODEL_NOT_FOUND',
+          message: 'Default model not found while initializing new chat',
+        })
       }
     }
 
     const modelFunction = await modelFunctionRepository.get({
       where: {
         model_id: model.id,
-        is_default: true
-      }
+        is_default: true,
+      },
     })
 
     const settings: IChatSettings = await settingsService.upsert({
-      model,
-      plan
+      parentModel: model,
+      plan,
     })
 
     platform = platform === Platform.TELEGRAM ? Platform.TELEGRAM : Platform.WEB
 
     if (platform === Platform.TELEGRAM) {
       const telegramGroup = await groupRepository.get({
-        where: { id: 'telegram' }
+        where: { id: 'telegram' },
       })
 
       if (!telegramGroup) {
@@ -80,8 +93,8 @@ export const buildInitialize = ({
             id: 'telegram',
             name: 'Telegram',
             user_id: userId,
-            order: 0
-          }
+            order: 0,
+          },
         })
       }
 
@@ -96,16 +109,16 @@ export const buildInitialize = ({
         highlight,
         model_id: model.id,
         ...(modelFunction && {
-          model_function_id: modelFunction.id
+          model_function_id: modelFunction.id,
         }),
         initial,
         settings: {
           connect: {
-            id: settings.id
-          }
+            id: settings.id,
+          },
         },
         platform,
-        order
+        order,
       },
       include: {
         model: true,
@@ -115,10 +128,10 @@ export const buildInitialize = ({
             image: true,
             speech: true,
             replicateImage: true,
-            mj: true
-          }
-        }
-      }
+            mj: true,
+          },
+        },
+      },
     })
 
     return chat

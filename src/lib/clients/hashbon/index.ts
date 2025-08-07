@@ -9,13 +9,13 @@ type Params = {
 
 export const newClient = ({
   shopId,
-  secretKey
+  secretKey,
 }: Params): {
   client: HashbonClient
 } => {
   const apiUrl = 'https://hashbon.io/api/v1/invoices/'
   const api = axios.create({
-    baseURL: apiUrl
+    baseURL: apiUrl,
   })
   api.interceptors.request.use((config) => {
     config.headers['Content-Type'] = 'application/json'
@@ -46,17 +46,17 @@ export const newClient = ({
         data?: { result: Invoice }
       }>('/create/fromdata', jsonData, {
         headers: {
-          Sign: sign
-        }
+          Sign: sign,
+        },
       })
       if (result.data.type !== 'success') {
         throw result.data.text
       }
       return result.data.data!.result
-    }
+    },
   }
   return {
-    client
+    client,
   }
 }
 

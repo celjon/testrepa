@@ -11,7 +11,13 @@ type Params = UseCaseParams & {
   getChildModel: GetChildModel
 }
 
-export type GenerateSubject = (params: { model_id: string; locale: string; generationMode: string; userId: string }) => Promise<{
+export type GenerateSubject = (params: {
+  model_id: string
+  locale: string
+  generationMode: string
+  userId: string
+  developerKeyId?: string
+}) => Promise<{
   responseStream$: Observable<{
     status: 'pending' | 'done'
     contentDelta: string
@@ -21,8 +27,11 @@ export type GenerateSubject = (params: { model_id: string; locale: string; gener
   closeStream: () => void
 }>
 
-export const buildGenerateSubject = ({ handleResponseStream, getChildModel }: Params): GenerateSubject => {
-  return async ({ model_id, locale, generationMode, userId }) => {
+export const buildGenerateSubject = ({
+  handleResponseStream,
+  getChildModel,
+}: Params): GenerateSubject => {
+  return async ({ model_id, locale, generationMode, userId, developerKeyId }) => {
     const prompt = dedent`
       You are a helpful assistant who writes a subject for an article. The subject must be a concise and clear statement that captures the article's main idea. It must be written in a way that is easy to understand and engaging for the reader. 
 
@@ -44,7 +53,7 @@ export const buildGenerateSubject = ({ handleResponseStream, getChildModel }: Pa
 
     const { model, subscription, employee } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
 
     return handleResponseStream({
@@ -55,8 +64,9 @@ export const buildGenerateSubject = ({ handleResponseStream, getChildModel }: Pa
       employee,
       settings: {
         temperature: 1,
-        system_prompt: prompt
-      }
+        system_prompt: prompt,
+      },
+      developerKeyId,
     })
   }
 }

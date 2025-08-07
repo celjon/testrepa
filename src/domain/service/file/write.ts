@@ -16,19 +16,19 @@ export const buildWrite = ({ storageGateway, cryptoGateway }: Adapter): Write =>
     if (dek) {
       bufferToStore = await cryptoGateway.encryptBytes({
         data: buffer,
-        dek
+        dek,
       })
       isEncrypted = true
     }
 
     const written = await storageGateway.write({
       buffer: bufferToStore,
-      ext
+      ext,
     })
 
     return {
       ...written,
-      isEncrypted
+      isEncrypted,
     }
   }
 }

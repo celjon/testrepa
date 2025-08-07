@@ -23,7 +23,7 @@ export const buildInit =
           clusterGateway.emit('job-stop', workers, jobId)
 
           const job = await get({
-            id: jobId
+            id: jobId,
           })
 
           if (!job) {
@@ -31,27 +31,27 @@ export const buildInit =
           }
 
           job.stop({
-            type: 'job'
+            type: 'job',
           })
         },
-        workers
+        workers,
       )
 
       await jobRepository.updateMany({
         where: {
           status: {
-            in: [JobStatus.CREATED, JobStatus.PENDING]
-          }
+            in: [JobStatus.CREATED, JobStatus.PENDING],
+          },
         },
         data: {
-          status: JobStatus.DONE
-        }
+          status: JobStatus.DONE,
+        },
       })
     }
     if (cluster.isWorker) {
       clusterGateway.on('job-stop', async (jobId) => {
         const job = await get({
-          id: jobId
+          id: jobId,
         })
 
         if (!job) {
@@ -59,7 +59,7 @@ export const buildInit =
         }
 
         job.stop({
-          type: 'job'
+          type: 'job',
         })
       })
     }

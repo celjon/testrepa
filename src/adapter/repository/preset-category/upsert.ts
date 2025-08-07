@@ -1,10 +1,12 @@
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
-import { IPresetCategory } from '@/domain/entity/presetCategory'
+import { IPresetCategory } from '@/domain/entity/preset-category'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Upsert = (data?: Prisma.PresetCategoryUpsertArgs) => Promise<IPresetCategory | null | never>
+export type Upsert = (
+  data?: Prisma.PresetCategoryUpsertArgs,
+) => Promise<IPresetCategory | null | never>
 
 export const buildUpsert = ({ db }: Params): Upsert => {
   return async (data) => {

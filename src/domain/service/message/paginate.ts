@@ -26,7 +26,7 @@ export const buildPaginate = ({ messageStorage }: Params): Paginate => {
     if (typeof page != 'undefined' && page < 1) {
       return {
         data: [],
-        pages: 0
+        pages: 0,
       }
     }
 
@@ -36,12 +36,12 @@ export const buildPaginate = ({ messageStorage }: Params): Paginate => {
       data: {
         ...query,
         ...(page && { skip: (page - 1) * quantity }),
-        ...(page && { take: quantity })
-      }
+        ...(page && { take: quantity }),
+      },
     })
 
     return {
-      data
+      data,
     }
   }
 }

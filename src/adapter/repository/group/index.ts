@@ -5,8 +5,8 @@ import { buildList, List } from './list'
 import { buildDelete, Delete } from './delete'
 import { buildCount, Count } from './count'
 import { buildUpdate, Update } from './update'
-import { buildUpdateMany, UpdateMany } from './updateMany'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
+import { buildDeleteMany, DeleteMany } from './delete-many'
 
 type Params = Pick<AdapterParams, 'db'>
 
@@ -38,6 +38,6 @@ export const buildGroupRepository = (params: Params): GroupRepository => {
     deleteMany,
     updateMany,
     count,
-    update
+    update,
   }
 }

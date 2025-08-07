@@ -24,7 +24,7 @@ export const buildShortcutRules = ({ authRequired, validateSchema }: Middlewares
     check('name').exists().isString().not().isEmpty(),
     check('text').exists().isString().not().isEmpty(),
     check('autosend').exists().isBoolean(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -49,7 +49,7 @@ export const buildShortcutRules = ({ authRequired, validateSchema }: Middlewares
     check('name').optional().isString().not().isEmpty(),
     check('text').optional().isString().not().isEmpty(),
     check('autosend').optional().isBoolean(),
-    validateSchema
+    validateSchema,
   ]
 
   const listShortcutRules = [authRequired()]
@@ -60,6 +60,6 @@ export const buildShortcutRules = ({ authRequired, validateSchema }: Middlewares
     createRules,
     updateRules,
     listShortcutRules,
-    deleteShortcutRules
+    deleteShortcutRules,
   }
 }

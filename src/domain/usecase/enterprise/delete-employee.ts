@@ -4,25 +4,28 @@ import { IEmployee } from '@/domain/entity/employee'
 import { IPlan } from '@/domain/entity/plan'
 import { ForbiddenError, InternalError, NotFoundError } from '@/domain/errors'
 
-export type DeleteEmployee = (data: { employeeId: string; userId: string }) => Promise<IEmployee | never>
+export type DeleteEmployee = (data: {
+  employeeId: string
+  userId: string
+}) => Promise<IEmployee | never>
 export const buildDeleteEmployee = ({ adapter }: UseCaseParams): DeleteEmployee => {
   return async ({ employeeId, userId }) => {
     const employee = await adapter.employeeRepository.get({
       where: {
-        id: employeeId
+        id: employeeId,
       },
       include: {
-        user: { include: { subscription: true } }
-      }
+        user: { include: { subscription: true } },
+      },
     })
     if (!employee) {
       throw new NotFoundError({
-        code: 'EMPLOYEE_NOT_FOUND'
+        code: 'EMPLOYEE_NOT_FOUND',
       })
     }
 
     const owner = await adapter.employeeRepository.get({
-      where: { user_id: userId, enterprise_id: employee.enterprise_id }
+      where: { user_id: userId, enterprise_id: employee.enterprise_id },
     })
     if (!owner || owner.role !== EnterpriseRole.OWNER || owner.id === employeeId) {
       throw new ForbiddenError()
@@ -32,38 +35,38 @@ export const buildDeleteEmployee = ({ adapter }: UseCaseParams): DeleteEmployee 
     if (employee.user && employee.user.subscription) {
       const freePlan = (await adapter.planRepository.get({
         where: {
-          type: PlanType.FREE
-        }
+          type: PlanType.FREE,
+        },
       })) as IPlan
       const tokens = employee.user.subscription.balance
       await adapter.subscriptionRepository.update({
         where: {
-          id: employee.user.subscription.id
+          id: employee.user.subscription.id,
         },
         data: {
           balance: 0,
-          plan_id: freePlan.id
-        }
+          plan_id: freePlan.id,
+        },
       })
       if (tokens > 0) {
         const enterpriseSubscription = await adapter.subscriptionRepository.get({
           where: {
-            enterprise_id: employee.enterprise_id
-          }
+            enterprise_id: employee.enterprise_id,
+          },
         })
         await adapter.subscriptionRepository.update({
           where: {
-            id: enterpriseSubscription!.id
+            id: enterpriseSubscription!.id,
           },
           data: {
-            balance: enterpriseSubscription!.balance + tokens
-          }
+            balance: enterpriseSubscription!.balance + tokens,
+          },
         })
       }
     }
 
     const deletedEmployee = await adapter.employeeRepository.delete({
-      where: { id: employeeId }
+      where: { id: employeeId },
     })
 
     if (!deletedEmployee) {

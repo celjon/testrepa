@@ -16,11 +16,13 @@ export type GetEmployeesStatsTotalTokensUsedExcel = (data: {
   month: string | undefined
 }) => Promise<Buffer<ArrayBufferLike>>
 
-export function buildGetEmployeesStatsTotalTokensUsedExcel({ adapter }: UseCaseParams): GetEmployeesStatsTotalTokensUsedExcel {
+export function buildGetEmployeesStatsTotalTokensUsedExcel({
+  adapter,
+}: UseCaseParams): GetEmployeesStatsTotalTokensUsedExcel {
   return async ({ userId, year, month }) => {
     try {
       const user = await adapter.userRepository.get({
-        where: { id: userId }
+        where: { id: userId },
       })
       if (user!.role !== Role.ADMIN) {
         throw new ForbiddenError({ code: 'YOU_ARE_NOT_ADMIN' })
@@ -34,7 +36,7 @@ export function buildGetEmployeesStatsTotalTokensUsedExcel({ adapter }: UseCaseP
           usedTokens: bigint
           month: string
           year: string
-        }[]
+        }[],
       ): {
         name: string
         creator: string
@@ -59,7 +61,7 @@ export function buildGetEmployeesStatsTotalTokensUsedExcel({ adapter }: UseCaseP
                 name: currentName,
                 agreement_conclusion_date: currentAgreementConclusionDate,
                 creator: currentCreator,
-                usedTokensForDates: currentData
+                usedTokensForDates: currentData,
               })
             }
 
@@ -82,7 +84,7 @@ export function buildGetEmployeesStatsTotalTokensUsedExcel({ adapter }: UseCaseP
           currentData.push({
             year: entry.year,
             month: getMonthName(parseInt(entry.month)),
-            usedTokens: entry.usedTokens
+            usedTokens: entry.usedTokens,
           })
 
           if (index === data.length - 1) {
@@ -90,14 +92,39 @@ export function buildGetEmployeesStatsTotalTokensUsedExcel({ adapter }: UseCaseP
               name: currentName,
               agreement_conclusion_date: currentAgreementConclusionDate,
               creator: currentCreator,
-              usedTokensForDates: currentData
+              usedTokensForDates: currentData,
             })
           }
         })
 
         return result
       }
-      const enterprisesData = await adapter.enterpriseRepository.getAggregateEnterpriseTokensUsedForAllEnterprises(month, year)
+
+      //MIGRATION_ON_CLICKHOUSE
+      /*const enterprisesData = await adapter.enterpriseRepository.getAggregateEnterpriseTokensUsedForAllEnterprises(month, year)*/
+
+      const adminIds = (await adapter.userRepository.list({ where: { role: Role.ADMIN } })).map(
+        (u) => u.id,
+      )
+
+      const enterprises = await adapter.enterpriseRepository.list({})
+      const enterprisesData = (
+        await adapter.enterpriseRepository.chGetEnterpriseSpendsForAllEnterprises({
+          month,
+          year,
+          adminIds,
+        })
+      ).map(({ enterprise_id, usedTokens, month, year }) => {
+        const enterprise = enterprises.find((e) => e.id === enterprise_id)
+        return {
+          name: enterprise?.name ?? 'UNDEFINED',
+          creator: enterprise?.creator ?? 'USER',
+          agreement_conclusion_date: enterprise?.agreement_conclusion_date ?? null,
+          usedTokens: BigInt(Math.round(usedTokens)),
+          month,
+          year,
+        }
+      })
 
       if (enterprisesData.length === 0) {
         logger.info('No transactions found for the given period.')
@@ -107,16 +134,16 @@ export function buildGetEmployeesStatsTotalTokensUsedExcel({ adapter }: UseCaseP
               usedTokensForDates: [{ year: year ?? '', month: month ?? '', usedTokens: 0n }],
               name: 'данные за данный период',
               creator: 'отсутствуют',
-              agreement_conclusion_date: ''
-            }
-          ]
+              agreement_conclusion_date: '',
+            },
+          ],
         })
         return emptyExcelDocument
       }
 
       const stats = transformData(enterprisesData)
       const excelDocument = adapter.excelGateway.createExcelStatsForAllEnterprises({
-        params: stats
+        params: stats,
       })
       return excelDocument
     } catch (error) {
@@ -126,7 +153,12 @@ export function buildGetEmployeesStatsTotalTokensUsedExcel({ adapter }: UseCaseP
   }
 }
 
-function addMissingMonths(firstYear: number, firstMonth: number, startYear: number, startMonth: number): UsedTokensForDates[] {
+function addMissingMonths(
+  firstYear: number,
+  firstMonth: number,
+  startYear: number,
+  startMonth: number,
+): UsedTokensForDates[] {
   const filledDates: UsedTokensForDates[] = []
   let currentYear = startYear
   let currentMonth = startMonth

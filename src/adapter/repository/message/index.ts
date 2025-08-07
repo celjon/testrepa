@@ -1,12 +1,12 @@
 import { AdapterParams } from '@/adapter/types'
 import { buildCreate, Create } from './create'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 import { buildUpdate, Update } from './update'
 import { buildList, List } from './list'
 import { buildCount, Count } from './count'
 import { buildGet, Get } from './get'
 import { buildDelete, Delete } from './delete'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
+import { buildDeleteMany, DeleteMany } from './delete-many'
 import { buildCreateReport, CreateReport } from '@/adapter/repository/message/report/create'
 import { buildDeleteReport, DeleteReport } from '@/adapter/repository/message/report/delete'
 import { buildListReport, ListReport } from '@/adapter/repository/message/report/list'
@@ -51,6 +51,6 @@ export const buildMessageRepository = (params: Params): MessageRepository => {
     deleteMany,
     createReport,
     deleteReport,
-    listReport
+    listReport,
   }
 }

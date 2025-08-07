@@ -1,4 +1,8 @@
-export async function runWithConcurrencyLimit<T, R>(poolLimit: number, array: T[], iteratorFn: (item: T) => Promise<R>): Promise<R[]> {
+export async function runWithConcurrencyLimit<T, R>(
+  poolLimit: number,
+  array: T[],
+  iteratorFn: (item: T) => Promise<R>,
+): Promise<R[]> {
   const ret: Promise<R>[] = []
   const executing: Promise<void>[] = []
   for (const item of array) {
@@ -12,7 +16,7 @@ export async function runWithConcurrencyLimit<T, R>(poolLimit: number, array: T[
       await Promise.race(executing)
       executing.splice(
         executing.findIndex((x) => x === e),
-        1
+        1,
       )
     }
   }

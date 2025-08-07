@@ -65,6 +65,6 @@ export const buildChatUseCase = (params: UseCaseParams): ChatUseCase => {
     stream,
     getJobs,
     stop,
-    move
+    move,
   }
 }

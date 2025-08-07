@@ -9,7 +9,8 @@ export const buildImagesCreate = ({ openai }: Params): ImagesCreate => {
   return async (req, res) => {
     const data = await openai.images.create({
       userId: req.user?.id,
-      params: req.body
+      params: req.body,
+      developerKeyId: req.user?.developerKeyId,
     })
 
     return res.status(200).json(data)

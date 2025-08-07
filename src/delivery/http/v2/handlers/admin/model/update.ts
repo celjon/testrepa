@@ -11,7 +11,7 @@ export const buildModelUpdate = ({ model }: Params): ModelUpdate => {
       userId: req.user?.id,
       modelId: req.body.modelId,
       label: req.body.label,
-      description: req.body.description
+      description: req.body.description,
     })
 
     res.status(200).json(data)

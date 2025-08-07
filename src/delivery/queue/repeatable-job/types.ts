@@ -5,5 +5,5 @@ export type Scheduler = (
     cronExpression: string
     jobId: string
   },
-  handler: RepeatableJobHandler
+  handler: RepeatableJobHandler,
 ) => void

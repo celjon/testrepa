@@ -7,6 +7,22 @@ type Params = Pick<DeliveryParams, 'fileRepository'> & {
   minioClient: Client
 }
 
+const filterUnlinkedObjects = async (
+  fileRepository: Params['fileRepository'],
+  batch: { name: string; versionId: string | null }[],
+) => {
+  const files = await fileRepository.list({
+    where: {
+      path: {
+        in: [...new Set(batch.map((obj) => obj.name))],
+      },
+    },
+    select: { path: true },
+  })
+  const filesSet = new Set(files.filter((file) => !!file.path).map((file) => file.path))
+  return batch.filter((obj) => !filesSet.has(obj.name))
+}
+
 export const buildDeleteStaleObjects =
   ({ minioClient, fileRepository }: Params) =>
   async () => {
@@ -20,13 +36,13 @@ export const buildDeleteStaleObjects =
       if (!(await minioClient.bucketExists(bucketName))) {
         logger.error({
           location: 'deleteStaleObjects',
-          message: `Bucket ${bucketName} does not exist`
+          message: `Bucket ${bucketName} does not exist`,
         })
         return
       }
 
       const objectsIterator = minioClient.listObjects(bucketName, instanceFolder, true, {
-        IncludeVersion: true
+        IncludeVersion: true,
       })
 
       let objects: {
@@ -64,7 +80,7 @@ export const buildDeleteStaleObjects =
 
         objects.push({
           name: obj.name,
-          versionId: obj.versionId
+          versionId: obj.versionId,
         })
 
         if (objects.length < filesBatchSize) {
@@ -74,24 +90,8 @@ export const buildDeleteStaleObjects =
         const objectsInBatch = [...objects]
         objects = []
 
-        const files = await fileRepository.list({
-          where: {
-            path: {
-              in: [...new Set(objectsInBatch.map((obj) => obj.name))]
-            }
-          },
-          select: { path: true }
-        })
-        const filesSet = new Set(files.filter((file) => !!file.path).map((file) => file.path))
-
-        for (const obj of objectsInBatch) {
-          if (!filesSet.has(obj.name)) {
-            objectsToRemove.push({
-              name: obj.name,
-              versionId: obj.versionId
-            })
-          }
-        }
+        const filtered = await filterUnlinkedObjects(fileRepository, objectsInBatch)
+        objectsToRemove.push(...filtered)
 
         while (objectsToRemove.length >= deleteBatchSize) {
           const batchToRemove = objectsToRemove.slice(0, deleteBatchSize)
@@ -100,7 +100,7 @@ export const buildDeleteStaleObjects =
           const deleted = await deleteMinioObjects(minioClient, bucketName, batchToRemove)
           logger.info({
             location: 'deleteStaleObjects',
-            message: `Deleted ${deleted} objects`
+            message: `Deleted ${deleted} objects`,
           })
         }
 
@@ -108,22 +108,27 @@ export const buildDeleteStaleObjects =
           break
         }
       }
+      if (objects.length > 0) {
+        const objectsInBatch = [...objects]
 
-      if (objectsToRemove.length >= 0) {
+        const filtered = await filterUnlinkedObjects(fileRepository, objectsInBatch)
+        objectsToRemove.push(...filtered)
+      }
+      if (objectsToRemove.length > 0) {
         const deleted = await deleteMinioObjects(minioClient, bucketName, objectsToRemove)
         logger.info({
           location: 'deleteStaleObjects',
-          message: `Deleted ${deleted} objects`
+          message: `Deleted ${deleted} objects`,
         })
       }
       logger.info({
         location: 'deleteStaleObjects',
-        message: `Processed ${processedObjectsCount} objects`
+        message: `Processed ${processedObjectsCount} objects`,
       })
     } catch (err) {
       logger.error({
         location: 'deleteStaleObjects',
-        message: err
+        message: err,
       })
     }
   }
@@ -131,44 +136,25 @@ export const buildDeleteStaleObjects =
 export const deleteMinioObjects = async (
   client: Client,
   bucketName: string,
-  batch: {
-    name: string
-    versionId: string | null
-  }[]
+  batch: { name: string; versionId: string | null }[],
 ) => {
-  let deleted = 0
+  const deleteResults = await Promise.all(
+    batch.map(async (obj) => {
+      try {
+        await client.removeObject(bucketName, obj.name, {
+          versionId: obj.versionId ?? undefined,
+          forceDelete: true,
+        })
+        return true
+      } catch (err) {
+        logger.error({
+          location: 'deleteStaleObjects',
+          message: `Failed to remove ${obj.versionId ? `version ${obj.versionId} of ` : ''}${obj.name}: ${err}`,
+        })
+        return false
+      }
+    }),
+  )
 
-  const deletePromises = batch.map((obj) => {
-    if (obj.versionId) {
-      return client
-        .removeObject(bucketName, obj.name, { versionId: obj.versionId, forceDelete: true })
-        .then(() => {
-          deleted++
-        })
-        .catch((err) => {
-          logger.error({
-            location: 'deleteStaleObjects',
-            message: `Failed to remove version ${obj.versionId} of ${obj.name}: ${err}`
-          })
-        })
-    } else {
-      return client
-        .removeObject(bucketName, obj.name, {
-          forceDelete: true
-        })
-        .then(() => {
-          deleted++
-        })
-        .catch((err) => {
-          logger.error({
-            location: 'deleteStaleObjects',
-            message: `Failed to remove ${obj.name}: ${err}`
-          })
-        })
-    }
-  })
-
-  await Promise.all(deletePromises)
-
-  return deleted
+  return deleteResults.filter(Boolean).length
 }

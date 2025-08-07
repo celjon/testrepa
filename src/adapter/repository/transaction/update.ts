@@ -4,7 +4,9 @@ import { AdapterParams } from '@/adapter/types'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type UpdateTransaction = (data: Prisma.TransactionUpdateArgs) => Promise<ITransaction | never>
+export type UpdateTransaction = (
+  data: Prisma.TransactionUpdateArgs,
+) => Promise<ITransaction | never>
 
 export const buildUpdateTransaction = ({ db }: Params): UpdateTransaction => {
   return async (data) => {

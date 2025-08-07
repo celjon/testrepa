@@ -6,10 +6,12 @@ type Params = Pick<DeliveryParams, 'seoArticleProofreading'>
 
 export type DeleteSEOArticleProofreading = (req: AuthRequest, res: Response) => Promise<void>
 
-export const buildDeleteSEOArticleProofreading = ({ seoArticleProofreading }: Params): DeleteSEOArticleProofreading => {
+export const buildDeleteSEOArticleProofreading = ({
+  seoArticleProofreading,
+}: Params): DeleteSEOArticleProofreading => {
   return async (req, res) => {
     const result = await seoArticleProofreading.deleteSEOArticleProofreading({
-      id: req.params.seoArticleProofreadingId
+      id: req.params.seoArticleProofreadingId,
     })
 
     res.status(200).json(result)

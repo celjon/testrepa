@@ -1,7 +1,7 @@
 import { Field, ID, ObjectType } from 'type-graphql'
 import { Referral } from '@prisma/client'
-import { IReferralParticipant, ReferralParticipantGraphQLObject } from './referralParticipant'
-import { IReferralTemplate, ReferralTemplateGraphQLObject } from './referralTemplate'
+import { IReferralParticipant, ReferralParticipantGraphQLObject } from './referral-participant'
+import { IReferralTemplate, ReferralTemplateGraphQLObject } from './referral-template'
 import { ITransaction, TransactionGraphQLObject } from './transaction'
 import { IUser, UserGraphQLObject } from './user'
 

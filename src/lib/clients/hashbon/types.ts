@@ -18,6 +18,7 @@ export type CreateInvoiceParams = {
   invoiceCurrency?: string
   receiveCurrency?: string
   receipt?: Receipt[]
+  successUrl?: string
 }
 
 export type Invoice = {

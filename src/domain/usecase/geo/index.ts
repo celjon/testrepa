@@ -9,6 +9,6 @@ export const buildGeoUseCase = (params: UseCaseParams): GeoUseCase => {
   const get = buildGet(params)
 
   return {
-    get
+    get,
   }
 }

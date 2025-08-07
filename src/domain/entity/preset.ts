@@ -2,8 +2,8 @@ import { Field, ID, ObjectType } from 'type-graphql'
 import { Preset, PresetAccess } from '@prisma/client'
 import { IModel, ModelGraphQLObject } from './model'
 import { IUser, UserGraphQLObject } from './user'
-import { IPresetCategory, PresetCategoryGraphQLObject } from './presetCategory'
-import { IPresetAttachment, PresetAttachmentGraphQLObject } from './presetAttachment'
+import { IPresetCategory, PresetCategoryGraphQLObject } from './preset-category'
+import { IPresetAttachment, PresetAttachmentGraphQLObject } from './preset-attachment'
 
 /**
  * @openapi

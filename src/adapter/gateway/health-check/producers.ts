@@ -7,20 +7,21 @@ export const buildOnMemoryUsageRequest = (): MetricSources['MEMORY_USAGE'] => ()
     isPrimary: cluster.isPrimary,
     heapUsedBytes: used.heapUsed, // Your app data
     heapTotalBytes: used.heapTotal, // V8 reserved
-    rssBytes: used.rss // Total process size
+    rssBytes: used.rss, // Total process size
   }
 }
 
 export const buildOnEventLoopLagRequest = (): MetricSources['EVENT_LOOP_LAG'] => () => {
   return {
     isPrimary: cluster.isPrimary,
-    lag: 42
+    lag: 42,
   }
 }
 
-export const buildOnEventLoopUtilizationRequest = (): MetricSources['EVENT_LOOP_UTILIZATION'] => () => {
-  return {
-    isPrimary: cluster.isPrimary,
-    utilization: 42
+export const buildOnEventLoopUtilizationRequest =
+  (): MetricSources['EVENT_LOOP_UTILIZATION'] => () => {
+    return {
+      isPrimary: cluster.isPrimary,
+      utilization: 42,
+    }
   }
-}

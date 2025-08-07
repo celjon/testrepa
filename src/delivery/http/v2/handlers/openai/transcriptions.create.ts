@@ -15,7 +15,7 @@ export const buildTranscriptionsCreate = ({ openai }: Params): TranscriptionsCre
       throw new InvalidDataError({
         httpStatus: 403,
         message: 'Audio file not transferred',
-        code: 'FILE_NOT_TRANSFERRED'
+        code: 'FILE_NOT_TRANSFERRED',
       })
     }
 
@@ -37,8 +37,9 @@ export const buildTranscriptionsCreate = ({ openai }: Params): TranscriptionsCre
         prompt: req.body.prompt,
         response_format: req.body.response_format,
         temperature: req.body.temperature,
-        timestamp_granularities: req.body.timestamp_granularities
-      }
+        timestamp_granularities: req.body.timestamp_granularities,
+      },
+      developerKeyId: req.user.developerKeyId,
     })
 
     return res.status(200).json(data)

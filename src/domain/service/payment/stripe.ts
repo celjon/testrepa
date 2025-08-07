@@ -9,7 +9,7 @@ export const buildStripe = ({ paymentGateway }: Adapter): Stripe => {
 
     return {
       id: result.id,
-      url: result.url as string
+      url: result.url as string,
     }
   }
 }

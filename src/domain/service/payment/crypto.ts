@@ -8,6 +8,6 @@ export const buildCrypto = ({ paymentGateway }: Adapter): Crypto => {
   }
 
   return {
-    createPayment: createPayment
+    createPayment: createPayment,
   }
 }

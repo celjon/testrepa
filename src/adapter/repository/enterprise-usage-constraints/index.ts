@@ -16,7 +16,9 @@ export type EnterpriseUsageConstraintsRepository = {
   list: List
   count: Count
 }
-export const buildEnterpriseUsageConstraintsRepository = (params: Params): EnterpriseUsageConstraintsRepository => {
+export const buildEnterpriseUsageConstraintsRepository = (
+  params: Params,
+): EnterpriseUsageConstraintsRepository => {
   const create = buildCreate(params)
   const get = buildGet(params)
   const update = buildUpdate(params)
@@ -30,6 +32,6 @@ export const buildEnterpriseUsageConstraintsRepository = (params: Params): Enter
     update,
     delete: deleteEnterpriseUsageConstraints,
     list,
-    count
+    count,
   }
 }

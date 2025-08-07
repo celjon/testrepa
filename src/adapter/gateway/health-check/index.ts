@@ -1,7 +1,11 @@
 import cluster from 'node:cluster'
 import type { AdapterParams } from '@/adapter/types'
 import type { ClusterGateway } from '../cluster'
-import { buildOnEventLoopLagRequest, buildOnEventLoopUtilizationRequest, buildOnMemoryUsageRequest } from './producers'
+import {
+  buildOnEventLoopLagRequest,
+  buildOnEventLoopUtilizationRequest,
+  buildOnMemoryUsageRequest,
+} from './producers'
 import { IHealthCheckEvent, MetricSources } from './types'
 import { buildGetMetricFromCluster } from './get-metric-from-cluster'
 
@@ -19,7 +23,7 @@ export const buildHealthCheckGateway = ({ db, clusterGateway }: Params) => {
   const metricSources: MetricSources = {
     MEMORY_USAGE: onMemoryUsageRequest,
     EVENT_LOOP_LAG: onEventLoopLagRequest,
-    EVENT_LOOP_UTILIZATION: onEventLoopUtilizationRequest
+    EVENT_LOOP_UTILIZATION: onEventLoopUtilizationRequest,
   }
 
   const pendingRequests = new Map<string, (event: IHealthCheckEvent) => void>()
@@ -41,7 +45,7 @@ export const buildHealthCheckGateway = ({ db, clusterGateway }: Params) => {
                 if (targetWorker.id !== requestingWorkerId) {
                   clusterGateway.emit('health-check', targetWorker, {
                     ...event,
-                    type: 'primary:collectMetrics'
+                    type: 'primary:collectMetrics',
                   })
                 }
               }
@@ -57,8 +61,8 @@ export const buildHealthCheckGateway = ({ db, clusterGateway }: Params) => {
                   targetWorkerId: requestingWorkerId,
                   metric: {
                     name: event.metric.name,
-                    data: metricSources[event.metric.name]()
-                  }
+                    data: metricSources[event.metric.name](),
+                  },
                 } as IHealthCheckEvent)
               }
             } else if (event.type === 'worker:metricsResponse') {
@@ -68,12 +72,12 @@ export const buildHealthCheckGateway = ({ db, clusterGateway }: Params) => {
               if (requestingWorker) {
                 clusterGateway.emit('health-check', requestingWorker, {
                   ...event,
-                  type: 'primary:metricsResponse'
+                  type: 'primary:metricsResponse',
                 })
               }
             }
           },
-          workersToListen
+          workersToListen,
         )
       } else {
         // Handle messages from primary
@@ -88,8 +92,8 @@ export const buildHealthCheckGateway = ({ db, clusterGateway }: Params) => {
               targetWorkerId: event.sourceWorkerId,
               metric: {
                 name: event.metric.name,
-                data: metricSources[event.metric.name]()
-              }
+                data: metricSources[event.metric.name](),
+              },
             } as IHealthCheckEvent)
           }
           if (event.type === 'primary:metricsResponse') {
@@ -106,26 +110,26 @@ export const buildHealthCheckGateway = ({ db, clusterGateway }: Params) => {
       await db.client.$executeRaw`SELECT 1;`
       return {
         status: 'ok',
-        message: 'Database connection is healthy'
+        message: 'Database connection is healthy',
       }
     },
     getEventLoopLag: buildGetMetricFromCluster({
       clusterGateway,
       pendingRequests,
       metricSource: metricSources.EVENT_LOOP_LAG,
-      metricName: 'EVENT_LOOP_LAG'
+      metricName: 'EVENT_LOOP_LAG',
     }),
     getEventLoopUtilization: buildGetMetricFromCluster({
       clusterGateway,
       pendingRequests,
       metricSource: metricSources.EVENT_LOOP_UTILIZATION,
-      metricName: 'EVENT_LOOP_UTILIZATION'
+      metricName: 'EVENT_LOOP_UTILIZATION',
     }),
     getMemoryUsage: buildGetMetricFromCluster({
       clusterGateway,
       pendingRequests,
       metricSource: metricSources.MEMORY_USAGE,
-      metricName: 'MEMORY_USAGE'
-    })
+      metricName: 'MEMORY_USAGE',
+    }),
   }
 }

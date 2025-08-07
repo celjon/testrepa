@@ -12,29 +12,33 @@ export const newClient = ({
   botToken,
   chatId,
   replyToMessageId,
-  defaultMessageThreadId
+  defaultMessageThreadId,
 }: Params): {
   client: TgBotClient
 } => {
   const bot = new TelegramBot(botToken, { polling: false })
 
   const client: TgBotClient = {
-    sendMessage: async (message, parseMode = TgBotParseMode.MARKDOWN, messageThreadId: number | undefined = defaultMessageThreadId) => {
+    sendMessage: async (
+      message,
+      parseMode = TgBotParseMode.MARKDOWN,
+      messageThreadId: number | undefined = defaultMessageThreadId,
+    ) => {
       await bot.sendMessage(chatId, message, {
         ...(parseMode === TgBotParseMode.MARKDOWN && {
-          parse_mode: 'MarkdownV2'
+          parse_mode: 'MarkdownV2',
         }),
         ...(parseMode === TgBotParseMode.HTML && {
-          parse_mode: 'HTML'
+          parse_mode: 'HTML',
         }),
         reply_to_message_id: replyToMessageId,
-        message_thread_id: messageThreadId
+        message_thread_id: messageThreadId,
       })
-    }
+    },
   }
 
   return {
-    client
+    client,
   }
 }
 

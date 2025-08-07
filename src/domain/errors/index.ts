@@ -13,8 +13,8 @@ export class BaseError extends Error {
 
   constructor(
     { message = '', data, code, httpStatus }: ErrorCreateParams = {
-      message: ''
-    }
+      message: '',
+    },
   ) {
     super(message)
     this.message = message
@@ -65,7 +65,7 @@ export class BanedUserError extends BaseError {
     super({
       ...data,
       message: data?.message ?? 'User is banned',
-      httpStatus: data?.httpStatus ?? 403
+      httpStatus: data?.httpStatus ?? 403,
     })
   }
 }
@@ -74,7 +74,7 @@ export class TooManyRequestsError extends BaseError {
   constructor(data?: ErrorCreateParams) {
     super({
       ...data,
-      httpStatus: 429
+      httpStatus: 429,
     })
   }
 }
@@ -83,7 +83,7 @@ export class TimeoutError extends InternalError {
   constructor(data?: ErrorCreateParams) {
     super({
       ...data,
-      message: data?.message ?? 'Timeout exceeded'
+      message: data?.message ?? 'Timeout exceeded',
     })
   }
 }

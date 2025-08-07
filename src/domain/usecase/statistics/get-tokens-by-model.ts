@@ -14,17 +14,16 @@ export const buildGetTokensByModel = ({ adapter }: UseCaseParams): GetTokensByMo
   return async ({ userId, dateFrom, dateTo }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user || user.role !== Role.ADMIN) {
       throw new ForbiddenError()
     }
+    //MIGRATION_ON_CLICKHOUSE
+    /* return adapter.actionRepository.getTokensByModel({ dateTo, dateFrom })*/
 
-    return adapter.actionRepository.getTokensByModel({
-      dateTo,
-      dateFrom
-    })
+    return await adapter.actionRepository.chGetTokensByModel({ dateTo, dateFrom })
   }
 }

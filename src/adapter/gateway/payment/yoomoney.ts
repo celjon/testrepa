@@ -11,12 +11,12 @@ export const buildYoomoney = ({ yoomoney }: Params): Yoomoney => {
   const createPayment = async (data: IPaymentRequest) => {
     const amount: Amount = {
       value: data.price.toString(),
-      currency: data.currency
+      currency: data.currency,
     }
 
     const confirmation: Confirmation = {
       type: 'redirect',
-      return_url: data.returnUrl
+      return_url: data.returnUrl,
     }
 
     const result = await yoomoney.client.createPayment({
@@ -33,21 +33,21 @@ export const buildYoomoney = ({ yoomoney }: Params): Yoomoney => {
             amount: amount,
             description: data.description,
             vat_code: 1,
-            quantity: 1
-          }
-        ]
-      }
+            quantity: 1,
+          },
+        ],
+      },
     })
 
     const payment: IPayment = {
       id: result.id,
-      url: result.confirmation?.confirmation_url
+      url: result.confirmation?.confirmation_url,
     }
 
     return payment
   }
 
   return {
-    createPayment
+    createPayment,
   }
 }

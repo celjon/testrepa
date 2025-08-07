@@ -8,7 +8,7 @@ export type List = (req: AuthRequest, res: Response) => Promise<Response>
 export const buildList = ({ referral }: Params): List => {
   return async (req, res) => {
     const data = await referral.list({
-      userId: req.user?.id
+      userId: req.user?.id,
     })
     return res.status(200).json(data)
   }

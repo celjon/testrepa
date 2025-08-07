@@ -13,14 +13,14 @@ export const buildTinkoff = ({ webhook }: Params): Tinkoff => {
         paymentId: paymentId,
         provider: TransactionProvider.TINKOFF,
         status: TransactionStatus.SUCCEDED,
-        meta: req.body
+        meta: req.body,
       })
     } else if (req.body.Status === 'REJECTED') {
       await webhook.payment({
         paymentId: paymentId,
         provider: TransactionProvider.TINKOFF,
         status: TransactionStatus.FAILED,
-        meta: req.body
+        meta: req.body,
       })
     }
     return res.status(200).json()

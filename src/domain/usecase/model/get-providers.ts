@@ -1,7 +1,10 @@
-import { IModelProvider } from '@/domain/entity/modelProvider'
+import { IModelProvider } from '@/domain/entity/model-provider'
 import { UseCaseParams } from '@/domain/usecase/types'
 
-export type GetProviders = (params: { disabled?: boolean; supportedAccounts?: boolean }) => Promise<Array<IModelProvider> | never>
+export type GetProviders = (params: {
+  disabled?: boolean
+  supportedAccounts?: boolean
+}) => Promise<Array<IModelProvider> | never>
 
 export const buildGetProviders =
   ({ adapter }: UseCaseParams): GetProviders =>
@@ -10,19 +13,19 @@ export const buildGetProviders =
       where: {
         parent_id: null,
         disabled,
-        supported_accounts: supportedAccounts
+        supported_accounts: supportedAccounts,
       },
       orderBy: {
-        order: 'asc'
+        order: 'asc',
       },
       include: {
         fallback: true,
         children: {
           orderBy: {
-            order: 'asc'
-          }
-        }
-      }
+            order: 'asc',
+          },
+        },
+      },
     })
 
     return modelProviders

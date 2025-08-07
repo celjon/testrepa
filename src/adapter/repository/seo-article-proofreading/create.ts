@@ -4,7 +4,9 @@ import { ISEOArticleProofreading } from '@/domain/entity/seo-article-proofreadin
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Create = (data: Prisma.SEOArticleProofreadingCreateArgs) => Promise<ISEOArticleProofreading | never>
+export type Create = (
+  data: Prisma.SEOArticleProofreadingCreateArgs,
+) => Promise<ISEOArticleProofreading | never>
 
 export const buildCreate = ({ db }: Params): Create => {
   return async (data) => {

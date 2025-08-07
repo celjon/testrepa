@@ -1,7 +1,7 @@
-import { GetAccessToken, GetConsentURL, GetUserInfo } from '../types'
+import { GetTokens, GetConsentURL, GetUserInfo } from '../types'
 import { TGAuthResult } from './types'
 import { InvalidDataError } from '@/domain/errors'
-import { verifyTgAuthResult } from './verifyTGAuthResult'
+import { verifyTgAuthResult } from './verify-auth-result'
 
 type Params = {
   clientId: string
@@ -10,13 +10,13 @@ type Params = {
 
 export const buildTelegramOAuth = (params: Params) => {
   const getConsentURL = buildGetConsentURL(params)
-  const getAccessToken = buildGetAccessToken()
+  const getTokens = buildGetTokens()
   const getUserInfo = buildGetUserInfo(params)
 
   return {
     getConsentURL,
-    getAccessToken,
-    getUserInfo
+    getTokens,
+    getUserInfo,
   }
 }
 
@@ -31,16 +31,17 @@ const buildGetConsentURL = ({ authorizeURL, clientId }: Params): GetConsentURL =
 
     return {
       consentURL: consentURL.toString(),
-      code_verifier: ''
+      code_verifier: '',
     }
   }
 }
 
-const buildGetAccessToken = (): GetAccessToken => {
+const buildGetTokens = (): GetTokens => {
   return async ({ code }) => {
     return {
       access_token: code,
-      expires_in: 0
+      id_token: '',
+      expires_in: 0,
     }
   }
 }
@@ -51,7 +52,7 @@ const buildGetUserInfo = ({ clientId }: Params): GetUserInfo => {
 
     if (!verifyTgAuthResult(tgAuthResult, clientId)) {
       throw new InvalidDataError({
-        code: 'INVALID_CODE'
+        code: 'INVALID_CODE',
       })
     }
 
@@ -59,7 +60,8 @@ const buildGetUserInfo = ({ clientId }: Params): GetUserInfo => {
       tg_id: tgAuthResult.id?.toString(),
       email: undefined,
       given_name: tgAuthResult.first_name ?? tgAuthResult.username,
-      avatar: tgAuthResult.photo_url
+      avatar: tgAuthResult.photo_url,
+      external_id: tgAuthResult.id?.toString(),
     }
   }
 }

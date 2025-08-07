@@ -1,7 +1,7 @@
 import { ForbiddenError, NotFoundError } from '@/domain/errors'
 import { UseCaseParams } from '../types'
 import { EnterpriseRole } from '@prisma/client'
-import { IEnterpriseUsageConstraints } from '@/domain/entity/enterpriseUsageConstraints'
+import { IEnterpriseUsageConstraints } from '@/domain/entity/enterprise-usage-constraints'
 
 export type RemoveUsageConstraint = (data: {
   enterpriseId: string
@@ -12,7 +12,7 @@ export type RemoveUsageConstraint = (data: {
 export const buildRemoveUsageConstraint = ({ adapter }: UseCaseParams): RemoveUsageConstraint => {
   return async ({ enterpriseId, userId, constraintId }) => {
     const employee = await adapter.employeeRepository.get({
-      where: { user_id: userId, enterprise_id: enterpriseId }
+      where: { user_id: userId, enterprise_id: enterpriseId },
     })
     if (!employee || employee.role !== EnterpriseRole.OWNER) {
       throw new ForbiddenError()
@@ -21,8 +21,8 @@ export const buildRemoveUsageConstraint = ({ adapter }: UseCaseParams): RemoveUs
     const constraint = await adapter.enterpriseUsageConstraintsRepository.delete({
       where: {
         enterprise_id: enterpriseId,
-        id: constraintId
-      }
+        id: constraintId,
+      },
     })
 
     if (!constraint) {

@@ -18,7 +18,7 @@ export const buildAddChapterToPlan = ({ article }: Params): AddChapterToPlan => 
       locale: getLocale(req.headers['accept-language']),
       creativity: Number(req.body.creativity),
       model_id: req.body.model_id,
-      chapter: req.body.chapter
+      chapter: req.body.chapter,
     })
 
     setSSEHeaders(res)
@@ -36,13 +36,13 @@ export const buildAddChapterToPlan = ({ article }: Params): AddChapterToPlan => 
         res.write(`data: ${JSON.stringify(error)}\n\n`)
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.on('error', () => {
       logger.warn({
         location: 'article.addChapterToPlan',
-        message: 'Unexpected sse connection error'
+        message: 'Unexpected sse connection error',
       })
     })
 

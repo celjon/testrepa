@@ -1,22 +1,34 @@
 import { UseCaseParams } from '../types'
 import { InvalidDataError, NotFoundError } from '@/domain/errors'
-import { IMessageButton } from '@/domain/entity/messageButton'
+import { IMessageButton } from '@/domain/entity/message-button'
 import { MessageButtonAction, MessageButtonType } from '@prisma/client'
 
-export type ButtonClick = (params: { buttonId: string; userId: string; keyEncryptionKey: string | null }) => Promise<IMessageButton>
+export type ButtonClick = (params: {
+  buttonId: string
+  userId: string
+  keyEncryptionKey: string | null
+  developerKeyId?: string
+}) => Promise<IMessageButton>
 
 export const buildButtonClick =
   ({ adapter, service }: UseCaseParams): ButtonClick =>
-  async ({ buttonId, userId, keyEncryptionKey }) => {
+  async ({ buttonId, userId, keyEncryptionKey, developerKeyId }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
+      include: {
+        employees: {
+          include: {
+            enterprise: true,
+          },
+        },
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -25,9 +37,9 @@ export const buildButtonClick =
         id: buttonId,
         message: {
           user: {
-            id: userId
-          }
-        }
+            id: userId,
+          },
+        },
       },
       include: {
         message: {
@@ -39,24 +51,24 @@ export const buildButtonClick =
                 model: true,
                 settings: {
                   include: {
-                    mj: true
-                  }
-                }
-              }
+                    mj: true,
+                  },
+                },
+              },
             },
             voice: {
               include: {
-                file: true
-              }
-            }
-          }
-        }
-      }
+                file: true,
+              },
+            },
+          },
+        },
+      },
     })
 
     if (!button) {
       throw new NotFoundError({
-        code: 'MESSAGE_BUTTON_NOT_FOUND'
+        code: 'MESSAGE_BUTTON_NOT_FOUND',
       })
     }
 
@@ -65,20 +77,21 @@ export const buildButtonClick =
         return button
       } else {
         throw new InvalidDataError({
-          code: 'INVALID_MESSAGE_BUTTON_ACTION'
+          code: 'INVALID_MESSAGE_BUTTON_ACTION',
         })
       }
     } else {
       if (button.message?.chat?.model) {
         await service.model.incrementUsage({
-          modelIds: [button.message.chat.model.id]
+          modelIds: [button.message.chat.model.id],
         })
       }
 
       await service.message.midjourney.buttonClick({
         button,
         user,
-        keyEncryptionKey
+        keyEncryptionKey,
+        developerKeyId,
       })
     }
 

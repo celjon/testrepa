@@ -1,4 +1,4 @@
-import { IModelAccountModel } from '@/domain/entity/modelAccountModel'
+import { IModelAccountModel } from '@/domain/entity/model-account-model'
 import { UseCaseParams } from '@/domain/usecase/types'
 
 export type CreateAccountModel = (params: {
@@ -17,8 +17,8 @@ export const buildCreateAccountModel =
       data: {
         model: {
           connect: {
-            id: modelId
-          }
+            id: modelId,
+          },
         },
         limit,
         time_limit: timeLimit,
@@ -26,14 +26,14 @@ export const buildCreateAccountModel =
         usage_reset_interval_seconds: usageResetIntervalSeconds,
         account: {
           connect: {
-            id: accountId
-          }
+            id: accountId,
+          },
         },
-        disabled_at
+        disabled_at,
       },
       include: {
-        model: true
-      }
+        model: true,
+      },
     })
 
     return modelAccountModel

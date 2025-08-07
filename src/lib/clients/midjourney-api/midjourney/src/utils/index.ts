@@ -1,14 +1,16 @@
 import { Epoch, Snowyflake } from 'snowyflake'
 import { MJInfo, MJOptions } from '../interfaces'
 
-export const sleep = async (ms: number): Promise<void> => await new Promise((resolve) => setTimeout(resolve, ms))
+export const sleep = async (ms: number): Promise<void> =>
+  await new Promise((resolve) => setTimeout(resolve, ms))
 
-export const random = (min: number, max: number): number => Math.floor(Math.random() * (max - min) + min)
+export const random = (min: number, max: number): number =>
+  Math.floor(Math.random() * (max - min) + min)
 
 const snowflake = new Snowyflake({
   workerId: 0n,
   processId: 0n,
-  epoch: Epoch.Discord // BigInt timestamp
+  epoch: Epoch.Discord, // BigInt timestamp
 })
 
 export const nextNonce = (): string => snowflake.nextId().toString()
@@ -37,7 +39,7 @@ export const formatOptions = (components: any) => {
       type: component.type,
       style: component.style,
       label: component.label || component.emoji?.name,
-      custom: component.custom_id
+      custom: component.custom_id,
     })
   }
   return data
@@ -53,7 +55,7 @@ export const formatInfo = (msg: string) => {
     relaxedUsage: '',
     queuedJobsFast: '',
     queuedJobsRelax: '',
-    runningJobs: ''
+    runningJobs: '',
   } // Initialize jsonResult with empty object
   msg.split('\n').forEach(function (line) {
     const colonIndex = line.indexOf(':')

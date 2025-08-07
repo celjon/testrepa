@@ -1,6 +1,7 @@
 import Express from 'express'
 import { buildCompileEmailTemplate, loadPartials } from './compile-email-template'
-import { getTranlation } from './translation'
+import { getTranslation } from './translation'
+import { config } from '@/config'
 
 export const buildTemplatePreview = () => {
   const router = Express.Router()
@@ -8,7 +9,7 @@ export const buildTemplatePreview = () => {
   router.use('/email-templates/:template', async (req, res) => {
     let locale = req.query.locale
     if (typeof locale !== 'string' || !locale) {
-      locale = 'ru'
+      locale = config.frontend.default_locale
     }
     const templateName = req.params.template
 
@@ -23,12 +24,12 @@ export const buildTemplatePreview = () => {
         t: text,
         user: {
           email: 'test@test.com',
-          password: 'password'
+          password: 'password',
         },
         verificationCode: '123456',
-        tokens: 300000
+        tokens: 300000,
       },
-      locale
+      locale,
     )
 
     res.send(html)
@@ -40,19 +41,19 @@ export const buildTemplatePreview = () => {
 const getTemplateText = (templateName: string, locale?: string) => {
   switch (templateName) {
     case 'welcome-mail.hbs':
-      return getTranlation('welcomeMail', locale)
+      return getTranslation('welcomeMail', locale)
 
     case 'verification.hbs':
-      return getTranlation('verificationMail', locale)
+      return getTranslation('verificationMail', locale)
 
     case 'password-recovery.hbs':
-      return getTranlation('passwordRecoveryMail', locale)
+      return getTranslation('passwordRecoveryMail', locale)
 
     case 'gift-token.hbs':
-      return getTranlation('giftTokenMail', locale)
+      return getTranslation('giftTokenMail', locale)
 
     case 'soft-limit.hbs':
-      return getTranlation('softLimitMail', locale)
+      return getTranslation('softLimitMail', locale)
 
     default:
       return {}

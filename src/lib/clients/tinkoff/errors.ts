@@ -3,7 +3,15 @@ export class CreatePaymentError extends Error {
   public details: string
   public errorCode: string
 
-  constructor({ errorCode, message, details }: { errorCode: string; message: string; details: string }) {
+  constructor({
+    errorCode,
+    message,
+    details,
+  }: {
+    errorCode: string
+    message: string
+    details: string
+  }) {
     super(message)
 
     this.message = message

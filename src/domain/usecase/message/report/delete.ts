@@ -7,8 +7,8 @@ export const buildDeleteReport = ({ adapter }: UseCaseParams): DeleteReport => {
   return async (message_id: string) => {
     const deletedReport = await adapter.messageRepository.deleteReport({
       where: {
-        message_id: message_id
-      }
+        message_id: message_id,
+      },
     })
     return deletedReport
   }

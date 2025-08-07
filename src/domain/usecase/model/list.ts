@@ -20,7 +20,7 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
 
       if (!subscription) {
         throw new NotFoundError({
-          code: 'SUBSCRIPTION_NOT_FOUND'
+          code: 'SUBSCRIPTION_NOT_FOUND',
         })
       }
 
@@ -30,16 +30,16 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
     const plansModels: IPlanModel[] = await adapter.planModelRepository.list({
       where: {
         model: { disabled: false, deleted_at: null },
-        deleted_at: null
+        deleted_at: null,
       },
       orderBy: {
-        plan: { price: 'asc' }
+        plan: { price: 'asc' },
       },
       include: {
         plan: {
-          select: { type: true }
-        }
-      }
+          select: { type: true },
+        },
+      },
     })
 
     const disabledKey = getPlatformDisabledKey(platform ?? Platform.API)
@@ -52,10 +52,10 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
               parent_id: parentId,
               ...(listChildren &&
                 !parentId && {
-                  parent_id: { not: null }
+                  parent_id: { not: null },
                 }),
               [disabledKey]: false,
-              deleted_at: null
+              deleted_at: null,
             },
       orderBy: listChildren
         ? [{ parent: { popularity_score: 'desc' } }, { parent: { order: 'asc' } }]
@@ -67,27 +67,27 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
             order: true,
             label: true,
             used_count: true,
-            popularity_score: true
-          }
+            popularity_score: true,
+          },
         },
         functions: true,
         ...(!listChildren && {
           children: {
             where: {
               [disabledKey]: false,
-              deleted_at: null
+              deleted_at: null,
             },
             orderBy: [{ popularity_score: 'desc' }, { order: 'asc' }],
             select: {
               id: true,
               features: true,
               used_count: true,
-              popularity_score: true
-            }
-          }
+              popularity_score: true,
+            },
+          },
         }),
-        providers: true
-      }
+        providers: true,
+      },
     })
 
     models = filterModels({ models, platform, listChildren })
@@ -99,29 +99,38 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
           if (plan) {
             isAllowed = await service.model.isAllowed({
               plan,
-              modelId: model.id
+              modelId: model.id,
             })
           }
 
           let allowedPlanType: PlanType | null = null
           if (!isAllowed) {
-            allowedPlanType = plansModels.find(({ model_id }) => model_id === model.id)?.plan.type ?? null
+            allowedPlanType =
+              plansModels.find(({ model_id }) => model_id === model.id)?.plan.type ?? null
           }
 
           return {
             ...model,
             is_allowed: isAllowed,
             allowed_plan_type: allowedPlanType,
-            is_default: isAllowed && plansModels.some((planModel) => planModel.model_id === model.id && planModel.is_default_model),
+            is_default:
+              isAllowed &&
+              plansModels.some(
+                (planModel) => planModel.model_id === model.id && planModel.is_default_model,
+              ),
             ...(model.parent && {
               parent: {
                 ...model.parent,
                 is_default:
-                  isAllowed && plansModels.some((planModel) => planModel.model_id === model.parent_id && planModel.is_default_model)
-              }
-            })
+                  isAllowed &&
+                  plansModels.some(
+                    (planModel) =>
+                      planModel.model_id === model.parent_id && planModel.is_default_model,
+                  ),
+              },
+            }),
           }
-        })
+        }),
       )
     )
       .sort((modelA, modelB) => modelB.popularity_score - modelA.popularity_score)
@@ -141,7 +150,7 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
 export const filterModels = ({
   models,
   platform,
-  listChildren
+  listChildren,
 }: {
   models: IModel[]
   platform?: ModelPlatform
@@ -164,12 +173,14 @@ export const filterModels = ({
           }
           return true
         })
-        .map(({ providers: _, ...child }) => child)
+        .map(({ providers: _, ...child }) => child),
     }))
 
   if (platform === Platform.WEB && !listChildren) {
     // allow midjourney and valid parent models only
-    models = models.filter((model) => isMidjourney(model) || (model.children && model.children.length > 0))
+    models = models.filter(
+      (model) => isMidjourney(model) || (model.children && model.children.length > 0),
+    )
   }
 
   return models

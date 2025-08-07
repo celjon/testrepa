@@ -30,45 +30,99 @@ export const buildMessageRules = ({ authRequired, validateSchema }: Middlewares)
     body('message').optional().isString(),
     body('model_id').optional().isString(),
     body('tgBotMessageId').optional().isString(),
-    body('platform').optional().isString().isIn([Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM, Platform.BOTHUB_API]),
-    validateSchema
+    body('platform')
+      .optional()
+      .isString()
+      .isIn([Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM, Platform.BOTHUB_API]),
+    validateSchema,
+  ]
+
+  /**
+   * @openapi
+   * components:
+   *   rules:
+   *     chatPromptQueue:
+   *       required:
+   *         - prompts
+   *       properties:
+   *         chatId:
+   *           type: string
+   *         prompts:
+   *           type: array
+   *           items:
+   *             type: object
+   *             properties:
+   *               message:
+   *                 type: string
+   *               include_context:
+   *                 type: boolean
+   *               modelId:
+   *                 type: string
+   */
+  const chatPromptQueueRules = [
+    authRequired(),
+    body('chatId').optional().exists().isString(),
+    body('prompts').isArray().notEmpty(),
+    body('prompts.*.message').exists().isString(),
+    body('prompts.*.include_context').exists().isBoolean(),
+    body('prompts.*.modelId').exists().isString(),
+    validateSchema,
+  ]
+
+  /**
+   * @openapi
+   * components:
+   *   rules:
+   *     outputFilePromptQueue:
+   *       required:
+   *         - prompts
+   *       properties:
+   *         chatId:
+   *           type: string
+   *         markup:
+   *           type: string
+   *           enum:
+   *             - md
+   *             - html
+   *             - docx
+   *         outputOneFile:
+   *           type: boolean
+   *         prompts:
+   *           type: array
+   *           items:
+   *             type: object
+   *             properties:
+   *               message:
+   *                 type: string
+   *               include_context:
+   *                 type: boolean
+   *               modelId:
+   *                 type: string
+   */
+
+  const outputFilePromptQueueRules = [
+    authRequired(),
+    body('chatId').optional().exists().isString(),
+    body('markup').optional().exists().isString().isIn(['md', 'docx', 'html']),
+    body('outputOneFile').optional().exists().isBoolean(),
+    body('prompts').isArray().notEmpty(),
+    body('prompts.*.message').exists().isString(),
+    body('prompts.*.include_context').exists().isBoolean(),
+    body('prompts.*.modelId').exists().isString(),
+    validateSchema,
   ]
   /**
    * @openapi
    * components:
    *   rules:
-   *      promptQueue:
-   *          required:
-   *            - chatId
-   *            - prompts
-   *          properties:
-   *            chatId:
-   *                type: string
-   *            prompts:
-   *                type: array
-   *                items:
-   *                  type: object
-   *                  properties:
-   *                    message:
-   *                      type: string
-   *                    context:
-   *                      type: boolean
-   *                    modelId:
-   *                      type: string
-   *            platform:
-   *                type: string
-   *                enum: [MAIN, DASHBOARD, TELEGRAM, BOTHUB_API]
+   *     downloadPromptQueueResult:
+   *       required:
+   *         - path
+   *       properties:
+   *         path:
+   *           type: string
    */
-  const promptQueueRules = [
-    authRequired(),
-    body('chatId').exists().notEmpty().isString(),
-    body('prompts').isArray(),
-    body('prompts.*.message').exists().isString(),
-    body('prompts.*.context').exists().isBoolean(),
-    body('prompts.*.modelId').exists().isString(),
-    body('platform').optional().isString().isIn([Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM, Platform.BOTHUB_API, 'telegram']),
-    validateSchema
-  ]
+  const downloadPromptQueueResultRules = [query('path').isString(), validateSchema]
 
   const queueCancelRules = [authRequired(), validateSchema]
 
@@ -92,8 +146,11 @@ export const buildMessageRules = ({ authRequired, validateSchema }: Middlewares)
     authRequired(),
     body('id').isString(),
     body('userMessageId').optional().isString(),
-    body('platform').optional().isString().isIn([Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM, Platform.BOTHUB_API]),
-    validateSchema
+    body('platform')
+      .optional()
+      .isString()
+      .isIn([Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM, Platform.BOTHUB_API]),
+    validateSchema,
   ]
 
   const switchMessageRules = [authRequired(), param('id').isString(), validateSchema]
@@ -105,16 +162,20 @@ export const buildMessageRules = ({ authRequired, validateSchema }: Middlewares)
   const listMessagesRules = [
     authRequired({}),
     query('page').optional().isInt({
-      min: 1
+      min: 1,
     }),
     query('chatId').notEmpty().isString(),
     query('quantity').optional().isInt({
-      min: 1
+      min: 1,
     }),
-    validateSchema
+    validateSchema,
   ]
 
-  const listAllMessagesRules = [authRequired({}), query('chatId').notEmpty().isString(), validateSchema]
+  const listAllMessagesRules = [
+    authRequired({}),
+    query('chatId').notEmpty().isString(),
+    validateSchema,
+  ]
 
   const deleteMessageRules = [authRequired(), param('id').isString(), validateSchema]
 
@@ -133,7 +194,8 @@ export const buildMessageRules = ({ authRequired, validateSchema }: Middlewares)
     createReportRules,
     deleteReportRules,
     sendMessageRules,
-    promptQueueRules,
+    chatPromptQueueRules,
+    outputFilePromptQueueRules,
     queueCancelRules,
     regenerateMessageRules,
     switchMessageRules,
@@ -143,6 +205,7 @@ export const buildMessageRules = ({ authRequired, validateSchema }: Middlewares)
     updateMessageRules,
     deleteMessageRules,
     deleteManyMessagesRules,
-    buttonClickRules
+    buttonClickRules,
+    downloadPromptQueueResultRules,
   }
 }

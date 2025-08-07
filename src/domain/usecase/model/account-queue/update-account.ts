@@ -1,7 +1,7 @@
-import { config } from '@/config'
-import { IModelAccount } from '@/domain/entity/modelAccount'
-import { UseCaseParams } from '@/domain/usecase/types'
 import { FileType, ModelAccountAuthType, ModelAccountStatus } from '@prisma/client'
+import { config } from '@/config'
+import { g4fIsPhaseChanged, IModelAccount } from '@/domain/entity/model-account'
+import { UseCaseParams } from '@/domain/usecase/types'
 
 type File = {
   size: number
@@ -21,6 +21,8 @@ export type UpdateAccount = (params: {
   g4fPassword?: string
   g4fEmailPassword?: string
   g4fIMAPServer?: string
+  g4fOnlinePhaseSeconds?: number | null
+  g4fOfflinePhaseSeconds?: number | null
   mjChannelId?: string
   mjServerId?: string
   mjToken?: string
@@ -28,8 +30,9 @@ export type UpdateAccount = (params: {
   mjPersonalizationKey?: string
   queueId?: string
   disabledAt?: Date | null
-  inactive?: boolean
   status?: ModelAccountStatus
+  usageCountLimit?: number
+  usageResetIntervalSeconds?: number | null
 }) => Promise<IModelAccount | null | never>
 
 export const buildUpdateAccount =
@@ -45,44 +48,50 @@ export const buildUpdateAccount =
     g4fPassword,
     g4fEmailPassword,
     g4fIMAPServer,
+    g4fOnlinePhaseSeconds,
+    g4fOfflinePhaseSeconds,
     mjChannelId,
     mjServerId,
     mjToken,
     mjConcurrency,
+    mjPersonalizationKey,
     queueId,
     disabledAt,
     status,
-    mjPersonalizationKey
+    usageCountLimit,
+    usageResetIntervalSeconds,
   }) => {
     let modelAccount = await adapter.modelAccountRepository.get({ where: { id } })
 
     if (modelAccount?.mj_channel_id) {
       await adapter.modelAccountRepository.update({
         where: {
-          id
+          id,
         },
         data: {
           status: status ?? ModelAccountStatus.INACTIVE,
-          mj_active_generations: 0
-        }
+          mj_active_generations: 0,
+        },
       })
     }
 
     let g4f_password: string | undefined = undefined
     let g4f_email_password: string | undefined = undefined
 
-    const dek = await adapter.cryptoGateway.getKeyFromString(config.model_providers.g4f.encryption_key)
+    const dek = await adapter.cryptoGateway.getKeyFromString(
+      config.model_providers.g4f.encryption_key,
+    )
 
     if (g4fPassword !== undefined) {
       g4f_password = await adapter.cryptoGateway.encrypt({
         dek,
-        data: g4fPassword
+        data: g4fPassword,
       })
     }
     if (g4fEmailPassword !== undefined) {
       g4f_email_password = await adapter.cryptoGateway.encrypt({
         dek: dek,
-        data: g4fEmailPassword
+        data: g4fEmailPassword,
       })
     }
     let harFileUpdatedAt = undefined
@@ -94,10 +103,16 @@ export const buildUpdateAccount =
         name: g4fHarFile.originalname,
         buffer: g4fHarFile.buffer,
         apiUrl: apiURL,
-        harManagerUrl
+        harManagerUrl,
       })
       harFileUpdatedAt = new Date()
     }
+
+    const newStatus = modelAccount?.auth_type === ModelAccountAuthType.HAR_FILE ? status : undefined
+    const g4fPhaseUpdatedAt =
+      modelAccount && newStatus && g4fIsPhaseChanged(modelAccount.status, newStatus)
+        ? new Date()
+        : undefined
 
     modelAccount = await adapter.modelAccountRepository.update({
       where: { id },
@@ -110,19 +125,21 @@ export const buildUpdateAccount =
           g4f_har_file: {
             create: {
               type: FileType.HAR,
-              name: g4fHarFile.originalname
-            }
-          }
+              name: g4fHarFile.originalname,
+            },
+          },
         }),
         g4f_har_file_updated_at: harFileUpdatedAt,
         g4f_email: g4fEmail,
         ...(g4f_password !== undefined && {
-          g4f_password
+          g4f_password,
         }),
         ...(g4f_email_password !== undefined && {
-          g4f_email_password
+          g4f_email_password,
         }),
         g4f_imap_server: g4fIMAPServer,
+        g4f_online_phase_seconds: g4fOnlinePhaseSeconds,
+        g4f_offline_phase_seconds: g4fOfflinePhaseSeconds,
         mj_channel_id: mjChannelId,
         mj_server_id: mjServerId,
         mj_token: mjToken,
@@ -131,15 +148,27 @@ export const buildUpdateAccount =
         ...(queueId && {
           queue: {
             connect: {
-              id: queueId
-            }
-          }
+              id: queueId,
+            },
+          },
         }),
-        disabled_at: disabledAt
+        status: newStatus,
+        g4f_phase_updated_at: g4fPhaseUpdatedAt,
+        disabled_at: disabledAt,
+        usage_count_limit: usageCountLimit,
+        usage_reset_interval_seconds: usageResetIntervalSeconds,
       },
       include: {
-        g4f_har_file: true
-      }
+        g4f_har_file: true,
+        models: {
+          orderBy: {
+            created_at: 'desc',
+          },
+          include: {
+            model: true,
+          },
+        },
+      },
     })
 
     modelAccount.g4f_password = g4fPassword ? g4fPassword : null

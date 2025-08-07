@@ -1,8 +1,10 @@
 import { AdapterParams } from '@/adapter/types'
-import { buildCompileEmailTemplate } from './compile-email-template'
-import { getTranlation, Translation } from './translation'
+import { CompileTemplate } from './compile-email-template'
+import { getTranslation, Translation } from './translation'
 
-type Params = Pick<AdapterParams, 'mail'>
+type Params = Pick<AdapterParams, 'mail'> & {
+  compileTemplate: CompileTemplate
+}
 
 export type WelcomeMailParams = {
   user: {
@@ -19,27 +21,29 @@ export type SendWelcomeMail = (
   params: {
     to: string
     locale?: string
-  } & WelcomeMailParams
+  } & WelcomeMailParams,
 ) => Promise<void>
 
-export const buildSendWelcomeMail = ({ mail: mailClient }: Params): SendWelcomeMail => {
-  const compileTemplate = buildCompileEmailTemplate()
+export const buildSendWelcomeMail = ({
+  mail: mailClient,
+  compileTemplate,
+}: Params): SendWelcomeMail => {
   const template = compileTemplate<TemplateParams>('welcome-mail.hbs')
 
   return async (params) => {
     const html = await template(
       {
         user: params.user,
-        t: getTranlation('welcomeMail', params.locale)
+        t: getTranslation('welcomeMail', params.locale),
       },
-      params.locale
+      params.locale,
     )
 
     await mailClient.client.sendMail({
       from: 'no-reply@bothub.chat',
       to: params.to,
-      subject: getTranlation('welcomeMailSubject', params.locale),
-      html
+      subject: getTranslation('welcomeMailSubject', params.locale),
+      html,
     })
   }
 }

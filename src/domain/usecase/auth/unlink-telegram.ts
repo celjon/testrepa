@@ -15,19 +15,19 @@ export const buildUnlinkTelegram = ({ service, adapter }: UseCaseParams): Unlink
       where: { id: tokenPayload.id },
       include: {
         subscription: { include: { plan: true } },
-        referral_participants: true
-      }
+        referral_participants: true,
+      },
     })
 
     if (!user || !user.subscription) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
     if (!tokenPayload.id) {
       throw new InvalidDataError({
-        code: 'INVALID_TELEGRAM_UNLINK_TOKEN'
+        code: 'INVALID_TELEGRAM_UNLINK_TOKEN',
       })
     }
 
@@ -36,9 +36,9 @@ export const buildUnlinkTelegram = ({ service, adapter }: UseCaseParams): Unlink
       onUnlinkComplete: async (user) => {
         await adapter.authRepository.unlinkAccountInTgBot({
           type: 'unlink',
-          email: user.email
+          email: user.email,
         })
-      }
+      },
     })
 
     return updatedUser as IUser

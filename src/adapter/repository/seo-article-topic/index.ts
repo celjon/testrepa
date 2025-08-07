@@ -35,6 +35,6 @@ export const buildSEOArticleTopicRepository = (params: Params): SEOArticleTopicR
     findByLocalizedKeywords,
     update,
     updateMany,
-    delete: deleteTopic
+    delete: deleteTopic,
   }
 }

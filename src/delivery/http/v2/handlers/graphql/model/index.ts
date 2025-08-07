@@ -9,12 +9,14 @@ const validateModelPlatform = (platform: string) => {
   const isValid = (validModelPlatforms as string[]).includes(platform)
 
   if (!isValid) {
-    throw new ArgumentValidationError([{
-      property: 'platform',
-      constraints: {
-        enum: 'Valid platforms are ' + validModelPlatforms.join(', ')
+    throw new ArgumentValidationError([
+      {
+        property: 'platform',
+        constraints: {
+          enum: 'Valid platforms are ' + validModelPlatforms.join(', '),
+        },
       },
-    }])
+    ])
   }
 }
 
@@ -28,16 +30,16 @@ export class ModelResolver {
     @Arg('parentId', () => String, { nullable: true }) parentId?: string,
     @Arg('platform', () => String, {
       nullable: true,
-      validateFn: validateModelPlatform
+      validateFn: validateModelPlatform,
     })
     platform?: ModelPlatform,
-    @Arg('children', () => Boolean, { nullable: true }) children?: boolean
+    @Arg('children', () => Boolean, { nullable: true }) children?: boolean,
   ): Promise<ModelGraphQLObject[]> {
     const data = await this.params.model.list({
       userId: req.user.id,
       listChildren: children,
       parentId,
-      platform
+      platform,
     })
 
     return data

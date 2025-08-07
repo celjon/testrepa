@@ -19,6 +19,7 @@ export type GeneratePlan = (params: {
   creativity: number
   model_id: string
   isAdmin?: boolean
+  developerKeyId?: string
 }) => Promise<{
   responseStream$: Observable<{
     status: 'pending' | 'done'
@@ -29,8 +30,19 @@ export type GeneratePlan = (params: {
   closeStream: () => void
 }>
 
-export const buildGeneratePlan = ({ handleResponseStream, getChildModel }: Params): GeneratePlan => {
-  return async ({ userId, locale, generationMode, subject, creativity, model_id }) => {
+export const buildGeneratePlan = ({
+  handleResponseStream,
+  getChildModel,
+}: Params): GeneratePlan => {
+  return async ({
+    userId,
+    locale,
+    generationMode,
+    subject,
+    creativity,
+    model_id,
+    developerKeyId,
+  }) => {
     const prompt = dedent`
       You are an expert in creating article plans. Your task is to generate a clear and engaging plan based on the provided subject and generation mode.
 
@@ -62,7 +74,7 @@ export const buildGeneratePlan = ({ handleResponseStream, getChildModel }: Param
 
     const { model, subscription, employee } = await getChildModel({
       model_id,
-      userId
+      userId,
     })
 
     return handleResponseStream({
@@ -73,8 +85,9 @@ export const buildGeneratePlan = ({ handleResponseStream, getChildModel }: Param
       employee,
       settings: {
         temperature: creativity,
-        system_prompt: prompt
-      }
+        system_prompt: prompt,
+      },
+      developerKeyId,
     })
   }
 }

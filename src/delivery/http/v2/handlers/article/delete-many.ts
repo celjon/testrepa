@@ -13,7 +13,7 @@ export const buildDeleteMany = ({ article }: Params): DeleteMany => {
 
     if (!articleIds || !Array.isArray(articleIds) || articleIds.length === 0) {
       throw new NotFoundError({
-        code: 'NO_ARTICLE_IDS_PROVIDED'
+        code: 'NO_ARTICLE_IDS_PROVIDED',
       })
     }
     const createdCount = await article.deleteMany({ ids: articleIds })

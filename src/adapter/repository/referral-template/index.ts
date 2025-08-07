@@ -29,6 +29,6 @@ export const buildReferralTemplateRepository = (params: Params): ReferralTemplat
     count,
     get: buildGet(params),
     delete: d,
-    update
+    update,
   }
 }

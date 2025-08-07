@@ -19,11 +19,14 @@ import { TgBotApiClient } from '@/lib/clients/tg-bot-api'
 import { ExaAIClient } from '@/lib/clients/exaai.client'
 import { PrismaClientWithExtensions } from '@/lib/clients/prisma.client'
 import { AssemblyAI } from 'assemblyai'
-import { YandexMetricClient } from '@/lib/clients/yandexMetric.client'
+import { YandexMetricClient } from '@/lib/clients/yandex-metric.client'
 import { CurrencyToRubRateClient } from '@/lib/clients/currency-to-rub-rate.client'
 import { DataAnalysisServiceClient } from '@/lib/clients/data-analysis-service'
 import RunwayML from '@runwayml/sdk'
 import { Queues } from '@/queues/types'
+import { ClickHouseClient } from '@clickhouse/client'
+import { GoogleGenAI } from '@google/genai'
+import { ai302Client } from '@/lib/clients/ai-302.client'
 
 export type UnknownTx = unknown
 
@@ -31,6 +34,9 @@ export type AdapterParams = {
   db: {
     client: PrismaClientWithExtensions
     getContextClient: (tx?: unknown) => PrismaClientWithExtensions
+  }
+  clickhouse: {
+    client: ClickHouseClient
   }
   oauth: {
     client: GenericOAuthClient
@@ -97,6 +103,9 @@ export type AdapterParams = {
   replicate: {
     client: Replicate
   }
+  replicateBalancer: {
+    next: () => { client: Replicate }
+  }
   youtube: {
     client: YoutubeDataClient
   }
@@ -117,5 +126,9 @@ export type AdapterParams = {
   }
   dataAnalysisService: {
     client: DataAnalysisServiceClient
+  }
+  googleGenAI: { client: GoogleGenAI }
+  ai302: {
+    client: ai302Client
   }
 }

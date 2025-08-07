@@ -4,10 +4,14 @@ import { ISEOArticleProofreading } from '@/domain/entity/seo-article-proofreadin
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Get = (data: Prisma.SEOArticleProofreadingFindFirstArgs) => Promise<ISEOArticleProofreading | never | null>
+export type Get = (
+  data: Prisma.SEOArticleProofreadingFindFirstArgs,
+) => Promise<ISEOArticleProofreading | never | null>
 export const buildGet = ({ db }: Params): Get => {
   return async (data) => {
-    const action = (await db.client.sEOArticleProofreading.findFirst(data)) as ISEOArticleProofreading
+    const action = (await db.client.sEOArticleProofreading.findFirst(
+      data,
+    )) as ISEOArticleProofreading
 
     return action
   }

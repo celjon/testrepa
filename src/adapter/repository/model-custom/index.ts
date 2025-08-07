@@ -1,6 +1,6 @@
 import { AdapterParams } from '@/adapter/types'
 import { buildCreate, Create } from './create'
-import { buildDeleteMany, DeleteMany } from './deleteMany'
+import { buildDeleteMany, DeleteMany } from './delete-many'
 import { buildUpsert, Upsert } from './upsert'
 import { buildUpdate, Update } from './update'
 import { buildList, List } from './list'
@@ -39,6 +39,6 @@ export const buildModelCustomRepository = (params: Params): ModelCustomRepositor
     upsert,
     update,
     count,
-    delete: deleteModelCustom
+    delete: deleteModelCustom,
   }
 }

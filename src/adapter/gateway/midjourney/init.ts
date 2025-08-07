@@ -1,5 +1,5 @@
 import { AdapterParams } from '@/adapter/types'
-import { IModelAccount } from '@/domain/entity/modelAccount'
+import { IModelAccount } from '@/domain/entity/model-account'
 
 type Params = Pick<AdapterParams, 'midjourneyBalancer'>
 
@@ -13,7 +13,7 @@ export const buildInit = ({ midjourneyBalancer }: Params): Init => {
           id,
           ChannelId: mj_channel_id,
           ServerId: mj_server_id,
-          SalaiToken: mj_token
+          SalaiToken: mj_token,
         })
       }
     })

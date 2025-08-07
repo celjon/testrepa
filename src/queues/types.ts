@@ -25,4 +25,8 @@ export type Queues = {
   updateModelAccountHARFiles: Queue<UpdateModelAccountHARFileJob>
 }
 
-export type CreateQueueWorker = (queueName: string, processor: Processor, opts?: Omit<WorkerOptions, 'connection'>) => Worker
+export type CreateQueueWorker = (
+  queueName: string,
+  processor: Processor,
+  opts?: Omit<WorkerOptions, 'connection'>,
+) => Worker

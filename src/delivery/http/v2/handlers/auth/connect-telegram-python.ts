@@ -10,11 +10,11 @@ export const buildConnectTelegramPython = ({ auth }: Params): ConnectTelegramPyt
   return async (req: AuthRequest, res: Response) => {
     const result = await auth.connectTelegramPython({
       userId: req.user?.id,
-      telegramConnectionToken: req.body.telegramConnectionToken
+      telegramConnectionToken: req.body.telegramConnectionToken,
     })
 
     res.status(200).json({
-      data: result
+      data: result,
     })
   }
 }

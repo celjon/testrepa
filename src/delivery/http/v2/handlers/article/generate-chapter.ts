@@ -17,7 +17,7 @@ export const buildGenerateChapter = ({ article }: Params): GenerateChapter => {
       model_id: req.body.model_id,
       creativity: req.body.creativity,
       chapterPrompt: req.body.chapterPrompt,
-      language: req.body.language
+      language: req.body.language,
     })
 
     setSSEHeaders(res)
@@ -36,13 +36,13 @@ export const buildGenerateChapter = ({ article }: Params): GenerateChapter => {
         res.write(`data: ${JSON.stringify(error)}\n\n`)
         res.write('[DONE]')
         res.end()
-      }
+      },
     })
 
     req.on('error', () => {
       logger.warn({
         location: 'article.generateChapter',
-        message: 'Unexpected sse connection error'
+        message: 'Unexpected sse connection error',
       })
     })
 

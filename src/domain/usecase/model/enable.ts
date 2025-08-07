@@ -13,13 +13,13 @@ export const buildEnable = ({ adapter, service }: UseCaseParams): Enable => {
   return async ({ userId, modelId, platform = Platform.API }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user || user.role !== Role.ADMIN) {
       throw new ForbiddenError({
-        message: "You don't have permission"
+        message: "You don't have permission",
       })
     }
 

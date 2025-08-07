@@ -1,11 +1,13 @@
 import { FileType, MessageButtonAction, MessageStatus, Platform } from '@prisma/client'
+import { config } from '@/config'
+import { getErrorString } from '@/lib'
 import { logger } from '@/lib/logger'
 import { Adapter } from '@/domain/types'
 import { ChatService } from '../../chat'
 import { IChat } from '@/domain/entity/chat'
 import { NotFoundError } from '@/domain/errors'
 import { ISubscription } from '@/domain/entity/subscription'
-import { IMessageImage } from '@/domain/entity/messageImage'
+import { IMessageImage } from '@/domain/entity/message-image'
 import { JobService } from '../../job'
 import { IMessage } from '@/domain/entity/message'
 import { SubscriptionService } from '../../subscription'
@@ -20,7 +22,7 @@ import { UploadFiles } from '../upload/files'
 import { RawFile } from '@/domain/entity/file'
 import { MessageStorage } from '../storage/types'
 import { FileService } from '../../file'
-import { TransalatePrompt } from '../translatePrompt'
+import { TransalatePrompt } from '../translate-prompt'
 import { IEmployee } from '@/domain/entity/employee'
 
 type Params = Adapter & {
@@ -51,6 +53,7 @@ export type SendReplicateImage = (params: {
   sentPlatform?: Platform
   onEnd?: (params: { userMessage: IMessage; assistantMessage: IMessage | null }) => unknown
   stream: boolean
+  developerKeyId?: string
 }) => Promise<IMessage>
 
 export const buildSendReplicateImage = ({
@@ -70,15 +73,28 @@ export const buildSendReplicateImage = ({
   modelService,
   modelRepository,
   cryptoGateway,
-  fileService
+  fileService,
 }: Params): SendReplicateImage => {
-  return async ({ userMessage, chat, user, employee, keyEncryptionKey, subscription, files, voiceFile, platform, onEnd, stream }) => {
+  return async ({
+    userMessage,
+    chat,
+    user,
+    employee,
+    keyEncryptionKey,
+    subscription,
+    files,
+    voiceFile,
+    platform,
+    onEnd,
+    stream,
+    developerKeyId,
+  }) => {
     const { settings } = chat
 
     if (!settings || !settings.replicateImage) {
       throw new NotFoundError({
         code: 'SETTINGS_NOT_FOUND',
-        message: 'Settings "replicateImage" not found'
+        message: 'Settings "replicateImage" not found',
       })
     }
 
@@ -86,8 +102,8 @@ export const buildSendReplicateImage = ({
     const model =
       (await modelRepository.get({
         where: {
-          id: replicateImageSettings.model
-        }
+          id: replicateImageSettings.model,
+        },
       })) ??
       chat.model ??
       null
@@ -95,13 +111,13 @@ export const buildSendReplicateImage = ({
     if (!model) {
       throw new NotFoundError({
         code: 'MODEL_NOT_FOUND',
-        message: `Model ${replicateImageSettings.model} not found`
+        message: `Model ${replicateImageSettings.model} not found`,
       })
     }
 
     const imageJob = await jobService.create({
       name: 'MODEL_GENERATION',
-      chat
+      chat,
     })
 
     let imageMessage = await messageStorage.create({
@@ -115,7 +131,7 @@ export const buildSendReplicateImage = ({
           user_id: user.id,
           model_id: model.id,
           job_id: imageJob.id,
-          created_at: new Date(userMessage.created_at.getTime() + 1)
+          created_at: new Date(userMessage.created_at.getTime() + 1),
         },
         include: {
           model: {
@@ -123,14 +139,14 @@ export const buildSendReplicateImage = ({
               icon: true,
               parent: {
                 include: {
-                  icon: true
-                }
-              }
-            }
+                  icon: true,
+                },
+              },
+            },
           },
-          job: true
-        }
-      }
+          job: true,
+        },
+      },
     })
 
     chatService.eventStream.emit({
@@ -138,16 +154,17 @@ export const buildSendReplicateImage = ({
       event: {
         name: 'MESSAGE_CREATE',
         data: {
-          message: imageMessage
-        }
-      }
+          message: imageMessage,
+        },
+      },
     })
     const updateImageMessage = async () => {
       try {
-        const [{ userMessageImages, userMessageAttachmentsFiles }, { userMessageVoice }] = await Promise.all([
-          uploadFiles({ files, user, keyEncryptionKey }),
-          uploadVoice({ voiceFile, user, keyEncryptionKey })
-        ])
+        const [{ userMessageImages, userMessageAttachmentsFiles }, { userMessageVoice }] =
+          await Promise.all([
+            uploadFiles({ files, user, keyEncryptionKey }),
+            uploadVoice({ voiceFile, user, keyEncryptionKey }),
+          ])
 
         userMessage =
           (await messageStorage.update({
@@ -155,23 +172,23 @@ export const buildSendReplicateImage = ({
             keyEncryptionKey,
             data: {
               where: {
-                id: userMessage.id
+                id: userMessage.id,
               },
               data: {
                 images: {
-                  connect: userMessageImages.map(({ id }) => ({ id }))
+                  connect: userMessageImages.map(({ id }) => ({ id })),
                 },
                 attachments: {
                   createMany: {
                     data: userMessageAttachmentsFiles.map((userMessageAttachmentFile) => ({
-                      file_id: userMessageAttachmentFile.id
-                    }))
-                  }
+                      file_id: userMessageAttachmentFile.id,
+                    })),
+                  },
                 },
                 ...(userMessageVoice && {
-                  voice_id: userMessageVoice.id
+                  voice_id: userMessageVoice.id,
                 }),
-                platform
+                platform,
               },
               include: {
                 user: true,
@@ -179,21 +196,21 @@ export const buildSendReplicateImage = ({
                   include: {
                     original: true,
                     preview: true,
-                    buttons: true
-                  }
+                    buttons: true,
+                  },
                 },
                 attachments: {
                   include: {
-                    file: true
-                  }
+                    file: true,
+                  },
                 },
                 voice: {
                   include: {
-                    file: true
-                  }
-                }
-              }
-            }
+                    file: true,
+                  },
+                },
+              },
+            },
           })) ?? userMessage
 
         chatService.eventStream.emit({
@@ -201,17 +218,28 @@ export const buildSendReplicateImage = ({
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: userMessage
-            }
-          }
+              message: userMessage,
+            },
+          },
         })
 
         let userMessageContent = `${userMessage.full_content ?? userMessage.content ?? ''} ${userMessage.voice?.content ?? ''} ${userMessage.video?.content ?? ''}`
 
+        //estimate
+        await subscriptionService.checkBalance({
+          subscription,
+          estimate: await modelService.estimate.image({
+            replicateImage: {
+              model,
+              settings,
+            },
+          }),
+        })
+
         await moderationService.moderate({
           userId: user.id,
           messageId: userMessage.id,
-          content: userMessageContent ?? ''
+          content: userMessageContent ?? '',
         })
 
         const isRussian = userMessageContent?.match(/[А-ЯЁа-яё]{2}/)
@@ -223,7 +251,11 @@ export const buildSendReplicateImage = ({
         let negativePrompt = replicateImageSettings.negative_prompt
         const negativePromptInRussian = negativePrompt.match(/[А-ЯЁа-яё]{2}/)
 
-        if ((isFlux(model) || isStableDiffusion(model)) && negativePromptInRussian && negativePrompt) {
+        if (
+          (isFlux(model) || isStableDiffusion(model)) &&
+          negativePromptInRussian &&
+          negativePrompt
+        ) {
           negativePrompt = await translatePrompt({ content: negativePrompt })
         }
 
@@ -237,10 +269,10 @@ export const buildSendReplicateImage = ({
               message: {
                 id: imageMessage.id,
                 job_id: imageJob.id,
-                job: imageJob.job
-              }
-            }
-          }
+                job: imageJob.job,
+              },
+            },
+          },
         })
 
         const images = await sendImageByProvider({
@@ -248,20 +280,20 @@ export const buildSendReplicateImage = ({
           model,
           message: {
             ...userMessage,
-            content: userMessageContent
+            content: userMessageContent,
           },
           settings: {
             ...replicateImageSettings,
-            negative_prompt: negativePrompt
+            negative_prompt: negativePrompt,
           },
-          endUserId: user.id
+          endUserId: user.id,
         })
 
         let dek = null
         if (user.encryptedDEK && user.useEncryption && keyEncryptionKey) {
           dek = await cryptoGateway.decryptDEK({
             edek: user.encryptedDEK as Buffer,
-            kek: keyEncryptionKey
+            kek: keyEncryptionKey,
           })
         }
 
@@ -270,25 +302,26 @@ export const buildSendReplicateImage = ({
             const originalImage = await fileService.write({
               buffer: image.buffer,
               ext: image.ext,
-              dek
+              dek,
             })
 
-            const { width: originalImageWidth = 1024, height: originalImageHeight = 1024 } = await imageGateway.metadata({
-              buffer: image.buffer
-            })
+            const { width: originalImageWidth = 1024, height: originalImageHeight = 1024 } =
+              await imageGateway.metadata({
+                buffer: image.buffer,
+              })
 
             const {
               buffer: previewImageBuffer,
-              info: { width: previewImageWidth, height: previewImageHeight }
+              info: { width: previewImageWidth, height: previewImageHeight },
             } = await imageGateway.resize({
               buffer: image.buffer,
-              width: 512
+              width: 512,
             })
 
             const previewImage = await fileService.write({
               buffer: previewImageBuffer,
               ext: image.ext,
-              dek
+              dek,
             })
 
             const messageImage = await messageImageRepository.create({
@@ -302,39 +335,39 @@ export const buildSendReplicateImage = ({
                     type: FileType.IMAGE,
                     name: originalImage.name,
                     path: originalImage.path,
-                    isEncrypted: originalImage.isEncrypted
-                  }
+                    isEncrypted: originalImage.isEncrypted,
+                  },
                 },
                 preview: {
                   create: {
                     type: FileType.IMAGE,
                     name: previewImage.name,
                     path: previewImage.path,
-                    isEncrypted: previewImage.isEncrypted
-                  }
+                    isEncrypted: previewImage.isEncrypted,
+                  },
                 },
                 buttons: {
                   createMany: {
                     data: [
                       {
                         message_id: imageMessage.id,
-                        action: MessageButtonAction.DOWNLOAD
-                      }
-                    ]
-                  }
-                }
-              }
+                        action: MessageButtonAction.DOWNLOAD,
+                      },
+                    ],
+                  },
+                },
+              },
             })
 
             return messageImage
-          })
+          }),
         )
 
         await imageJob.done()
 
-        const caps = await modelService.getCaps({
+        const caps = await modelService.getCaps.image({
           model,
-          settings
+          settings,
         })
 
         const writeOffResult = await subscriptionService.writeOffWithLimitNotification({
@@ -344,8 +377,10 @@ export const buildSendReplicateImage = ({
             userId: user.id,
             enterpriseId: employee?.enterprise_id,
             platform,
-            model_id: model.id
-          }
+            model_id: model.id,
+            provider_id: config.model_providers.replicate.id,
+            developerKeyId,
+          },
         })
         const { transaction } = writeOffResult
 
@@ -356,9 +391,9 @@ export const buildSendReplicateImage = ({
             where: { id: chat.id },
             data: {
               total_caps: {
-                increment: caps
-              }
-            }
+                increment: caps,
+              },
+            },
           })) ?? chat
 
         imageMessage =
@@ -372,9 +407,9 @@ export const buildSendReplicateImage = ({
                 transaction_id: transaction.id,
                 images: {
                   connect: messageImages.map(({ id }) => ({
-                    id
-                  }))
-                }
+                    id,
+                  })),
+                },
               },
               include: {
                 transaction: true,
@@ -383,25 +418,25 @@ export const buildSendReplicateImage = ({
                     icon: true,
                     parent: {
                       include: {
-                        icon: true
-                      }
-                    }
-                  }
+                        icon: true,
+                      },
+                    },
+                  },
                 },
                 images: {
                   include: {
                     original: true,
                     preview: true,
-                    buttons: true
-                  }
+                    buttons: true,
+                  },
                 },
                 buttons: true,
                 all_buttons: {
-                  distinct: ['action']
+                  distinct: ['action'],
                 },
-                job: true
-              }
-            }
+                job: true,
+              },
+            },
           })) ?? imageMessage
 
         chatService.eventStream.emit({
@@ -410,52 +445,57 @@ export const buildSendReplicateImage = ({
             name: 'UPDATE',
             data: {
               chat: {
-                total_caps: chat.total_caps
-              }
-            }
-          }
+                total_caps: chat.total_caps,
+              },
+            },
+          },
         })
         chatService.eventStream.emit({
           chat,
           event: {
             name: 'MESSAGE_UPDATE',
             data: {
-              message: imageMessage
-            }
-          }
+              message: imageMessage,
+            },
+          },
         })
         chatService.eventStream.emit({
           chat,
           event: {
             name: 'TRANSACTION_CREATE',
             data: {
-              transaction
-            }
-          }
+              transaction,
+            },
+          },
         })
 
         chatService.eventStream.emit({
           chat,
           event: {
-            name: userService.hasEnterpriseActualSubscription(user) ? 'ENTERPRISE_SUBSCRIPTION_UPDATE' : 'SUBSCRIPTION_UPDATE',
+            name: userService.hasEnterpriseActualSubscription(user)
+              ? 'ENTERPRISE_SUBSCRIPTION_UPDATE'
+              : 'SUBSCRIPTION_UPDATE',
             data: {
               subscription: {
                 id: subscription.id,
-                balance: subscription.balance
-              }
-            }
-          }
+                balance: subscription.balance,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: imageMessage
+          assistantMessage: imageMessage,
         })
       } catch (error) {
-        logger.error('SendReplicateImage', error, {
+        logger.error({
+          location: 'sendReplicateImage',
+          message: getErrorString(error),
           userId: user.id,
           email: user.email ?? user.tg_id,
-          chatId: chat.id
+          chatId: chat.id,
+          modelId: model.id,
         })
         await imageJob.setError(error)
 
@@ -467,15 +507,15 @@ export const buildSendReplicateImage = ({
               message: {
                 id: imageMessage.id,
                 job_id: imageJob.id,
-                job: imageJob.job
-              }
-            }
-          }
+                job: imageJob.job,
+              },
+            },
+          },
         })
 
         onEnd?.({
           userMessage,
-          assistantMessage: imageMessage
+          assistantMessage: imageMessage,
         })
 
         throw error

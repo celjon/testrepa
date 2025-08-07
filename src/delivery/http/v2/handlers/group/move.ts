@@ -11,7 +11,7 @@ export const buildMove =
     const groups = await group.move({
       userId: req.user.id,
       groupId: req.body?.groupId,
-      startGroupId: req.body?.startGroupId
+      startGroupId: req.body?.startGroupId,
     })
 
     return res.status(200).send(groups)

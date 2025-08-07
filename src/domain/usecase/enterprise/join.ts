@@ -11,12 +11,12 @@ export const buildJoin = ({ adapter }: UseCaseParams): Join => {
     //Если пользователь уже состоит в какой-то компании, то не даём присоединиться
     const existingEmployee = await adapter.employeeRepository.get({
       where: {
-        user_id: userId
-      }
+        user_id: userId,
+      },
     })
     if (existingEmployee) {
       throw new ForbiddenError({
-        code: 'EMPLOYEE_ALREADY_JOINED'
+        code: 'EMPLOYEE_ALREADY_JOINED',
       })
     }
 
@@ -25,7 +25,7 @@ export const buildJoin = ({ adapter }: UseCaseParams): Join => {
     }
     if (!tokenPayload.enterpriseId) {
       throw new ForbiddenError({
-        code: 'INVALID_INVITE_TOKEN'
+        code: 'INVALID_INVITE_TOKEN',
       })
     }
 
@@ -33,36 +33,36 @@ export const buildJoin = ({ adapter }: UseCaseParams): Join => {
       data: {
         enterprise_id: tokenPayload.enterpriseId,
         user_id: userId,
-        role: EnterpriseRole.EMPLOYEE
+        role: EnterpriseRole.EMPLOYEE,
       },
       include: {
-        enterprise: { include: { subscription: true } }
-      }
+        enterprise: { include: { subscription: true } },
+      },
     })
 
     return (await adapter.userRepository.update({
       where: {
-        id: userId
+        id: userId,
       },
       data: {
         subscription: {
           update: {
-            plan_id: employee!.enterprise!.subscription!.plan_id
-          }
-        }
+            plan_id: employee!.enterprise!.subscription!.plan_id,
+          },
+        },
       },
       include: {
         employees: {
           include: {
             enterprise: {
               include: {
-                subscription: true
-              }
-            }
-          }
+                subscription: true,
+              },
+            },
+          },
         },
-        subscription: true
-      }
+        subscription: true,
+      },
     })) as IUser
   }
 }

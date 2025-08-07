@@ -4,7 +4,10 @@ import { DefaultArgs } from '@prisma/client/runtime/library'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type ListReport = (data: Prisma.ReportFindManyArgs<DefaultArgs>, tx?: unknown) => Promise<Report[] | null | undefined>
+export type ListReport = (
+  data: Prisma.ReportFindManyArgs<DefaultArgs>,
+  tx?: unknown,
+) => Promise<Report[] | null | undefined>
 
 export const buildListReport = ({ db }: Params): ListReport => {
   return async (data, tx) => {

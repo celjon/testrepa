@@ -6,10 +6,10 @@ type Params = {
 
 export const newClient = ({ apiKey }: Params): { client: RunwayML } => {
   const client = new RunwayML({
-    apiKey: apiKey
+    apiKey: apiKey,
   })
 
   return {
-    client
+    client,
   }
 }

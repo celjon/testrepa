@@ -2,21 +2,25 @@ import { NotFoundError, UnauthorizedError } from '@/domain/errors'
 import { IFile } from '@/domain/entity/file'
 import { UseCaseParams } from '../types'
 
-export type Decrypt = (params: { userId: string; keyEncryptionKey: string | null; fileId: string }) => Promise<IFile>
+export type Decrypt = (params: {
+  userId: string
+  keyEncryptionKey: string | null
+  fileId: string
+}) => Promise<IFile>
 
 export const buildDecrypt = ({ service, adapter }: UseCaseParams): Decrypt => {
   return async ({ userId, keyEncryptionKey, fileId }) => {
     const [user, file] = await Promise.all([
       adapter.userRepository.get({
         where: {
-          id: userId
-        }
+          id: userId,
+        },
       }),
       adapter.fileRepository.get({
         where: {
-          id: fileId
-        }
-      })
+          id: fileId,
+        },
+      }),
     ])
 
     if (!user) {
@@ -32,11 +36,11 @@ export const buildDecrypt = ({ service, adapter }: UseCaseParams): Decrypt => {
 
     const dek = await adapter.cryptoGateway.decryptDEK({
       edek: user.encryptedDEK,
-      kek: keyEncryptionKey
+      kek: keyEncryptionKey,
     })
     const decrypted = await service.file.decrypt({
       file,
-      dek
+      dek,
     })
 
     return decrypted

@@ -34,7 +34,7 @@ export const buildPresetRules = ({ allowedIps, authRequired, validateSchema }: M
     // array can be empty
     check('categoriesIds').optional().isArray(),
     authRequired(),
-    validateSchema
+    validateSchema,
   ]
 
   const deleteRules = [authRequired(), validateSchema]
@@ -74,7 +74,7 @@ export const buildPresetRules = ({ allowedIps, authRequired, validateSchema }: M
     check('access').optional().isString(),
     check('categoriesIds').optional().isArray(),
     authRequired(),
-    validateSchema
+    validateSchema,
   ]
 
   const listRules = [
@@ -84,7 +84,7 @@ export const buildPresetRules = ({ allowedIps, authRequired, validateSchema }: M
     check('quantity').optional().isString(),
     check('locale').optional().isString(),
     authRequired(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -106,7 +106,7 @@ export const buildPresetRules = ({ allowedIps, authRequired, validateSchema }: M
     check('locale').optional().isString(),
     check('name').isString(),
     allowedIps(config.admin.allowed_ips),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -128,7 +128,7 @@ export const buildPresetRules = ({ allowedIps, authRequired, validateSchema }: M
     check('locale').optional().isString(),
     check('name').optional().isString(),
     allowedIps(config.admin.allowed_ips),
-    validateSchema
+    validateSchema,
   ]
 
   const getCategoriesRules = [check('locale').optional().isString(), validateSchema]
@@ -155,6 +155,6 @@ export const buildPresetRules = ({ allowedIps, authRequired, validateSchema }: M
     favoriteRules,
     unfavoriteRules,
     getFiltersRules,
-    createChatRules
+    createChatRules,
   }
 }

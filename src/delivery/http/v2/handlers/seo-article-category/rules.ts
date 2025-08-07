@@ -26,7 +26,11 @@ export const buildSEOArticleCategoryRules = ({ authRequired, validateSchema }: M
    *       required:
    *         - name
    */
-  const createSEOArticleCategoryRules = [authRequired({ adminOnly: true }), body('name').isObject(), validateSchema]
+  const createSEOArticleCategoryRules = [
+    authRequired({ adminOnly: true }),
+    body('name').isObject(),
+    validateSchema,
+  ]
   /**
    * @openapi
    * components:
@@ -39,7 +43,11 @@ export const buildSEOArticleCategoryRules = ({ authRequired, validateSchema }: M
    *         quantity:
    *           type: number
    */
-  const listSEOArticleCategoryRules = [query('page').optional().isNumeric(), query('quantity').optional().isNumeric(), validateSchema]
+  const listSEOArticleCategoryRules = [
+    query('page').optional().isNumeric(),
+    query('quantity').optional().isNumeric(),
+    validateSchema,
+  ]
   /**
    * @openapi
    * components:
@@ -61,14 +69,22 @@ export const buildSEOArticleCategoryRules = ({ authRequired, validateSchema }: M
    *             pt:
    *               type: string
    */
-  const updateSEOArticleCategoryRules = [authRequired({ adminOnly: true }), param('seoArticleCategoryId').isString(), validateSchema]
-  const deleteSEOArticleCategoryRules = [authRequired({ adminOnly: true }), param('seoArticleCategoryId').isString(), validateSchema]
+  const updateSEOArticleCategoryRules = [
+    authRequired({ adminOnly: true }),
+    param('seoArticleCategoryId').isString(),
+    validateSchema,
+  ]
+  const deleteSEOArticleCategoryRules = [
+    authRequired({ adminOnly: true }),
+    param('seoArticleCategoryId').isString(),
+    validateSchema,
+  ]
 
   return {
     getSEOArticleCategoryRules,
     listSEOArticleCategoryRules,
     createSEOArticleCategoryRules,
     updateSEOArticleCategoryRules,
-    deleteSEOArticleCategoryRules
+    deleteSEOArticleCategoryRules,
   }
 }

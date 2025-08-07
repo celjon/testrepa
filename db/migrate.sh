@@ -1,3 +1,3 @@
 #!/bin/bash
 
-bun migrate:prod && yarn seed:prod
+npm run migrate:prod && npm run seed:prod && npm run init:ch:dev

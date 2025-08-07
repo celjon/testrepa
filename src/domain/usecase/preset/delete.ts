@@ -10,13 +10,13 @@ export const buildDelete =
   async ({ id, userId }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -26,14 +26,14 @@ export const buildDelete =
       where: {
         id,
         ...(!isAdmin && {
-          author_id: userId
-        })
-      }
+          author_id: userId,
+        }),
+      },
     })
 
     if (!preset) {
       throw new NotFoundError({
-        code: 'PRESET_NOT_FOUND'
+        code: 'PRESET_NOT_FOUND',
       })
     }
 

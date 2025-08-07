@@ -1,12 +1,18 @@
 import { Field, ID, ObjectType } from 'type-graphql'
-import { Currency, Transaction, TransactionProvider, TransactionStatus, TransactionType } from '@prisma/client'
+import {
+  Currency,
+  Transaction,
+  TransactionProvider,
+  TransactionStatus,
+  TransactionType,
+} from '@prisma/client'
 import { IPlan } from './plan'
 import { IUser } from './user'
 import { IMessage } from './message'
 import { IAction } from './action'
 
 export interface ITransaction extends Transaction {
-  plan?: IPlan
+  plan?: IPlan | null
   user?: IUser
   from_user?: IUser
   message?: IMessage
@@ -59,49 +65,54 @@ export class TransactionGraphQLObject implements ITransaction {
 
   @Field(() => Date)
   created_at!: Date
+
+  @Field(() => ID, { nullable: true })
+  developer_key_id!: string | null
 }
 
 /**
  * @openapi
  * components:
  *   entities:
- *      Transaction:
- *          required:
- *            - id
- *            - provider
- *            - amount
- *            - currency
- *            - status
- *            - type
- *            - created_at
- *          properties:
- *            id:
- *                type: string
- *            provider:
- *                type: string
- *                enum: [YOOMONEY, CRYPTO, BOTHUB]
- *            currency:
- *                type: string
- *                enum: [RUB, USD, EUR, BOTHUB_TOKEN]
- *            meta:
- *                type: object
- *            amount:
- *                type: number
- *            status:
- *                type: string
- *                enum: [FAILED, SUCCEDED, PENDING]
- *            type:
- *                type: string
- *                enum: [SUBSCRIPTION, WRITE_OFF, REPLINSH, WITHDRAW]
- *            plan_id:
- *                type: string
- *            user_id:
- *                type: string
- *            referral_id:
- *                type: string
- *            external_id:
- *                type: string
- *            created_at:
- *                type: string
- *                format: date
+ *     Transaction:
+ *       required:
+ *         - id
+ *         - provider
+ *         - amount
+ *         - currency
+ *         - status
+ *         - type
+ *         - created_at
+ *       properties:
+ *         id:
+ *           type: string
+ *         provider:
+ *           type: string
+ *           enum: [YOOMONEY, CRYPTO, BOTHUB]
+ *         currency:
+ *           type: string
+ *           enum: [RUB, USD, EUR, BOTHUB_TOKEN]
+ *         meta:
+ *           type: object
+ *         amount:
+ *           type: number
+ *         status:
+ *           type: string
+ *           enum: [FAILED, SUCCEDED, PENDING]
+ *         type:
+ *           type: string
+ *           enum: [SUBSCRIPTION, WRITE_OFF, REPLINSH, WITHDRAW]
+ *         plan_id:
+ *           type: string
+ *         user_id:
+ *           type: string
+ *         referral_id:
+ *           type: string
+ *         external_id:
+ *           type: string
+ *         created_at:
+ *           type: string
+ *           format: date
+ *         developer_key_id:
+ *           type: string
  */

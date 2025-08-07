@@ -18,7 +18,12 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
    *         - model_id
    *         - generationMode
    */
-  const generateSubjectRules = [authRequired(), body('model_id').isString(), body('generationMode').isString(), validateSchema]
+  const generateSubjectRules = [
+    authRequired(),
+    body('model_id').isString(),
+    body('generationMode').isString(),
+    validateSchema,
+  ]
 
   /**
    * @openapi
@@ -46,7 +51,7 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
     body('subject').isString(),
     body('creativity').isNumeric(),
     body('model_id').isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /** @openapi
@@ -76,7 +81,7 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
     body('plan').isString(),
     body('creativity').isNumeric(),
     body('model_id').isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -117,7 +122,7 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
     body('creativity').isNumeric(),
     body('model_id').isString(),
     body('chapter').isString(),
-    validateSchema
+    validateSchema,
   ]
 
   /**
@@ -183,10 +188,14 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
     body('symbolsCount').isInt(),
     body('keywords').isString(),
     body('sourceLink').isString(),
-    validateSchema
+    validateSchema,
   ]
 
-  const batchGenerateArticlesRules = [authRequired(), allowedIps(config.admin.allowed_ips), validateSchema]
+  const batchGenerateArticlesRules = [
+    authRequired(),
+    allowedIps(config.admin.allowed_ips),
+    validateSchema,
+  ]
 
   /**
    * @openapi
@@ -218,7 +227,7 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
     body('creativity').isNumeric(),
     body('language').isString(),
     body('chapterPrompt').isString(),
-    validateSchema
+    validateSchema,
   ]
 
   const getArticleRules = [authRequired(), param('articleId').isString(), validateSchema]
@@ -235,7 +244,12 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
    *          required:
    *             - content
    */
-  const updateArticleRules = [authRequired(), param('articleId').isString(), body('content').isString(), validateSchema]
+  const updateArticleRules = [
+    authRequired(),
+    param('articleId').isString(),
+    body('content').isString(),
+    validateSchema,
+  ]
 
   /**
    * @openapi
@@ -255,9 +269,13 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
     authRequired({ adminOnly: true }),
     query('page').optional().isNumeric(),
     query('search').optional().isString(),
-    validateSchema
+    validateSchema,
   ]
-  const deleteArticleRules = [authRequired({ adminOnly: true }), param('articleId').isString(), validateSchema]
+  const deleteArticleRules = [
+    authRequired({ adminOnly: true }),
+    param('articleId').isString(),
+    validateSchema,
+  ]
   /**
    * @openapi
    * components:
@@ -272,7 +290,11 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
    *       required:
    *         - articleIds
    */
-  const deleteManyArticlesRules = [authRequired({ adminOnly: true }), body('articleIds').isArray().notEmpty(), validateSchema]
+  const deleteManyArticlesRules = [
+    authRequired({ adminOnly: true }),
+    body('articleIds').isArray().notEmpty(),
+    validateSchema,
+  ]
 
   return {
     generateSubjectRules,
@@ -288,6 +310,6 @@ export const buildArticleRules = ({ allowedIps, authRequired, validateSchema }: 
     deleteArticleRules,
     updateArticleRules,
     listSEOArticlesRules,
-    deleteManyArticlesRules
+    deleteManyArticlesRules,
   }
 }

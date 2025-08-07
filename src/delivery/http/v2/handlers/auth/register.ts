@@ -19,8 +19,8 @@ export const buildRegister = ({ auth }: Params): Register => {
       yandexMetricYclid: req.body.yandexMetricYclid ?? null,
       ip: getIPFromRequest(req),
       metadata: {
-        locale
-      }
+        locale,
+      },
     })
 
     return res.status(200).json(data)

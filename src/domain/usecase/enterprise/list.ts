@@ -15,8 +15,8 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
   return async ({ search, page, userId }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (!user) {
@@ -27,33 +27,33 @@ export const buildList = ({ adapter, service }: UseCaseParams): List => {
       where: {
         name: {
           contains: search || '',
-          mode: 'insensitive'
-        }
+          mode: 'insensitive',
+        },
       },
       include: {
         employees: {
           include: {
             user: {
               include: {
-                subscription: true
-              }
-            }
-          }
+                subscription: true,
+              },
+            },
+          },
         },
         subscription: {
           include: {
-            plan: true
-          }
-        }
-      }
+            plan: true,
+          },
+        },
+      },
     }
 
     if (user.role !== Role.ADMIN) {
       const employees = await adapter.employeeRepository.list({
         where: {
           user_id: userId,
-          role: EnterpriseRole.OWNER
-        }
+          role: EnterpriseRole.OWNER,
+        },
       })
       if (!employees) {
         return { data: [], pages: 0 }

@@ -8,15 +8,15 @@ export const buildFavorite =
   async ({ id, userId }) => {
     const preset = await adapter.presetRepository.update({
       where: {
-        id
+        id,
       },
       data: {
         users: {
           connect: {
-            id: userId
-          }
-        }
-      }
+            id: userId,
+          },
+        },
+      },
     })
 
     preset.favorite = true

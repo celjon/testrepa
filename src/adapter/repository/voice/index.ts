@@ -11,6 +11,6 @@ export const buildVoiceRepository = (params: Params): VoiceRepository => {
   const create = buildCreate(params)
 
   return {
-    create
+    create,
   }
 }

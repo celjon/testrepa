@@ -11,7 +11,7 @@ function extractTextFromExcel(buffer: Buffer): string {
     type: 'buffer',
     cellFormula: false,
     cellStyles: false,
-    cellHTML: false
+    cellHTML: false,
   })
 
   if (!wb.SheetNames.length) return 'No sheets found in the workbook'
@@ -107,7 +107,7 @@ export const buildToMarkdown =
     if (type === 'word') {
       const { value } = await mammoth.convertToHtml(
         {
-          buffer
+          buffer,
         },
         {
           convertImage: mammoth.images.imgElement(async (element) => {
@@ -117,11 +117,11 @@ export const buildToMarkdown =
             return {
               src: 'unknown',
               ...(convertImage && {
-                src: await convertImage(buffer, ext)
-              })
+                src: await convertImage(buffer, ext),
+              }),
             }
-          })
-        }
+          }),
+        },
       )
 
       return turndownService.turndown(value)

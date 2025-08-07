@@ -212,7 +212,7 @@ export const bannedWords = [
   'seductive',
   'sexi',
   'sexualiz',
-  'sexual'
+  'sexual',
 ]
 
 export function detectBannedWords(prompt: string): string[] {

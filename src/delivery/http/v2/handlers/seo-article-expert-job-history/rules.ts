@@ -1,8 +1,14 @@
 import { body, param } from 'express-validator'
 import { Middlewares } from '../../middlewares'
 
-export const buildSEOArticleExpertJobHistoryRules = ({ authRequired, validateSchema }: Middlewares) => {
-  const getSEOArticleExpertJobHistoryRules = [param('seoArticleExpertJobHistoryId').isString(), validateSchema]
+export const buildSEOArticleExpertJobHistoryRules = ({
+  authRequired,
+  validateSchema,
+}: Middlewares) => {
+  const getSEOArticleExpertJobHistoryRules = [
+    param('seoArticleExpertJobHistoryId').isString(),
+    validateSchema,
+  ]
   /**
    * @openapi
    * components:
@@ -37,7 +43,6 @@ export const buildSEOArticleExpertJobHistoryRules = ({ authRequired, validateSch
    *       required:
    *         - post
    *         - from_date
-   *         - to_date
    *         - company
    *         - city
    *         - duties
@@ -49,14 +54,13 @@ export const buildSEOArticleExpertJobHistoryRules = ({ authRequired, validateSch
     authRequired({ adminOnly: true }),
     body('post').isString(),
     body('from_date').isDate(),
-    body('to_date').isDate(),
     body('company').isString(),
     body('city').isString(),
     body('duties').isArray(),
     body('achievements').isArray(),
     body('description').isString(),
     body('seo_expert_id').isString(),
-    validateSchema
+    validateSchema,
   ]
   /**
    * @openapi
@@ -93,18 +97,18 @@ export const buildSEOArticleExpertJobHistoryRules = ({ authRequired, validateSch
   const updateSEOArticleExpertJobHistoryRules = [
     authRequired({ adminOnly: true }),
     param('seoArticleExpertJobHistoryId').isString(),
-    validateSchema
+    validateSchema,
   ]
   const deleteSEOArticleExpertJobHistoryRules = [
     authRequired({ adminOnly: true }),
     param('seoArticleExpertJobHistoryId').isString(),
-    validateSchema
+    validateSchema,
   ]
 
   return {
     getSEOArticleExpertJobHistoryRules,
     createSEOArticleExpertJobHistoryRules,
     updateSEOArticleExpertJobHistoryRules,
-    deleteSEOArticleExpertJobHistoryRules
+    deleteSEOArticleExpertJobHistoryRules,
   }
 }

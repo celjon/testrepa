@@ -11,14 +11,14 @@ type Params = {
 
 export const newClient = ({
   shopId,
-  secretKey
+  secretKey,
 }: Params): {
   client: YoomoneyClient
 } => {
   const { protocol, host, port } = config.proxy
   const authCredentials = Buffer.from(`${shopId}:${secretKey}`).toString('base64').toString()
   const api = axios.create({
-    baseURL: 'https://api.yookassa.ru/v3/'
+    baseURL: 'https://api.yookassa.ru/v3/',
   })
   api.interceptors.request.use((config) => {
     config.headers.Authorization = `Basic ${authCredentials}`
@@ -31,20 +31,20 @@ export const newClient = ({
       const { data: payment } = await api.post<Payment>('/payments', data, {
         headers: {
           'Content-Type': 'application/json',
-          'Idempotence-Key': idempotenceKey
+          'Idempotence-Key': idempotenceKey,
         },
-        httpsAgent: new SocksProxyAgent(`${protocol}://${host}:${port}`)
+        httpsAgent: new SocksProxyAgent(`${protocol}://${host}:${port}`),
       })
       return payment
     },
     getPayment: async (paymentId) => {
       const { data: payment } = await api.get<Payment>(`/payments/${paymentId}`)
       return payment
-    }
+    },
   }
 
   return {
-    client
+    client,
   }
 }
 

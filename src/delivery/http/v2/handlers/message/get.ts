@@ -10,7 +10,7 @@ export const buildGet = ({ message }: Params): Get => {
     const data = await message.get({
       userId: req.user?.id,
       keyEncryptionKey: req.user?.keyEncryptionKey,
-      id: req.params.id
+      id: req.params.id,
     })
 
     return res.status(200).json(data)

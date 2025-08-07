@@ -21,11 +21,17 @@ export type UploadVoice = (params: {
   userMessageVoice: IVoice | null
 }>
 
-export const buildUploadVoice = ({ assemblyAiGateway, mediaGateway, voiceRepository, cryptoGateway, fileService }: Params): UploadVoice => {
+export const buildUploadVoice = ({
+  assemblyAiGateway,
+  mediaGateway,
+  voiceRepository,
+  cryptoGateway,
+  fileService,
+}: Params): UploadVoice => {
   return async ({ voiceFile, user, keyEncryptionKey, temperature, prompt }) => {
     if (!voiceFile) {
       return {
-        userMessageVoice: null
+        userMessageVoice: null,
       }
     }
 
@@ -37,7 +43,7 @@ export const buildUploadVoice = ({ assemblyAiGateway, mediaGateway, voiceReposit
     const {
       waveData: voiceWaveData,
       duration: voiceDuration,
-      content: voiceTranscriptionResult
+      content: voiceTranscriptionResult,
     } = await mediaGateway.getData({ assemblyAiGateway, file: voiceFile, temperature, prompt })
 
     let isEncrypted = false
@@ -47,12 +53,12 @@ export const buildUploadVoice = ({ assemblyAiGateway, mediaGateway, voiceReposit
     if (user.encryptedDEK && user.useEncryption && keyEncryptionKey) {
       dek = await cryptoGateway.decryptDEK({
         edek: user.encryptedDEK,
-        kek: keyEncryptionKey
+        kek: keyEncryptionKey,
       })
 
       voiceContent = await cryptoGateway.encrypt({
         dek,
-        data: voiceContent
+        data: voiceContent,
       })
       isEncrypted = true
     }
@@ -60,7 +66,7 @@ export const buildUploadVoice = ({ assemblyAiGateway, mediaGateway, voiceReposit
     const { path, isEncrypted: isEncryptedFile } = await fileService.write({
       buffer: voiceFileBuffer,
       ext: extname(voiceFile.originalname),
-      dek
+      dek,
     })
 
     const userMessageVoice = await voiceRepository.create({
@@ -75,10 +81,10 @@ export const buildUploadVoice = ({ assemblyAiGateway, mediaGateway, voiceReposit
             name: voiceFile.originalname,
             path: path,
             size: voiceFile.size,
-            isEncrypted: isEncryptedFile
-          }
-        }
-      }
+            isEncrypted: isEncryptedFile,
+          },
+        },
+      },
     })
 
     userMessageVoice.content = voiceTranscriptionResult

@@ -1,11 +1,11 @@
 import { getToken, newClient } from './index'
-import { describe, expect, test } from '@jest/globals'
+import { describe, expect, test } from 'vitest'
 import { faker } from '@faker-js/faker'
 
 describe.skip('tinkoff client', () => {
   const client = newClient({
     terminalKey: '1685557539127DEMO',
-    merchantPassword: '7u27zwoqkyqqhjhc'
+    merchantPassword: '7u27zwoqkyqqhjhc',
   })
 
   test('hasher', () => {
@@ -14,7 +14,7 @@ describe.skip('tinkoff client', () => {
       amount: 19200,
       orderId: 21090,
       description: 'Подарочная карта на 1000 рублей',
-      password: 'usaf8fw8fsw21g'
+      password: 'usaf8fw8fsw21g',
     }
 
     const hash = getToken(dataToHash)
@@ -25,7 +25,7 @@ describe.skip('tinkoff client', () => {
   test('create payment', async () => {
     const price = faker.number.int({
       max: 10000,
-      min: 100
+      min: 100,
     })
 
     const email = faker.internet.email()
@@ -35,11 +35,11 @@ describe.skip('tinkoff client', () => {
       description: faker.string.alpha({
         length: {
           min: 5,
-          max: 40
-        }
+          max: 40,
+        },
       }),
       data: {
-        email
+        email,
       },
       receipt: {
         email,
@@ -50,11 +50,11 @@ describe.skip('tinkoff client', () => {
             name: 'Test',
             quantity: 1,
             tax: 'vat0',
-            paymentMethod: 'full_prepayment'
-          }
+            paymentMethod: 'full_prepayment',
+          },
         ],
-        taxation: 'osn'
-      }
+        taxation: 'osn',
+      },
     })
     expect(res.paymentUrl).not.toBeUndefined()
   })

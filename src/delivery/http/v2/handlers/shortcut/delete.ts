@@ -9,7 +9,7 @@ export const buildDelete = ({ shortcut }: Params): Delete => {
   return async (req, res) => {
     const data = await shortcut.delete({
       userId: req.user?.id,
-      shortcutId: req.params.id
+      shortcutId: req.params.id,
     })
 
     return res.status(200).json(data)

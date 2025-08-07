@@ -11,10 +11,10 @@ export type Speech2TextService = {
 
 export const buildSpeech2TextService = (params: Params): Speech2TextService => {
   const format = buildFormat(params)
-  const transcribe = buildTranscribe({...params, format})
+  const transcribe = buildTranscribe({ ...params, format })
 
   return {
     format,
-    transcribe
+    transcribe,
   }
 }

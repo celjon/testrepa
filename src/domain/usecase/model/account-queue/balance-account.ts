@@ -1,4 +1,4 @@
-import { IModelAccountQueue } from '@/domain/entity/modelAccountQueue'
+import { IModelAccountQueue } from '@/domain/entity/model-account-queue'
 import { UseCaseParams } from '@/domain/usecase/types'
 
 export type BalanceAccount = () => Promise<IModelAccountQueue[]>

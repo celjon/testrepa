@@ -1,10 +1,12 @@
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
-import { IPresetCategory } from '@/domain/entity/presetCategory'
+import { IPresetCategory } from '@/domain/entity/preset-category'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Get = (data: Prisma.PresetCategoryFindFirstArgs) => Promise<IPresetCategory | null | never>
+export type Get = (
+  data: Prisma.PresetCategoryFindFirstArgs,
+) => Promise<IPresetCategory | null | never>
 
 export const buildGet = ({ db }: Params): Get => {
   return async (data) => {

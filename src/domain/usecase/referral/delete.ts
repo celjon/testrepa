@@ -9,20 +9,20 @@ export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
     const referral = await adapter.referralRepository.get({
       where: {
         owner_id: userId,
-        id
+        id,
       },
       include: {
         participants: {
           include: {
-            user: true
-          }
+            user: true,
+          },
         },
         template: {
           include: {
-            plan: true
-          }
-        }
-      }
+            plan: true,
+          },
+        },
+      },
     })
 
     if (!referral) {
@@ -31,11 +31,11 @@ export const buildDelete = ({ adapter }: UseCaseParams): Delete => {
 
     const updatedReferral = await adapter.referralRepository.update({
       where: {
-        id
+        id,
       },
       data: {
-        disabled: true
-      }
+        disabled: true,
+      },
     })
 
     return updatedReferral!

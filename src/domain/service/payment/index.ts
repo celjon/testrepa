@@ -20,6 +20,6 @@ export const buildPaymentService = (params: Adapter): PaymentService => {
     yoomoney,
     crypto,
     tinkoff,
-    stripe
+    stripe,
   }
 }

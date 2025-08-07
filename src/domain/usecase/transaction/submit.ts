@@ -8,8 +8,8 @@ export const buildSubmit = ({ adapter }: UseCaseParams): Submit => {
   return async ({ userId, id }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
-      }
+        id: userId,
+      },
     })
 
     if (user?.role !== Role.ADMIN) {
@@ -19,11 +19,11 @@ export const buildSubmit = ({ adapter }: UseCaseParams): Submit => {
     const transaction = await adapter.transactionRepository.update({
       where: {
         id,
-        deleted: false
+        deleted: false,
       },
       data: {
-        status: TransactionStatus.SUCCEDED
-      }
+        status: TransactionStatus.SUCCEDED,
+      },
     })
 
     if (!transaction) {
@@ -33,13 +33,13 @@ export const buildSubmit = ({ adapter }: UseCaseParams): Submit => {
     if (transaction.referral_id) {
       await adapter.referralRepository.update({
         where: {
-          id: transaction.referral_id
+          id: transaction.referral_id,
         },
         data: {
           balance: {
-            decrement: transaction.amount
-          }
-        }
+            decrement: transaction.amount,
+          },
+        },
       })
     }
 

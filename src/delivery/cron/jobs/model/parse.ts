@@ -11,7 +11,7 @@ export const buildParse = ({ model }: Params): Parse => {
     model.parse().catch((error) => {
       logger.error({
         location: 'cron.job.model.parse',
-        message: getErrorString(error)
+        message: getErrorString(error),
       })
     })
   }

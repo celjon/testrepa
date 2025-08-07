@@ -1,12 +1,13 @@
 import { IMessage } from '@/domain/entity/message'
 import { NotFoundError } from '@/domain/errors'
 import { MidjourneyImagineResult, newMidjourneyApi } from '@/lib/clients/midjourney-api'
-import { IChatMidjourneySettings } from '@/domain/entity/chatSettings'
+import { IChatMidjourneySettings } from '@/domain/entity/chat-settings'
 import { getFileURL } from '@/domain/entity/file'
 import { MidjourneyMode } from '@prisma/client'
 import { withTimeout } from '@/lib'
 import { config as projectConfig } from '@/config/config'
-import { MjConfig } from '@/domain/service/message/midjourney/processMj'
+import { MjConfig } from '@/domain/service/message/midjourney/process-mj'
+import { reorderParameters } from './reorder-parameters'
 
 export type Imagine = (params: {
   config: MjConfig
@@ -22,18 +23,22 @@ export const buildImagine = (): Imagine => {
     if (!client)
       throw new NotFoundError({
         code: 'MIDJOURNEY_ACCOUNT_NOT_FOUND',
-        message: `Midjourney account ${config.accountId} not found`
+        message: `Midjourney account ${config.accountId} not found`,
       })
 
     let promptImages: string[]
 
     if (message.images) {
       promptImages = message.images
-        .map((messageImage) => (messageImage.original ? getFileURL(messageImage.original).toString() : null))
+        .map((messageImage) =>
+          messageImage.original ? getFileURL(messageImage.original).toString() : null,
+        )
         .filter((fileUrl) => fileUrl !== null) as string[]
     } else {
       promptImages = []
     }
+
+    const userPrompt = reorderParameters(message.content ?? '')
 
     const parameters: Record<string, string | number | boolean> = {}
 
@@ -100,16 +105,17 @@ export const buildImagine = (): Imagine => {
     if (promptImages.length !== 0) {
       promptParts.push(promptImages.join(' '))
     }
-    if (message.content) {
+    if (userPrompt) {
       promptParts.push(
-        message.content
+        userPrompt
+          .replace(/^\/+/, '')
           .replace(/--relax/g, '')
           .replace(/--fast/g, '')
           .replace(/--turbo/g, '')
           .replace(/--v\s*\d+(\.\d+)?/g, '')
           .replace(/--version\s*\d+(\.\d+)?/g, '')
           .replace(/--p\s*[a-zA-Z0-9-]+/g, '')
-          .replace(/--profile\s*[a-zA-Z0-9-]+/g, '')
+          .replace(/--profile\s*[a-zA-Z0-9-]+/g, ''),
       )
     }
     if (promptParameters.length !== 0) {
@@ -124,9 +130,9 @@ export const buildImagine = (): Imagine => {
     const result = await withTimeout(
       client.imagine({
         prompt,
-        callback
+        callback,
       }),
-      timeout
+      timeout,
     )
 
     return result ? { ...result, accountId: config.accountId } : null

@@ -1,10 +1,12 @@
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
-import { IModelProvider } from '@/domain/entity/modelProvider'
+import { IModelProvider } from '@/domain/entity/model-provider'
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type List = (data?: Prisma.ModelProviderFindManyArgs) => Promise<Array<IModelProvider> | never>
+export type List = (
+  data?: Prisma.ModelProviderFindManyArgs,
+) => Promise<Array<IModelProvider> | never>
 
 export const buildList = ({ db }: Params): List => {
   return async (data) => {

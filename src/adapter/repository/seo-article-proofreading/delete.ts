@@ -4,7 +4,9 @@ import { ISEOArticleProofreading } from '@/domain/entity/seo-article-proofreadin
 
 type Params = Pick<AdapterParams, 'db'>
 
-export type Delete = (data: Prisma.SEOArticleProofreadingDeleteArgs) => Promise<ISEOArticleProofreading | never>
+export type Delete = (
+  data: Prisma.SEOArticleProofreadingDeleteArgs,
+) => Promise<ISEOArticleProofreading | never>
 
 export const buildDelete = ({ db }: Params): Delete => {
   return async (data) => {

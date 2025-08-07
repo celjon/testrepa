@@ -1,7 +1,8 @@
-import { IPreset } from '@/domain/entity/preset'
-import { IPresetCategory } from '@/domain/entity/presetCategory'
-import { UseCaseParams } from '@/domain/usecase/types'
 import { PresetAccess, Prisma } from '@prisma/client'
+import { config } from '@/config'
+import { IPreset } from '@/domain/entity/preset'
+import { IPresetCategory } from '@/domain/entity/preset-category'
+import { UseCaseParams } from '@/domain/usecase/types'
 
 export type List = (params: {
   userId: string
@@ -24,7 +25,17 @@ export type List = (params: {
 
 export const buildList =
   ({ adapter }: UseCaseParams): List =>
-  async ({ userId, search, categories, models, favorite = false, private: privateList = false, page, quantity = 20, locale = 'en' }) => {
+  async ({
+    userId,
+    search,
+    categories,
+    models,
+    favorite = false,
+    private: privateList = false,
+    page,
+    quantity = 20,
+    locale = config.frontend.default_locale,
+  }) => {
     const where: Prisma.PresetWhereInput = {
       AND: [
         ...(search
@@ -34,17 +45,17 @@ export const buildList =
                   {
                     name: {
                       contains: search,
-                      mode: 'insensitive'
-                    }
+                      mode: 'insensitive',
+                    },
                   } satisfies Prisma.PresetWhereInput,
                   {
                     description: {
                       contains: search,
-                      mode: 'insensitive'
-                    }
-                  } satisfies Prisma.PresetWhereInput
-                ]
-              }
+                      mode: 'insensitive',
+                    },
+                  } satisfies Prisma.PresetWhereInput,
+                ],
+              },
             ]
           : []),
         {
@@ -54,80 +65,80 @@ export const buildList =
                   {
                     users: {
                       some: {
-                        id: userId
-                      }
-                    }
-                  }
+                        id: userId,
+                      },
+                    },
+                  },
                 ]
               : []),
             ...(privateList
               ? [
                   {
                     access: PresetAccess.PRIVATE,
-                    author_id: userId
-                  }
+                    author_id: userId,
+                  },
                 ]
-              : [])
-          ]
-        }
+              : []),
+          ],
+        },
       ],
       ...(categories && {
         categories: {
           some: {
             code: {
-              in: categories
-            }
-          }
-        }
+              in: categories,
+            },
+          },
+        },
       }),
       ...(models && {
         OR: [
           {
             model_id: {
-              in: models.filter((model) => model !== 'other')
-            }
+              in: models.filter((model) => model !== 'other'),
+            },
           },
           ...(models.some((model) => model === 'other')
             ? [
                 {
-                  model_id: null
-                }
+                  model_id: null,
+                },
               ]
-            : [])
-        ]
+            : []),
+        ],
       }),
       ...(!favorite &&
         !privateList && {
-          access: PresetAccess.PUBLIC
-        })
+          access: PresetAccess.PUBLIC,
+        }),
     }
 
     const orderBy: Prisma.PresetOrderByWithRelationInput[] = [
       {
-        usage_count: 'desc'
+        usage_count: 'desc',
       },
       {
-        created_at: 'desc'
-      }
+        created_at: 'desc',
+      },
     ]
 
     const include: Prisma.PresetInclude = {
       author: {
         select: {
-          email: true
-        }
+          email: true,
+        },
       },
       // author: true,
       attachments: {
         include: {
-          file: true
-        }
+          file: true,
+        },
       },
-      categories: true
+      categories: true,
     }
 
     const total = await adapter.presetRepository.count({
-      where
+      where,
     })
     const pages = total > 0 ? Math.ceil(total / quantity) : 1
 
@@ -135,7 +146,7 @@ export const buildList =
       const data = await adapter.presetRepository.list({
         where,
         orderBy,
-        include
+        include,
       })
 
       const start = 0
@@ -148,7 +159,7 @@ export const buildList =
         start,
         end,
         page,
-        pages
+        pages,
       }
     }
 
@@ -163,13 +174,13 @@ export const buildList =
         where: {
           users: {
             some: {
-              id: userId
-            }
-          }
+              id: userId,
+            },
+          },
         },
         select: {
-          id: true
-        }
+          id: true,
+        },
       })
     }
 
@@ -178,7 +189,7 @@ export const buildList =
       orderBy,
       skip,
       take,
-      include
+      include,
     })
 
     const presetsCategories = await Promise.all(
@@ -196,25 +207,25 @@ export const buildList =
             return adapter.presetCategoryRepository.get({
               where: {
                 code: category.code,
-                locale
-              }
+                locale,
+              },
             })
-          })
+          }),
         )
-      })
+      }),
     )
 
     const data: IPreset[] = presets.map((preset, index) => ({
       ...preset,
       ...(favorite && {
-        favorite: true
+        favorite: true,
       }),
       ...(!favorite && {
-        favorite: favoritePresets.some((favoritePreset) => favoritePreset.id === preset.id)
+        favorite: favoritePresets.some((favoritePreset) => favoritePreset.id === preset.id),
       }),
       categories: presetsCategories[index].map(
-        (category, categoryIndex) => category ?? preset.categories?.[categoryIndex]
-      ) as IPresetCategory[]
+        (category, categoryIndex) => category ?? preset.categories?.[categoryIndex],
+      ) as IPresetCategory[],
     }))
 
     const start = total === 0 ? total : skip + 1
@@ -226,6 +237,6 @@ export const buildList =
       start,
       end,
       page,
-      pages
+      pages,
     }
   }

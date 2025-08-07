@@ -13,7 +13,7 @@ export const actions = {
   TOKEN_WRITEOFF: 'token:writeoff',
   SWITCH_COMMON_POOL: 'common:pool:switch',
   SUBSCRIPTION_PURCHASE: 'subscription:purchase',
-  REGISTRATION: 'registration'
+  REGISTRATION: 'registration',
 }
 
 export const validPlatforms: Platform[] = [
@@ -31,14 +31,20 @@ export const validPlatforms: Platform[] = [
   Platform.API_MODERATIONS,
 
   Platform.ENTERPRISE,
-  Platform.EASY_WRITER
+  Platform.EASY_WRITER,
+  Platform.PROMPT_QUEUE,
 ]
 
-export const validSentPlatforms: Platform[] = [Platform.MAIN, Platform.DASHBOARD, Platform.TELEGRAM, Platform.BOTHUB_API]
+export const validSentPlatforms: Platform[] = [
+  Platform.MAIN,
+  Platform.DASHBOARD,
+  Platform.TELEGRAM,
+  Platform.BOTHUB_API,
+]
 
-export const determinePlatform = (platform?: Platform, hasEnterprise?: boolean) => {
+export const determinePlatform = (platform?: Platform, hasEnterprise?: boolean): Platform => {
   if (hasEnterprise) return Platform.ENTERPRISE
-  if ((validPlatforms as string[]).includes(platform ?? '')) return platform
+  if (platform && validPlatforms.includes(platform)) return platform
   return Platform.BOTHUB_API
 }
 

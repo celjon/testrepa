@@ -1,6 +1,6 @@
 import { AdapterParams } from '@/adapter/types'
 import { Prisma } from '@prisma/client'
-import { IOldEmail } from '@/domain/entity/oldEmail'
+import { IOldEmail } from '@/domain/entity/old-email'
 
 type Params = Pick<AdapterParams, 'db'>
 

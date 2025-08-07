@@ -1,8 +1,8 @@
 import { AdapterParams } from '@/adapter/types'
 import { buildCount, Count } from './count'
 import { buildDelete, Delete } from './delete'
-import { buildSetDisable, SetDisable } from './setDisable'
-import { buildToExcel, ToExcel } from './toExcel'
+import { buildSetDisable, SetDisable } from './set-disable'
+import { buildToExcel, ToExcel } from './to-excel'
 import { buildUpdate, Update } from './update'
 import { buildList, List } from './list'
 import { buildCreate, Create } from './create'
@@ -38,6 +38,6 @@ export const buildUserRepository = (params: Params): UserRepository => {
     list,
     setDisable,
     toExcel,
-    update
+    update,
   }
 }

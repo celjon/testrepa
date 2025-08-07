@@ -35,7 +35,7 @@ export const buildSEOArticleTopicRules = ({ authRequired, validateSchema }: Midd
     body('name').isObject(),
     body('article_id').isString(),
     body('category_id').isString(),
-    validateSchema
+    validateSchema,
   ]
   /**
    * @openapi
@@ -64,13 +64,21 @@ export const buildSEOArticleTopicRules = ({ authRequired, validateSchema }: Midd
    *       required:
    *         - content
    */
-  const updateSEOArticleTopicRules = [authRequired({ adminOnly: true }), param('seoArticleTopicId').isString(), validateSchema]
-  const deleteSEOArticleTopicRules = [authRequired({ adminOnly: true }), param('seoArticleTopicId').isString(), validateSchema]
+  const updateSEOArticleTopicRules = [
+    authRequired({ adminOnly: true }),
+    param('seoArticleTopicId').isString(),
+    validateSchema,
+  ]
+  const deleteSEOArticleTopicRules = [
+    authRequired({ adminOnly: true }),
+    param('seoArticleTopicId').isString(),
+    validateSchema,
+  ]
 
   return {
     getSEOArticleTopicRules,
     createSEOArticleTopicRules,
     updateSEOArticleTopicRules,
-    deleteSEOArticleTopicRules
+    deleteSEOArticleTopicRules,
   }
 }

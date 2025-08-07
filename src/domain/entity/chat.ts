@@ -1,11 +1,11 @@
 import { Field, ID, ObjectType } from 'type-graphql'
 import { Chat, Platform } from '@prisma/client'
 import { GroupGraphQLObject, IGroup } from './group'
-import { ChatSettingsGraphQLObject, IChatSettings } from './chatSettings'
+import { ChatSettingsGraphQLObject, IChatSettings } from './chat-settings'
 import { IMessage, MessageGraphQLObject } from './message'
 import { IUser, UserGraphQLObject } from './user'
 import { IModel, ModelGraphQLObject } from './model'
-import { IModelFunction, ModelFunctionGraphQLObject } from './modelFunction'
+import { IModelFunction, ModelFunctionGraphQLObject } from './model-function'
 
 /**
  * @openapi
@@ -35,6 +35,8 @@ import { IModelFunction, ModelFunctionGraphQLObject } from './modelFunction'
  *            created_at:
  *                type: string
  *                format: date
+ *            queue_id:
+ *                type: string
  */
 export interface IChat extends Chat {
   model?: IModel
@@ -98,8 +100,11 @@ export class ChatGraphQLObject implements IChat {
   @Field(() => Date)
   created_at!: Date
 
-  @Field(() => Date, {nullable: true})
-  last_message_at!: Date | null 
+  @Field(() => Date, { nullable: true })
+  last_message_at!: Date | null
+
+  @Field(() => String, { nullable: true })
+  queue_id!: string | null
 
   @Field(() => [MessageGraphQLObject], { nullable: true })
   messages?: MessageGraphQLObject[]

@@ -9,7 +9,7 @@ export type FindBySlug = (req: AuthRequest, res: Response) => Promise<void>
 export const buildFindBySlug = ({ article }: Params): FindBySlug => {
   return async (req, res) => {
     const result = await article.findBySlug({
-      slug: req.params.slug as string
+      slug: req.params.slug,
     })
     res.status(200).json(result)
   }

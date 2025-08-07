@@ -12,8 +12,8 @@ export const buildList = ({ db }: Params): List => {
       ...data,
       where: {
         deleted_at: null,
-        ...(data ? data.where : {})
-      }
+        ...(data ? data.where : {}),
+      },
     })) as Array<IModel>
   }
 }

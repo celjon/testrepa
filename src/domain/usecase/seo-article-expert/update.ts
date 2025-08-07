@@ -15,7 +15,7 @@ export type Update = (params: {
     university: string
     level: string
     form: string
-    graduationYear: number
+    graduationYear: string
     faculty: string
     specialty: string
   }
@@ -38,13 +38,13 @@ export const buildUpdate = ({ adapter }: UseCaseParams): Update => {
           city,
           country,
           education,
-          qualification
-        }
+          qualification,
+        },
       })
     }
     if (!seoArticleExpert) {
       throw new NotFoundError({
-        code: 'EXPERT_NOT_FOUND'
+        code: 'EXPERT_NOT_FOUND',
       })
     }
 

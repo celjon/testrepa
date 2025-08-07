@@ -35,6 +35,6 @@ export const buildSEOArticleCategoryRepository = (params: Params): SEOArticleCat
     list,
     update,
     updateMany,
-    delete: deleteCategory
+    delete: deleteCategory,
   }
 }

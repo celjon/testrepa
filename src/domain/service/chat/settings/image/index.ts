@@ -1,7 +1,7 @@
+import { Adapter } from '@/domain/types'
 import { ModelService } from '@/domain/service/model'
 import { buildCreate, Create } from './create'
-import { buildCreateElements, CreateElements } from './createElements'
-import { Adapter } from '@/domain/types'
+import { buildCreateElements, CreateElements } from './create-elements'
 import { buildUpdate, Update } from './update'
 
 type Params = Adapter & {
@@ -18,6 +18,6 @@ export const buildImageService = (params: Params): ImageService => {
   return {
     create: buildCreate(),
     createElements: buildCreateElements(params),
-    update: buildUpdate()
+    update: buildUpdate(),
   }
 }

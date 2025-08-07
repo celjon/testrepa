@@ -13,13 +13,13 @@ export const buildSendResetLink = ({ adapter, service }: UseCaseParams): SendRes
       where: {
         email: {
           equals: email,
-          mode: 'insensitive'
-        }
-      }
+          mode: 'insensitive',
+        },
+      },
     })
     if (!user || !user.email) {
       throw new ForbiddenError({
-        code: 'USER_NOT_REGISTERED'
+        code: 'USER_NOT_REGISTERED',
       })
     }
 

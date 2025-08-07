@@ -25,7 +25,7 @@ export const buildGroupRules = ({ authRequired, validateSchema }: Middlewares) =
     check('preset_id').optional().isString(),
     check('highlight').optional().isString(),
     check('order').optional().isNumeric(),
-    validateSchema
+    validateSchema,
   ]
 
   const deleteGroupRules = [authRequired(), validateSchema]
@@ -52,19 +52,24 @@ export const buildGroupRules = ({ authRequired, validateSchema }: Middlewares) =
     check('name').optional().isString(),
     check('highlight').optional().isString(),
     check('order').optional().isNumeric(),
-    validateSchema
+    validateSchema,
   ]
 
   const listGroupsRules = [
     authRequired({}),
     query('page').optional().isInt({
-      min: 1
+      min: 1,
     }),
     query('search').optional().isString(),
-    validateSchema
+    validateSchema,
   ]
 
-  const moveGroupsRules = [authRequired(), body('groupId').isString(), body('startGroupId').isString().optional(), validateSchema]
+  const moveGroupsRules = [
+    authRequired(),
+    body('groupId').isString(),
+    body('startGroupId').isString().optional(),
+    validateSchema,
+  ]
 
   return {
     getChatsRules,
@@ -73,6 +78,6 @@ export const buildGroupRules = ({ authRequired, validateSchema }: Middlewares) =
     deleteManyGroupRules,
     updateGroupRules,
     listGroupsRules,
-    moveGroupsRules
+    moveGroupsRules,
   }
 }

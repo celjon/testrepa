@@ -8,6 +8,6 @@ export const buildEmployeeService = (params: Adapter): EmployeeService => {
   const paginate = buildPaginate(params)
 
   return {
-    paginate
+    paginate,
   }
 }

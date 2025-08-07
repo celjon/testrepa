@@ -2,7 +2,12 @@ import { IChat } from '@/domain/entity/chat'
 import { UseCaseParams } from '../types'
 import { NotFoundError } from '@/domain/errors'
 
-export type Move = (params: { userId: string; chatIds: Array<string>; groupId?: string; startChatId?: string }) => Promise<Array<IChat>>
+export type Move = (params: {
+  userId: string
+  chatIds: Array<string>
+  groupId?: string
+  startChatId?: string
+}) => Promise<Array<IChat>>
 
 export const buildMove = ({ adapter }: UseCaseParams): Move => {
   return async ({ chatIds, groupId, userId, startChatId }) => {
@@ -16,13 +21,13 @@ export const buildMove = ({ adapter }: UseCaseParams): Move => {
       const startChat = await adapter.chatRepository.get({
         where: {
           id: startChatId,
-          user_id: userId
-        }
+          user_id: userId,
+        },
       })
 
       if (!startChat || startChat.order === null) {
         throw new NotFoundError({
-          code: 'START_CHAT_NOT_FOUND'
+          code: 'START_CHAT_NOT_FOUND',
         })
       }
 
@@ -33,15 +38,15 @@ export const buildMove = ({ adapter }: UseCaseParams): Move => {
         where: {
           user_id: userId,
           order: {
-            gte: startOrder
+            gte: startOrder,
           },
-          group_id: groupId
+          group_id: groupId,
         },
         data: {
           order: {
-            increment: offset
-          }
-        }
+            increment: offset,
+          },
+        },
       })
 
       await Promise.all(
@@ -49,27 +54,27 @@ export const buildMove = ({ adapter }: UseCaseParams): Move => {
           const updatedChat = await adapter.chatRepository.update({
             where: {
               id,
-              user_id: userId
+              user_id: userId,
             },
             data: {
               group_id: groupId,
-              order: startOrder + index
-            }
+              order: startOrder + index,
+            },
           })
 
           touchedChats.push(updatedChat)
-        })
+        }),
       )
     } else {
       const lastChat = await adapter.chatRepository.list({
         where: {
           user_id: userId,
-          group_id: groupId
+          group_id: groupId,
         },
         orderBy: {
-          order: 'desc'
+          order: 'desc',
         },
-        take: 1
+        take: 1,
       })
 
       await Promise.all(
@@ -77,15 +82,15 @@ export const buildMove = ({ adapter }: UseCaseParams): Move => {
           const updatedChat = await adapter.chatRepository.update({
             where: {
               id,
-              user_id: userId
+              user_id: userId,
             },
             data: {
               group_id: groupId,
-              order: lastChat[0] && lastChat[0].order ? lastChat[0].order + index + 1 : index + 1
-            }
+              order: lastChat[0] && lastChat[0].order ? lastChat[0].order + index + 1 : index + 1,
+            },
           })
           touchedChats.push(updatedChat)
-        })
+        }),
       )
     }
 

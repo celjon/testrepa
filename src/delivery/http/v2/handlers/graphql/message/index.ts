@@ -14,14 +14,14 @@ export class MessageResolver {
     @Ctx() { req }: GraphQLContext,
     @Arg('chatId', () => String) chatId: string,
     @Arg('page', () => Int, { nullable: true }) page?: number,
-    @Arg('quantity', () => Int, { nullable: true }) quantity?: number
+    @Arg('quantity', () => Int, { nullable: true }) quantity?: number,
   ): Promise<Array<IMessage>> {
     const { data } = await this.params.message.list({
       userId: req.user.id,
       keyEncryptionKey: req.user.keyEncryptionKey,
       chatId: chatId,
       page: page,
-      quantity: quantity
+      quantity: quantity,
     })
 
     return data

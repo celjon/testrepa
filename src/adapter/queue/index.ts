@@ -1,5 +1,8 @@
 import { AdapterParams } from '../types'
-import { buildPublishSoftLimitNotification, PublishSoftLimitNotification } from './soft-limit-notifications'
+import {
+  buildPublishSoftLimitNotification,
+  PublishSoftLimitNotification,
+} from './soft-limit-notifications'
 
 type Params = Pick<AdapterParams, 'queues'>
 
@@ -16,13 +19,13 @@ export const buildQueueManager = (params: Params): QueueManager => {
         'update-har-file',
         {
           modelAccountId: dto.modelAccountId,
-          jobId: `update-har-file:${dto.modelAccountId}`
+          jobId: `update-har-file:${dto.modelAccountId}`,
         },
         {
-          removeOnComplete: true
-        }
+          removeOnComplete: true,
+        },
       )
       return
-    }
+    },
   }
 }

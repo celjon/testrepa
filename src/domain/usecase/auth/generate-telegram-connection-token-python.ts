@@ -2,19 +2,24 @@ import { UseCaseParams } from '@/domain/usecase/types'
 import { signJWT } from '@/lib'
 import { NotFoundError } from '@/domain/errors'
 
-export type GenerateTelegramConnectionTokenPython = (data: { userId: string }) => Promise<{
-  telegramConnectionToken: string
-} | never>
+export type GenerateTelegramConnectionTokenPython = (data: { userId: string }) => Promise<
+  | {
+      telegramConnectionToken: string
+    }
+  | never
+>
 
-export const buildGenerateTelegramConnectionTokenPython = ({ adapter }: UseCaseParams): GenerateTelegramConnectionTokenPython => {
+export const buildGenerateTelegramConnectionTokenPython = ({
+  adapter,
+}: UseCaseParams): GenerateTelegramConnectionTokenPython => {
   return async ({ userId }) => {
     const user = await adapter.userRepository.get({
-      where: { id: userId }
+      where: { id: userId },
     })
 
     if (!user) {
       throw new NotFoundError({
-        code: 'USER_NOT_FOUND'
+        code: 'USER_NOT_FOUND',
       })
     }
 
@@ -25,8 +30,8 @@ export const buildGenerateTelegramConnectionTokenPython = ({ adapter }: UseCaseP
         id: userId,
         pythonBot: true,
         expiresIn: '1h',
-        keyEncryptionKey: null
-      })
+        keyEncryptionKey: null,
+      }),
     }
   }
 }

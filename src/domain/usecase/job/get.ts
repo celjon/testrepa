@@ -11,14 +11,14 @@ export const buildGet =
       where: {
         id: jobId,
         chat: {
-          user_id: userId
-        }
-      }
+          user_id: userId,
+        },
+      },
     })
 
     if (!job) {
       throw new NotFoundError({
-        code: 'JOB_NOT_FOUND'
+        code: 'JOB_NOT_FOUND',
       })
     }
 

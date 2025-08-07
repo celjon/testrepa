@@ -4,7 +4,10 @@ type Params = Pick<Adapter, 'modelUsageBucketRepository' | 'modelRepository'>
 
 export type UpdatePopularityScores = () => Promise<void>
 
-export const buildUpdatePopularityScores = ({ modelUsageBucketRepository, modelRepository }: Params): UpdatePopularityScores => {
+export const buildUpdatePopularityScores = ({
+  modelUsageBucketRepository,
+  modelRepository,
+}: Params): UpdatePopularityScores => {
   return async () => {
     const referenceDate = new Date()
 
@@ -17,13 +20,13 @@ export const buildUpdatePopularityScores = ({ modelUsageBucketRepository, modelR
     deletionCutoff.setHours(0, 0, 0, 0)
 
     await modelRepository.updatePopularityScores({
-      cutOffDate: popularityCutOff
+      cutOffDate: popularityCutOff,
     })
 
     await modelUsageBucketRepository.deleteMany({
       where: {
-        bucket_date: { lt: deletionCutoff }
-      }
+        bucket_date: { lt: deletionCutoff },
+      },
     })
   }
 }

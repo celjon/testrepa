@@ -11,13 +11,19 @@ import { buildSwitch, Switch } from './switch'
 import { buildCreateReport, CreateReport } from './report/create'
 import { buildDeleteReport, DeleteReport } from './report/delete'
 import { buildListReport, ListReport } from './report/list'
-import { buildListAll, ListAll } from './listAll'
-import { buildPromptQueue, PromptQueue } from './prompt-queue'
+import { buildListAll, ListAll } from './list-all'
+import { buildChatPromptQueue, ChatPromptQueue } from './chat-prompt-queue'
 import { buildUpdateSettings } from './../chat/update-settings'
+import {
+  buildOutputFilePromptQueue,
+  OutputFilePromptQueue,
+} from '@/domain/usecase/message/output-file-prompt-queue'
+import { buildPromptQueueStream, PromptQueueStream } from './prompt-queue-stream'
 
 export type MessageUseCase = {
   send: Send
-  promptQueue: PromptQueue
+  chatPromptQueue: ChatPromptQueue
+  outputFilePromptQueue: OutputFilePromptQueue
   regenerate: Regenerate
   switch: Switch
   buttonClick: ButtonClick
@@ -27,6 +33,7 @@ export type MessageUseCase = {
   update: Update
   delete: Delete
   deleteMany: DeleteMany
+  promptQueueStream: PromptQueueStream
   report: {
     create: CreateReport
     delete: DeleteReport
@@ -37,8 +44,10 @@ export type MessageUseCase = {
 export const buildMessageUseCase = (params: UseCaseParams): MessageUseCase => {
   const send = buildSend(params)
   const get = buildGet(params)
+  const promptQueueStream = buildPromptQueueStream(params)
   const updateChatSettings = buildUpdateSettings(params)
-  const promptQueue = buildPromptQueue({ ...params, send, get, updateChatSettings })
+  const chatPromptQueue = buildChatPromptQueue({ ...params, send, get, updateChatSettings })
+  const outputFilePromptQueue = buildOutputFilePromptQueue(params)
   const regenerate = buildRegenerate(params)
   const s = buildSwitch(params)
   const buttonClick = buildButtonClick(params)
@@ -53,7 +62,8 @@ export const buildMessageUseCase = (params: UseCaseParams): MessageUseCase => {
 
   return {
     send,
-    promptQueue,
+    chatPromptQueue,
+    outputFilePromptQueue,
     regenerate,
     switch: s,
     buttonClick,
@@ -63,10 +73,11 @@ export const buildMessageUseCase = (params: UseCaseParams): MessageUseCase => {
     update,
     delete: deleteMessage,
     deleteMany,
+    promptQueueStream,
     report: {
       create: createReport,
       delete: deleteReport,
-      list: listReport
-    }
+      list: listReport,
+    },
   }
 }

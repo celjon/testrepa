@@ -1,6 +1,6 @@
 import { AdapterParams } from '@/adapter/types'
 import { buildSend, Send } from './send'
-import { buildNotifyAboutPresent, NotifyAboutPresent } from './notifyAboutPresent'
+import { buildNotifyAboutPresent, NotifyAboutPresent } from './notify-about-present'
 
 type Params = Pick<AdapterParams, 'tgBot'>
 
@@ -14,6 +14,6 @@ export const buildTelegramGateway = (params: Params): TelegramGateway => {
 
   return {
     send,
-    notifyAboutPresent
+    notifyAboutPresent,
   }
 }

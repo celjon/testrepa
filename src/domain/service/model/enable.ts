@@ -8,21 +8,21 @@ export const buildEnable = ({ modelRepository }: Adapter): Enable => {
     const key = getPlatformDisabledKey(platform)
     const model = await modelRepository.update({
       where: {
-        id
+        id,
       },
       data: {
-        [key]: false
-      }
+        [key]: false,
+      },
     })
 
     if (model && model.parent_id) {
       await modelRepository.update({
         where: {
-          id: model.parent_id
+          id: model.parent_id,
         },
         data: {
-          [key]: false
-        }
+          [key]: false,
+        },
       })
     }
 

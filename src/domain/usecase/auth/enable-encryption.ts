@@ -12,7 +12,7 @@ export const buildEnableEncryption = ({ service, adapter }: UseCaseParams): Enab
   return async ({ userId, password }) => {
     const user = await adapter.userRepository.get({
       where: {
-        id: userId
+        id: userId,
       },
       select: {
         id: true,
@@ -20,8 +20,8 @@ export const buildEnableEncryption = ({ service, adapter }: UseCaseParams): Enab
         password: true,
         useEncryption: true,
         encryptedDEK: true,
-        kekSalt: true
-      }
+        kekSalt: true,
+      },
     })
 
     if (!user) {
@@ -33,7 +33,7 @@ export const buildEnableEncryption = ({ service, adapter }: UseCaseParams): Enab
 
     const passwordIsValid = await service.auth.checkCredentials({
       email: user.email,
-      password
+      password,
     })
     if (!passwordIsValid) {
       throw new UnauthorizedError({ code: 'INVALID_PASSWORD' })
@@ -46,33 +46,33 @@ export const buildEnableEncryption = ({ service, adapter }: UseCaseParams): Enab
     const kekSalt = await cryptoGateway.generateKEKSalt()
     const keyEncryptionKey = await cryptoGateway.deriveKEK({
       password,
-      kekSalt
+      kekSalt,
     })
     const dek = await cryptoGateway.generateDEK()
     const encryptedDEK = await cryptoGateway.encryptDEK({
       kek: keyEncryptionKey,
-      dek
+      dek,
     })
 
     await adapter.userRepository.update({
       where: {
-        id: userId
+        id: userId,
       },
       data: {
         useEncryption: true,
         encryptedDEK,
-        kekSalt
-      }
+        kekSalt,
+      },
     })
 
     const tokens = await service.auth.signAuthTokens({
       user,
-      keyEncryptionKey
+      keyEncryptionKey,
     })
 
     return {
       accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken
+      refreshToken: tokens.refreshToken,
     }
   }
 }

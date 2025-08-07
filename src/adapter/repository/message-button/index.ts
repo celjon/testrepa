@@ -1,6 +1,6 @@
 import { AdapterParams } from '@/adapter/types'
 import { buildCreate, Create } from './create'
-import { buildUpdateMany, UpdateMany } from './updateMany'
+import { buildUpdateMany, UpdateMany } from './update-many'
 import { buildUpdate, Update } from './update'
 import { buildList, List } from './list'
 import { buildCount, Count } from './count'
@@ -31,6 +31,6 @@ export const buildMessageButtonRepository = (params: Params): MessageButtonRepos
     updateMany,
     update,
     list,
-    count
+    count,
   }
 }

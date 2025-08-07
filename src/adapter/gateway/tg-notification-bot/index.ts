@@ -11,6 +11,6 @@ export const buildTgNotificationBotGateway = (params: Params): TgNotificationBot
   const send = buildSend(params)
 
   return {
-    send
+    send,
   }
 }

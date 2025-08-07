@@ -75,9 +75,9 @@ export const buildJobHandler = (params: Params): IHandler => {
     registerRoutes: buildRegisterRoutes(
       {
         get,
-        stop
+        stop,
       },
-      params.middlewares
-    )
+      params.middlewares,
+    ),
   }
 }

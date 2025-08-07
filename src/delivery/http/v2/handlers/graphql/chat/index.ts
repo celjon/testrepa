@@ -1,4 +1,15 @@
-import { Arg, ArgumentValidationError, Ctx, Field, FieldResolver, Int, ObjectType, Query, Resolver, Root } from 'type-graphql'
+import {
+  Arg,
+  ArgumentValidationError,
+  Ctx,
+  Field,
+  FieldResolver,
+  Int,
+  ObjectType,
+  Query,
+  Resolver,
+  Root,
+} from 'type-graphql'
 import { DeliveryParams } from '@/delivery/types'
 import { NotFoundError } from '@/domain/errors'
 import { ChatGraphQLObject, ChatPlatform, IChat, validChatPlatforms } from '@/domain/entity/chat'
@@ -14,8 +25,8 @@ import {
   ChatSettingsSelectElementGraphQLObject,
   ChatSettingsTextAreaElementGraphQLObject,
   ChatSettingsTextElementGraphQLObject,
-  IChatSettings
-} from '@/domain/entity/chatSettings'
+  IChatSettings,
+} from '@/domain/entity/chat-settings'
 import { MessageGraphQLObject } from '@/domain/entity/message'
 import { Platform } from '@prisma/client'
 
@@ -27,9 +38,9 @@ const validateChatPlatform = (platform: string) => {
       {
         property: 'platform',
         constraints: {
-          enum: 'Valid platforms are ' + validChatPlatforms.join(', ')
-        }
-      }
+          enum: 'Valid platforms are ' + validChatPlatforms.join(', '),
+        },
+      },
     ])
   }
 }
@@ -53,19 +64,19 @@ export class ChatResolver {
   async chat(
     @Ctx() { req }: GraphQLContext,
     @Arg('chatId', () => String, { nullable: true }) chatId?: string | null,
-    @Arg('modelId', () => String, { nullable: true }) modelId?: string
+    @Arg('modelId', () => String, { nullable: true }) modelId?: string,
   ): Promise<IChat | null> {
     if (!chatId) {
       return this.params.chat.getInitial({
         userId: req.user.id,
-        modelId
+        modelId,
       })
     }
 
     try {
       return await this.params.chat.get({
         userId: req.user.id,
-        chatId: chatId
+        chatId: chatId,
       })
     } catch (e) {
       if (e instanceof NotFoundError) {
@@ -85,7 +96,7 @@ export class ChatResolver {
     @Arg('sort', () => String, { nullable: true }) sort?: string,
     @Arg('sortDirection', () => String, { nullable: true })
     sortDirection?: string,
-    @Arg('quantity', () => Int, { nullable: true }) quantity?: number
+    @Arg('quantity', () => Int, { nullable: true }) quantity?: number,
   ): Promise<{ data: Array<IChat>; pages: number }> {
     try {
       return await this.params.chat.list({
@@ -96,13 +107,13 @@ export class ChatResolver {
         search: search,
         sort: sort,
         sortDirection: sortDirection,
-        quantity: quantity
+        quantity: quantity,
       })
     } catch (e) {
       if (e instanceof NotFoundError) {
         return {
           data: [],
-          pages: 0
+          pages: 0,
         }
       }
       throw e
@@ -116,19 +127,19 @@ export class ChatResolver {
     @Arg('all', () => Boolean, { nullable: true }) all?: boolean,
     @Arg('elements', () => Boolean, { nullable: true }) elements?: boolean,
     @Arg('platform', () => String, { nullable: true, validateFn: validateChatPlatform })
-    platform?: ChatPlatform
+    platform?: ChatPlatform,
   ): Promise<ChatSettingsGraphQLObject> {
     const settings = await this.params.chat.getSettings({
       userId: req.user.id,
       chatId: chatId,
       all: all,
       elements: elements,
-      platform: platform ?? Platform.WEB
+      platform: platform ?? Platform.WEB,
     })
 
     return {
       ...settings,
-      elements: this.mapSettingsElements(settings.elements)
+      elements: this.mapSettingsElements(settings.elements),
     }
   }
 
@@ -140,19 +151,19 @@ export class ChatResolver {
     @Arg('all', () => Boolean, { nullable: true }) all?: boolean,
     @Arg('elements', () => Boolean, { nullable: true }) elements?: boolean,
     @Arg('platform', () => String, { nullable: true, validateFn: validateChatPlatform })
-    platform?: ChatPlatform
+    platform?: ChatPlatform,
   ): Promise<ChatSettingsGraphQLObject> {
     const settings = await this.params.chat.getSettings({
       userId: req.user.id,
       chatId: chat.id,
       all: all,
       elements: elements,
-      platform: platform ?? Platform.WEB
+      platform: platform ?? Platform.WEB,
     })
 
     return {
       ...settings,
-      elements: this.mapSettingsElements(settings.elements)
+      elements: this.mapSettingsElements(settings.elements),
     }
   }
 
@@ -162,20 +173,22 @@ export class ChatResolver {
     @Root() chat: ChatGraphQLObject,
     @Ctx() { req }: GraphQLContext,
     @Arg('page', () => Int, { nullable: true }) page?: number,
-    @Arg('quantity', () => Int, { nullable: true }) quantity?: number
+    @Arg('quantity', () => Int, { nullable: true }) quantity?: number,
   ) {
     const { data } = await this.params.message.list({
       userId: req.user.id,
       keyEncryptionKey: req.user.keyEncryptionKey,
       chatId: chat.id,
       page: page,
-      quantity: quantity
+      quantity: quantity,
     })
 
     return data
   }
 
-  private mapSettingsElements(settings: IChatSettings['elements']): ChatSettingsGraphQLObject['elements'] {
+  private mapSettingsElements(
+    settings: IChatSettings['elements'],
+  ): ChatSettingsGraphQLObject['elements'] {
     return settings?.map((element) => {
       if (classMap[element.field_type] && element.field_type !== 'custom') {
         return toObjectType(classMap[element.field_type], element)
@@ -208,7 +221,7 @@ const classMap = {
   range: ChatSettingsRangeElementGraphQLObject,
   checkbox: ChatSettingsCheckboxElementGraphQLObject,
   select: ChatSettingsSelectElementGraphQLObject,
-  custom: {} as const
+  custom: {} as const,
 } as const
 
 function toObjectType<T extends object>(Type: new (...args: unknown[]) => T, object: T) {

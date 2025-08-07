@@ -7,7 +7,7 @@ import {
   RemixModalSubmitID,
   ShortenModalSubmitID,
   UploadParam,
-  UploadSlot
+  UploadSlot,
 } from './interfaces'
 
 import { nextNonce, sleep } from './utils'
@@ -40,7 +40,7 @@ export class MidjourneyApi extends Command {
     msgId,
     hash,
     nonce = nextNonce(),
-    flags = 0
+    flags = 0,
   }: {
     index: 1 | 2 | 3 | 4
     msgId: string
@@ -52,7 +52,7 @@ export class MidjourneyApi extends Command {
       msgId,
       customId: `MJ::JOB::variation::${index}::${hash}`,
       flags,
-      nonce
+      nonce,
     })
   }
 
@@ -61,7 +61,7 @@ export class MidjourneyApi extends Command {
     msgId,
     hash,
     nonce = nextNonce(),
-    flags
+    flags,
   }: {
     index: 1 | 2 | 3 | 4
     msgId: string
@@ -73,20 +73,40 @@ export class MidjourneyApi extends Command {
       msgId,
       customId: `MJ::JOB::upsample::${index}::${hash}`,
       flags,
-      nonce
+      nonce,
     })
   }
 
-  async RerollApi({ msgId, hash, nonce = nextNonce(), flags }: { msgId: string; hash: string; nonce?: string; flags: number }) {
+  async RerollApi({
+    msgId,
+    hash,
+    nonce = nextNonce(),
+    flags,
+  }: {
+    msgId: string
+    hash: string
+    nonce?: string
+    flags: number
+  }) {
     return this.CustomApi({
       msgId,
       customId: `MJ::JOB::reroll::0::${hash}::SOLO`,
       flags,
-      nonce
+      nonce,
     })
   }
 
-  async CustomApi({ msgId, customId, flags, nonce = nextNonce() }: { msgId: string; customId: string; flags: number; nonce?: string }) {
+  async CustomApi({
+    msgId,
+    customId,
+    flags,
+    nonce = nextNonce(),
+  }: {
+    msgId: string
+    customId: string
+    flags: number
+    nonce?: string
+  }) {
     if (!msgId) throw new Error('msgId is empty')
     if (flags === undefined) throw new Error('flags is undefined')
     const payload = {
@@ -100,8 +120,8 @@ export class MidjourneyApi extends Command {
       session_id: this.config.SessionId,
       data: {
         component_type: 2,
-        custom_id: customId
-      }
+        custom_id: customId,
+      },
     }
     return this.safeIteractions(payload)
   }
@@ -112,7 +132,7 @@ export class MidjourneyApi extends Command {
     msgId,
     customId,
     prompt,
-    submitCustomId
+    submitCustomId,
   }: {
     nonce: string
     msgId: string
@@ -135,57 +155,97 @@ export class MidjourneyApi extends Command {
               {
                 type: 4,
                 custom_id: submitCustomId,
-                value: prompt
-              }
-            ]
-          }
-        ]
+                value: prompt,
+              },
+            ],
+          },
+        ],
       },
       session_id: this.config.SessionId,
-      nonce
+      nonce,
     }
     console.log('submitCustomId', JSON.stringify(payload))
     return this.safeIteractions(payload)
   }
 
-  async RemixApi({ nonce, msgId, customId, prompt }: { nonce: string; msgId: string; customId: string; prompt: string }) {
+  async RemixApi({
+    nonce,
+    msgId,
+    customId,
+    prompt,
+  }: {
+    nonce: string
+    msgId: string
+    customId: string
+    prompt: string
+  }) {
     return this.ModalSubmitApi({
       nonce,
       msgId,
       customId,
       prompt,
-      submitCustomId: RemixModalSubmitID
+      submitCustomId: RemixModalSubmitID,
     })
   }
 
-  async ShortenImagineApi({ nonce, msgId, customId, prompt }: { nonce: string; msgId: string; customId: string; prompt: string }) {
+  async ShortenImagineApi({
+    nonce,
+    msgId,
+    customId,
+    prompt,
+  }: {
+    nonce: string
+    msgId: string
+    customId: string
+    prompt: string
+  }) {
     return this.ModalSubmitApi({
       nonce,
       msgId,
       customId,
       prompt,
-      submitCustomId: ShortenModalSubmitID
+      submitCustomId: ShortenModalSubmitID,
     })
   }
 
-  async DescribeImagineApi({ nonce, msgId, customId, prompt }: { nonce: string; msgId: string; customId: string; prompt: string }) {
+  async DescribeImagineApi({
+    nonce,
+    msgId,
+    customId,
+    prompt,
+  }: {
+    nonce: string
+    msgId: string
+    customId: string
+    prompt: string
+  }) {
     return this.ModalSubmitApi({
       nonce,
       msgId,
       customId,
       prompt,
-      submitCustomId: DescribeModalSubmitID
+      submitCustomId: DescribeModalSubmitID,
     })
   }
 
-  async CustomZoomImagineApi({ nonce, msgId, customId, prompt }: { nonce: string; msgId: string; customId: string; prompt: string }) {
+  async CustomZoomImagineApi({
+    nonce,
+    msgId,
+    customId,
+    prompt,
+  }: {
+    nonce: string
+    msgId: string
+    customId: string
+    prompt: string
+  }) {
     customId = customId.replace('MJ::CustomZoom', 'MJ::OutpaintCustomZoomModal')
     return this.ModalSubmitApi({
       nonce,
       msgId,
       customId,
       prompt,
-      submitCustomId: CustomZoomModalSubmitID
+      submitCustomId: CustomZoomModalSubmitID,
     })
   }
 
@@ -226,14 +286,14 @@ export class MidjourneyApi extends Command {
     const { attachments } = await this.attachments({
       filename,
       file_size,
-      id: this.UpId++
+      id: this.UpId++,
     })
     const UploadSlot = attachments[0]
     await this.uploadImage(UploadSlot, fileData, mimeType)
     const resp: DiscordImage = {
       id: UploadSlot.id,
       filename: UploadSlot.upload_filename.split('/').pop() || 'image.png',
-      upload_filename: UploadSlot.upload_filename
+      upload_filename: UploadSlot.upload_filename,
     }
     return resp
   }
@@ -248,14 +308,14 @@ export class MidjourneyApi extends Command {
     const { attachments } = await this.attachments({
       filename,
       file_size,
-      id: this.UpId++
+      id: this.UpId++,
     })
     const UploadSlot = attachments[0]
     await this.uploadImage(UploadSlot, fileData, mimeType)
     const resp: DiscordImage = {
       id: UploadSlot.id,
       filename: UploadSlot.upload_filename.split('/').pop() || 'image.png',
-      upload_filename: UploadSlot.upload_filename
+      upload_filename: UploadSlot.upload_filename,
     }
     return resp
   }
@@ -273,18 +333,18 @@ export class MidjourneyApi extends Command {
       channel_id: ChannelId,
       type: 0,
       sticker_ids: [],
-      attachments: [image]
+      attachments: [image],
     }
 
     const url = new URL(`${DiscordBaseUrl}/api/v9/channels/${ChannelId}/messages`)
     const headers = {
       Authorization: SalaiToken,
-      'content-type': 'application/json'
+      'content-type': 'application/json',
     }
     const response = await fetch(url, {
       headers,
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     })
 
     return response.status
@@ -297,7 +357,7 @@ export class MidjourneyApi extends Command {
           request,
           callback: (any: any) => {
             resolve(any)
-          }
+          },
         },
         (error: any, result: any) => {
           if (error) {
@@ -305,12 +365,18 @@ export class MidjourneyApi extends Command {
           } else {
             resolve(result)
           }
-        }
+        },
       )
     })
   }
 
-  private processRequest = async ({ request, callback }: { request: any; callback: (any: any) => void }) => {
+  private processRequest = async ({
+    request,
+    callback,
+  }: {
+    request: any
+    callback: (any: any) => void
+  }) => {
     const httpStatus = await this.interactions(request)
     callback(httpStatus)
     await sleep(this.config.ApiInterval)
@@ -322,17 +388,20 @@ export class MidjourneyApi extends Command {
     try {
       const headers = {
         'Content-Type': 'application/json',
-        Authorization: this.config.SalaiToken
+        Authorization: this.config.SalaiToken,
       }
-      const response = await this.config.fetch(`${this.config.DiscordBaseUrl}/api/v9/interactions`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-        headers: headers
-      })
+      const response = await this.config.fetch(
+        `${this.config.DiscordBaseUrl}/api/v9/interactions`,
+        {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: headers,
+        },
+      )
       if (response.status >= 400) {
         console.error('api.error.config', {
           payload: JSON.stringify(payload),
-          config: this.config
+          config: this.config,
         })
       }
       return response.status
@@ -349,14 +418,14 @@ export class MidjourneyApi extends Command {
     const { SalaiToken, DiscordBaseUrl, ChannelId } = this.config
     const headers = {
       Authorization: SalaiToken,
-      'content-type': 'application/json'
+      'content-type': 'application/json',
     }
     const url = new URL(`${DiscordBaseUrl}/api/v9/channels/${ChannelId}/attachments`)
     const body = { files }
     const response = await this.config.fetch(url, {
       headers,
       method: 'POST',
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
     })
     if (response.status === 200) {
       return (await response.json()) as { attachments: UploadSlot[] }
@@ -365,16 +434,22 @@ export class MidjourneyApi extends Command {
     throw new Error(error)
   }
 
-  private async uploadImage(slot: UploadSlot, data: ArrayBuffer, contentType: string): Promise<void> {
+  private async uploadImage(
+    slot: UploadSlot,
+    data: ArrayBuffer,
+    contentType: string,
+  ): Promise<void> {
     const body = new Uint8Array(data)
     const headers = { 'content-type': contentType }
     const response = await this.config.fetch(slot.upload_url, {
       method: 'PUT',
       headers,
-      body
+      body,
     })
     if (!response.ok) {
-      throw new Error(`uploadImage return ${response.status} ${response.statusText} ${await response.text()}`)
+      throw new Error(
+        `uploadImage return ${response.status} ${response.statusText} ${await response.text()}`,
+      )
     }
   }
 }

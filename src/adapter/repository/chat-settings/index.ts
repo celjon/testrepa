@@ -22,6 +22,6 @@ export const buildChatSettingsRepository = (params: Params): ChatSettingsReposit
     create,
     upsert,
     update,
-    get
+    get,
   }
 }

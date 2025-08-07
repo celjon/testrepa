@@ -1,2 +1,2 @@
-export * from './signJWT'
-export * from './verifyJWT'
+export * from './sign-jwt'
+export * from './verify-jwt'

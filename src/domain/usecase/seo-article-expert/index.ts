@@ -24,6 +24,6 @@ export const buildSEOArticleExpertUseCase = (params: UseCaseParams): SEOArticleE
     findBySlug,
     createSEOArticleExpert,
     updateSEOArticleExpert,
-    deleteSEOArticleExpert
+    deleteSEOArticleExpert,
   }
 }

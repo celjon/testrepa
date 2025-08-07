@@ -7,8 +7,8 @@ export const buildListReport = ({ adapter }: UseCaseParams): ListReport => {
   return async (chat_id: string) => {
     const listedReports = await adapter.messageRepository.listReport({
       where: {
-        chat_id: chat_id
-      }
+        chat_id: chat_id,
+      },
     })
     return listedReports
   }
